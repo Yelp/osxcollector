@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>com.apple.appleseed.seedusaged</string>
+        <key>StartCalendarInterval</key>
+        <dict>
+            <key>Hour</key>
+            <integer>12</integer>
+        </dict>
+        <key>LimitLoadToSessionType</key>
+        <string>Aqua</string>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>Program</key>
+        <string>/System/Library/CoreServices/Feedback Assistant.app/Contents/Library/LaunchServices/seedusaged</string>
+    </dict>
+</plist>
