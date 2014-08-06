@@ -1,6 +1,16 @@
 # OSXCollector
+## how'd that malware get there?
+That's the question you've got to answer for every OSX malware infection. We built OSXCollector to make that easy. Quickly parse its output to get an answer.
 
-OSXCollector is a security diagnostic tool that helps in forensic analysis OS X systems. It gathers information from plists, sqlite databases and the local filesystems to get the information for analyzing a malware infection. The output is JSON which makes it easy to process it further by other tools.
+A typical infection might follow a path like:
+ - a phishing email leads to a malicious download
+ - once installed, the initial establishes persistence
+ - then it reaches out on the network and pulls down additional payloads
+
+With the output of OSXCollector we quickly correlate between browser history, startup items, downloads, and installed applications. It makes root causing an infection, collect IOCs, and get to the bottom of an infection.
+
+## so what's it do
+OSXCollector gathers information from plists, sqlite databases and the local filesystems to get the information for analyzing a malware infection. The output is JSON which makes it easy to process it further by other tools.
 
 ## usage
 Tool is self contained in one script file [osxcollector](osxcollector/osxcollector.py).
