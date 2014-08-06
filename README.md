@@ -21,6 +21,7 @@ OSXCollector gathers information from plists, sqlite databases and the local fil
 Tool is self contained in one script file [osxcollector](osxcollector/osxcollector.py).
 
 Launch OSXCollector as root or it will be unable to read data from all accounts
+
 ```
 $ sudo python osxcollector.py
 ```
@@ -72,7 +73,7 @@ would create an output file named `collection_report.tar.gz`
 For example:
 
 ```
-sudo python osxcollector.py -p /Volumes/UNTITLED
+$ sudo python osxcollector.py -p /Volumes/UNTITLED
 ```
 
 would look in ` /Volumes/UNTITLED` as the root of the system to analyze.
@@ -86,17 +87,18 @@ would look in ` /Volumes/UNTITLED` as the root of the system to analyze.
 ```
 
 The full list of sections:
-*  system_info
-*  kext
-*  startup
-*  applications
-*  quarantines
-*  downloads
-*  chrome
-*  firefox
-*  safari
-*  accounts
-*  mail
+
+* `system_info`
+* `kext`
+* `startup`
+* `applications`
+* `quarantines`
+* `downloads`
+* `chrome`
+* `firefox`
+* `safari`
+* `accounts`
+* `mail`
 
 For example:
 
