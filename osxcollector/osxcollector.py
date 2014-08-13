@@ -244,6 +244,11 @@ def _normalize_val(val, key=None):
     try:
         if isinstance(val, basestring):
             try:
+                # Firefox history entries contain reversed host name
+                # while scope value in webapps_store entries also have it suffixed
+                # by protocol and port number, e.g. "moc.elpmaxe.www.:http:80"
+                if key in ['rev_host', 'scope']:
+                    val = val.split(':')[0][::-1]
                 return unicode(val).decode(encoding='utf-8', errors='ignore')
             except UnicodeEncodeError:
                 return val
