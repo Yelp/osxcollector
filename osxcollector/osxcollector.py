@@ -212,8 +212,14 @@ def _get_where_froms(file_path):
     try:
         plist = buffer(getxattr(file_path, KMD_ITEM_WHERE_FROMS))
         if plist:
-            data = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(plist, 0, None, None)[0]
-            return list(data)
+            try:
+                plist_array, plist_format, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(plist, 0, None, None)
+                if plist_error:
+                    Logger.log_error(message='plist deserialization error: {0}'.format(plist_error))
+                    return None
+                return list(plist_array)
+            except Exception as deserialize_plist_e:
+                Logger.log_exception(deserialize_plist_e, message='_get_where_froms failed on {0}'.format(file_path))
     except KeyError:
         pass  # ignore missing key in xattr
     return None
@@ -241,7 +247,7 @@ def _get_file_info(file_path, log_where_froms=False):
             'ctime':     ctime
         }
         if log_where_froms:
-            file_info['from'] = _get_where_froms(file_path)
+            file_info['where_froms'] = _get_where_froms(file_path)
         return file_info
 
     return {}
