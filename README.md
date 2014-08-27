@@ -143,6 +143,12 @@ sha1        sha1 hash of the file
 sha2        sha256 hash of the file
 ```
 
+For records representing downloaded files:
+
+```
+where_froms   list containing the source URL and the referrer from which file was downloaded
+```
+
 For records representing rows from a database:
 
 ```

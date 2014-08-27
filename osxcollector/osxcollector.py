@@ -42,6 +42,7 @@ from optparse import OptionParser
 from sqlite3 import connect
 from sqlite3 import OperationalError
 from traceback import extract_tb
+from xattr import getxattr
 
 
 ROOT_PATH = '/'
@@ -202,7 +203,28 @@ def _datetime_to_string(dt):
         debugbreak()
         return None
 
-def _get_file_info(file_path):
+KMD_ITEM_WHERE_FROMS = "com.apple.metadata:kMDItemWhereFroms"
+
+def _get_where_froms(file_path):
+    """Get kMDItemWhereFroms from a file, returns an array of strings or None if no value is set.
+    Found on https://gist.github.com/dunhamsteve/2889617
+    """
+    try:
+        plist = buffer(getxattr(file_path, KMD_ITEM_WHERE_FROMS))
+        if plist:
+            try:
+                plist_array, plist_format, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(plist, 0, None, None)
+                if plist_error:
+                    Logger.log_error(message='plist deserialization error: {0}'.format(plist_error))
+                    return None
+                return list(plist_array)
+            except Exception as deserialize_plist_e:
+                Logger.log_exception(deserialize_plist_e, message='_get_where_froms failed on {0}'.format(file_path))
+    except KeyError:
+        pass  # ignore missing key in xattr
+    return None
+
+def _get_file_info(file_path, log_where_froms=False):
     """Gather info about a file including hash and dates
 
     :param file_path: str path of file to hash
@@ -216,15 +238,20 @@ def _get_file_info(file_path):
         mtime = _datetime_to_string(datetime.fromtimestamp(os.path.getmtime(file_path)))
         ctime = _datetime_to_string(datetime.fromtimestamp(os.path.getctime(file_path)))
         md5_hash, sha1_hash, sha2_hash = _hash_file(file_path)
+        file_info = {
+            'md5':       md5_hash,
+            'sha1':      sha1_hash,
+            'sha2':      sha2_hash,
+            'file_path': file_path,
+            'mtime':     mtime,
+            'ctime':     ctime
+        }
+        if log_where_froms:
+            file_info['where_froms'] = _get_where_froms(file_path)
+        return file_info
 
-    return {
-        'md5':       md5_hash,
-        'sha1':      sha1_hash,
-        'sha2':      sha2_hash,
-        'file_path': file_path,
-        'mtime':     mtime,
-        'ctime':     ctime
-    }
+    return {}
+
 
 def _normalize_val(val, key=None):
     """Transform a value read from SqlLite or a plist into a string
@@ -536,7 +563,7 @@ class Collector(object):
             for file_name in file_names:
                 try:
                     file_path = pathjoin(root, file_name)
-                    file_info = _get_file_info(file_path)
+                    file_info = _get_file_info(file_path, True)
                     Logger.log_dict(file_info)
                 except Exception as log_file_info_for_directory_e:
                     Logger.log_exception(log_file_info_for_directory_e)
