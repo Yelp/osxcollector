@@ -1,5 +1,9 @@
 #!/usr/bin/awk -f
 BEGIN { print "[" }
-{ print $0, "," }
+{
+    if (NR != 1)
+        printf ","
+    print $0
+}
 END { print "]" }
 
