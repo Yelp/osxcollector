@@ -23,7 +23,7 @@ Tool is self contained in one script file [osxcollector](osxcollector/osxcollect
 Launch OSXCollector as root or it will be unable to read data from all accounts
 
 ```
-$ sudo python osxcollector.py
+$ sudo ./osxcollector.py
 ```
 
 Before running the tool make sure that your web browsers (Safari, Chrome or Firefox) are closed. Otherwise OS X Collector will not be able to access their diagnostic files for collecting the data.
@@ -40,7 +40,7 @@ Before running the tool make sure that your web browsers (Safari, Chrome or Fire
 For example:
 
 ```
-$ sudo python osxcollector.py -i INCIDENT32
+$ sudo ./osxcollector.py -i INCIDENT32
 ```
 
 would create an output file named `INCIDENT32-2014_07_08-15_57_54.tar.gz`
@@ -56,7 +56,7 @@ would create an output file named `INCIDENT32-2014_07_08-15_57_54.tar.gz`
 For example:
 
 ```
-$ sudo python osxcollector.py -o collection_report
+$ sudo ./osxcollector.py -o collection_report
 ```
 
 would create an output file named `collection_report.tar.gz`
@@ -73,7 +73,7 @@ would create an output file named `collection_report.tar.gz`
 For example:
 
 ```
-$ sudo python osxcollector.py -p /Volumes/UNTITLED
+$ sudo ./osxcollector.py -p /Volumes/UNTITLED
 ```
 
 would look in ` /Volumes/UNTITLED` as the root of the system to analyze.
@@ -103,7 +103,7 @@ The full list of sections:
 For example:
 
 ```
-$ sudo python osxcollector.py -s startup -s downloads
+$ sudo ./osxcollector.py -s startup -s downloads
 ```
 
 would only collect the `startup` and `downloads` sections.
