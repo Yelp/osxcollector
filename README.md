@@ -185,7 +185,9 @@ Collects basic information about the system:
 
 ### `kext`
 
-Collects the Kernel extensions from `/System/Library/Extensions`.
+Collects the Kernel extensions from:
+- `/System/Library/Extensions`
+- '/Library/Extensions'
 
 ### Startup
 

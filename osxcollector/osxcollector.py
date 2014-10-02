@@ -622,6 +622,7 @@ class Collector(object):
                 file_path = pathjoin(sub_dir_path, cfbundle_executable_path, cfbundle_executable)
                 file_info = _get_file_info(file_path)
                 file_info['osxcollector_plist_path'] = plist_path
+                file_info['osxcollector_bundle_id'] = plist.get('CFBundleIdentifier', '')
                 Logger.log_dict(file_info)
 
     def _log_startup_items(self, dir_path):
@@ -922,7 +923,13 @@ class Collector(object):
 
     def _collect_kext(self):
         """Log the Kernel extensions"""
-        self._log_packages_in_dir(pathjoin(ROOT_PATH, 'System/Library/Extensions/'))
+        kext_paths = [
+            'System/Library/Extensions',
+            'Library/Extensions'
+        ]
+
+        for kext_path in kext_paths:
+            self._log_packages_in_dir(pathjoin(ROOT_PATH, kext_path))
 
     def _collect_accounts(self):
         """Log users's accounts"""
