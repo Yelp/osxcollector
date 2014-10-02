@@ -81,7 +81,8 @@ class CollectorTestCase(T.TestCase):
 
     def test_log_packages_in_dir(self):
         expected = {
-            'osxcollector_plist_path': 'tests/data/packages/Digital Hub Scripting.osax/Contents/Info.plist'
+            'osxcollector_plist_path': 'tests/data/packages/Digital Hub Scripting.osax/Contents/Info.plist',
+            'osxcollector_bundle_id': 'com.apple.osax.digihub'
         }
         expected = self._really_expected_file_info(expected)
 
