@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 import time
-
 import testify as T
 
+from datetime import datetime
 from osxcollector import osxcollector
+
 
 def _convert_to_utc(func):
     '''Local time to UTC conversion
@@ -38,6 +38,9 @@ DT_VALID = datetime(2014, 7, 8, 14, 28, 22)
 """Valid date that should not cause problems after convertion"""
 DT_FUTURE = datetime(datetime.now().year + 1, 7, 8, 14, 28, 22)
 """Date in the future"""
+
+DT_VALID_AS_STRING = '2014-07-08 14:28:22'
+"""String representation of DT_VALID"""
 
 class SecondsSince2001ToDatetimeTestCase(T.TestCase):
 
@@ -160,32 +163,17 @@ class NormalizeValueTestCase(T.TestCase):
     def test_normalize_datetime(self):
         """Tests whether timestamps are resolved to datetime string representation,
         based on passed key value."""
-        expected_date = '2014-07-08 14:28:22'
 
-        sec_since_2001 = _datetime_to_seconds_since_2001(DT_VALID)
-        val = osxcollector._normalize_val(sec_since_2001, "start date:")
-        T.assert_equal(expected_date, val)
-
-        sec_since_epoch = _datetime_to_seconds_since_epoch(DT_VALID)
-        val = osxcollector._normalize_val(sec_since_epoch, "TIME FINISHED")
-        T.assert_equal(expected_date, val)
-
-        microsec_since_epoch = _datetime_to_microseconds_since_epoch(DT_VALID)
-        val = osxcollector._normalize_val(microsec_since_epoch, "in UTC")
-        T.assert_equal(expected_date, val)
-
-        microsec_since_1601 = _datetime_to_microseconds_since_1601(DT_VALID)
-        val = osxcollector._normalize_val(microsec_since_1601, "event date")
-        T.assert_equal(expected_date, val)
-
-        last_visited_date = "428630978.0"
-        val = osxcollector._normalize_val(last_visited_date, "lastVisitedDate")
-        T.assert_equal('2014-08-01 17:09:38', val)
+        keys_that_hint_about_being_a_date = ["start date:", "TIME FINISHED", "in UTC", "event date"]
+        for key in keys_that_hint_about_being_a_date:
+            sec_since_2001 = _datetime_to_seconds_since_2001(DT_VALID)
+            val = osxcollector._normalize_val(sec_since_2001, key)
+            T.assert_equal(DT_VALID_AS_STRING, val)
 
         # key contains 'date' however the value is not date
-        fake_date = "yes, it includes"
-        val = osxcollector._normalize_val(fake_date, "includes_dates")
-        T.assert_equal(fake_date, val)
+        not_a_date = "yes, it includes"
+        val = osxcollector._normalize_val(not_a_date, "includes_dates")
+        T.assert_equal(not_a_date, val)
 
 if __name__ == "__main__":
     T.run()
