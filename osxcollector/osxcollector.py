@@ -46,6 +46,7 @@ from sqlite3 import OperationalError
 from traceback import extract_tb
 from xattr import getxattr
 
+__version__ = '1.0'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
@@ -1075,7 +1076,7 @@ def main():
     euid = os.geteuid()
     egid = os.getegid()
 
-    parser = OptionParser(usage='usage: %prog [options]')
+    parser = OptionParser(usage='usage: %prog [options]', version='%prog ' + __version__)
     parser.add_option('-i', '--id', dest='incident_prefix', default='osxcollect', help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
     parser.add_option('-o', '--outputfile', dest='output_file_name', default=None, help='[OPTIONAL] Name of the output file. Default name uses the timestamp. Try \'/dev/stdout\' for fun!')
     parser.add_option('-p', '--path', dest='rootpath', default='/', help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited if not specified.')

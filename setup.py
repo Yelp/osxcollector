@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
 
-from osxcollector import __version__
-
+from osxcollector.osxcollector import __version__
 
 setup(
     name="osxcollector",
