@@ -479,6 +479,7 @@ class Collector(object):
         """
 
         sections = [
+            ('version',         self._version_string),
             ('system_info',     self._collect_system_info),
             ('kext',            self._collect_kext),
             ('startup',         self._collect_startup),
@@ -701,6 +702,10 @@ class Collector(object):
         plist_path = pathjoin(homedir.path, 'Library/Preferences/com.apple.loginitems.plist')
         plist = self._read_plist(plist_path)
         self._log_items_in_plist(plist, 'SessionItems.CustomListItems')
+
+    def _version_string(self):
+        """Log the current version of this program (osxcollector)"""
+        Logger.log_dict({'osxcollector_version': __version__})
 
     def _collect_system_info(self):
         """Collect basic info about the system and system logs"""
