@@ -334,6 +334,34 @@ $ cat INCIDENT32.json | jq 'select(.osxcollector_username=="ivanlei")|.'
 
 We're huge fans of ElasticSearch/Logstash/Kibana. They create an awesome pipeline for searching visualizing, and correlating JSON.
 
+## OSXCollector Development
+
+We encourage you to extend the functionality of OSXCollector to suit your needs.
+
+### Testing OSXCollector
+
+A collection of tests for osxcollector is provided under the `tests` directory. In order to run these tests you must install [tox](https://pypi.python.org/pypi/tox):
+
+```
+sudo pip install tox
+```
+
+To run this suit of tests, `cd` into `osxcollector` and enter:
+
+```make test```
+
+Please note that tox will fail to run if osxcollector is stored under a path containing white spaces.
+  Bad Path  -> "/path/to/my files/osxcollector"
+  Good Path -> "/path/to/my_files/osxcollector"
+
+### Development Tips
+
+The functionality of OSXCollector is stored in a single file: osxcollector.py.
+
+Ensure that all of the osxcollector tests pass before editing the source code. You can run the tests using: `make test`
+
+After making changes to the source code, run `make test` again to verify that your changes did not break any of the tests.
+
 ## License
 
 This work is licensed under the GNU General Public License and a derivation of [https://github.com/jipegit/OSXAuditor](https://github.com/jipegit/OSXAuditor)
