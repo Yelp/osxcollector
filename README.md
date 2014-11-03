@@ -88,6 +88,7 @@ would look in ` /Volumes/UNTITLED` as the root of the system to analyze.
 
 The full list of sections:
 
+* `version`
 * `system_info`
 * `kext`
 * `startup`
@@ -172,6 +173,10 @@ OSXCollector attempts to convert timestamps to human readable date/time strings 
 * seconds since 1601-01-01
 
 ## Details On Data Collection
+
+### `version`
+
+The current version of OSXCollector.
 
 ### `system_info`
 
