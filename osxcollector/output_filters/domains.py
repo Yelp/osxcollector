@@ -9,6 +9,7 @@ from urllib import unquote_plus
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
 
+
 class DomainsFilter(OutputFilter):
     """Adds 'osxcollector_domains' key to output lines.
 
@@ -17,6 +18,8 @@ class DomainsFilter(OutputFilter):
     threat feeds.
     """
     def __init__(self):
+        super(DomainsFilter, self).__init__()
+
         self._domains = set()
 
     def filter_line(self, line):

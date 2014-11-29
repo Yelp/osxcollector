@@ -1,9 +1,37 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
+import yaml
 
 
 class OutputFilter(object):
     """An OutputFilter transforms the output from OSXCollector."""
+
+    def __init__(self):
+        """Reads a dict of config for the filter
+
+        Config is read from a YAML file named `osxcollector.yaml`
+        
+        The file will be searched for first in the current directory, then in the
+        home directory for the user, then by reading the OSXCOLLECTOR_CONF environment var.
+
+        The config for each filter is it's own top level key in the YAML file.
+        The name of the toplevel key is the name of the filter class.
+        """
+        self.config = None
+
+        full_config = None
+        for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF'):
+            try: 
+                with open(os.path.join(loc, 'osxcollector.yaml')) as source:
+                    full_config = yaml.load(source.read())
+                    break
+            except IOError:
+                pass
+
+        if full_config:
+            section = self.__class__.__name__
+            self.config = full_config.get(section)
 
     def filter_line(self, line):
         """Each line of output will be passed to filter_line.
@@ -28,6 +56,12 @@ class OutputFilter(object):
             An array of strings or None
         """
         return None
+
+
+class MissingConfigError(Exception):
+    """An error to throw when configuration is missing"""
+    pass
+
 
 def run_filter(output_filter):
     """Feeds stdin to an instance of OutputFilter and spews to stdout.

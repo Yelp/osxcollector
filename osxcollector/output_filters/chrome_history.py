@@ -9,6 +9,8 @@ class ChromeHistoryFilter(OutputFilter):
     """Joins Chrome browser history 'visits' and 'urls' tables, producing a time sorted browser history."""
 
     def __init__(self):
+        super(ChromeHistoryFilter, self).__init__()
+
         self._visits_table = dict()
         self._urls_table = dict()
 
