@@ -346,6 +346,12 @@ Each filter has a single purpose. They do one thing and they do it right.
 $ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
 ```
 
+### DomainsFilter
+`osxcollector.output_filters.domains` attempts to find domain names in a line. Any domains that are found are added to the line with the key `osxcollector_domains`. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | jq 'select(has("osxcollector_domains"))'
+```
+
 ## OSXCollector Development
 
 We encourage you to extend the functionality of OSXCollector to suit your needs.
