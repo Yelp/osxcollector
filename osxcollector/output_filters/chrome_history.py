@@ -53,6 +53,9 @@ class ChromeHistoryFilter(OutputFilter):
                 for key in visit.keys():
                     if key.startswith('osxcollector_'):
                         record[key] = visit[key]
+                for key in url.keys():
+                    if key.startswith('osxcollector_') and key not in record:
+                        record[key] = url[key]
 
                 history.append(record)
         
