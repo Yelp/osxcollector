@@ -62,6 +62,12 @@ class MissingConfigError(Exception):
     """An error to throw when configuration is missing"""
     pass
 
+def _unbuffered_stdin():
+    """Unbuffered read allows lines to be processed before EOF is reached"""
+    line = sys.stdin.readline()
+    while bool(line):
+        yield line.decode('latin-1')
+        line = sys.stdin.readline()
 
 def run_filter(output_filter):
     """Feeds stdin to an instance of OutputFilter and spews to stdout.
@@ -69,7 +75,7 @@ def run_filter(output_filter):
     Args:
         output_filter: An instance of an OutputFilter
     """
-    for line in sys.stdin.readlines():
+    for line in _unbuffered_stdin():
         line = output_filter.filter_line(line)
         if line:
             sys.stdout.write(line)
