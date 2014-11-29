@@ -334,6 +334,18 @@ $ cat INCIDENT32.json | jq 'select(.osxcollector_username=="ivanlei")|.'
 
 We're huge fans of ElasticSearch/Logstash/Kibana. They create an awesome pipeline for searching visualizing, and correlating JSON.
 
+## Automated Analysis With Output Filters
+
+The `osxcollector.output_filters` package contains filters the process and transform the output of OSXCollector. The goal of filters is to make it easier to understand output.
+
+Each filter has a single purpose. They do one thing and they do it right.
+
+## ChromeHistoryFilter
+`osxcollector.output_filters.chome_history` builds a really nice Chrome browser history sorted in descending time order. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
+```
+
 ## OSXCollector Development
 
 We encourage you to extend the functionality of OSXCollector to suit your needs.
