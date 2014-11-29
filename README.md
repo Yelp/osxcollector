@@ -340,7 +340,7 @@ The `osxcollector.output_filters` package contains filters the process and trans
 
 Each filter has a single purpose. They do one thing and they do it right.
 
-## ChromeHistoryFilter
+### ChromeHistoryFilter
 `osxcollector.output_filters.chome_history` builds a really nice Chrome browser history sorted in descending time order. Run it as:
 ```
 $ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
