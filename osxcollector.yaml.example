@@ -1,5 +1,26 @@
+# The OpenDNSFilter requires an API key for OpenDNS Investigate
 OpenDNSFilter:
     api_key: "ADD YOUR KEY"
 
+# The VTHashesFilter requires an API key for VirusTotal
 VTHashesFilter:
 	api_key: "ADD YOUR KEY"
+
+# The BlacklistFilter allows for multiple blacklists to be compared against at once
+# Each blacklists requires:
+#  - blacklist_name, A name
+#  - blacklist_keys, JSON paths. These can be of the form "a.b" to look at "b" in {"a": {"b": "foo"}}
+#  - value_file, the path to a file containing values considered blacklisted. Any line starting with # is skipped
+#  - blacklist_is_regex, should values in the file be treated as Python regex
+BlacklistFilter:
+    blacklists:
+     -  blacklist_name: "Bad Hashes"
+        blacklist_keys:
+         - "md5"
+        value_file: "/tmp/hash_blacklist.txt"
+        blacklist_is_regex: False
+     -  blacklist_name: "Bad Domains"
+        blacklist_keys: 
+         - "osxcollector_domains"
+        value_file: "/tmp/domain_blacklist.txt"
+        blacklist_is_regex: True

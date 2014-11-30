@@ -47,20 +47,20 @@ class DomainsFilter(OutputFilter):
             key: A string key associated with the value.
         """
         if isinstance(val, basestring):
-            if -1 == val.find('http'):
-                return
-
-            # Sometimes values are complex strings, like JSON or pickle encoded stuff.
-            # Try splitting the string on non-URL related punctuation
-            for part in re.split('[ \'\(\)\"\[\]\{\}\;\n\t]+', val):
-                if part.startswith('http'):
-                    self._add_domain(part)
+            if -1 != val.find('http'):
+                # Sometimes values are complex strings, like JSON or pickle encoded stuff.
+                # Try splitting the string on non-URL related punctuation
+                for part in re.split('[ \'\(\)\"\[\]\{\}\;\n\t]+', val):
+                    if part.startswith('http'):
+                        self._add_domain(part)
+            elif key in ['host']:
+                self._domains.add(val.rstrip('.').lstrip('.'))
         elif isinstance(val, list):
             for elem in val:
                 self._look_for_domains(elem)
         elif isinstance(val, dict):
             for key, elem in val.iteritems():
-                self._look_for_domains(elem)
+                self._look_for_domains(elem, key)
 
     def _add_domain(self, val):
         """Accumulates domain names in self._domains
