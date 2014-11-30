@@ -1,2 +1,5 @@
 OpenDNSFilter:
     api_key: "ADD YOUR KEY"
+
+VTHashesFilter:
+	api_key: "ADD YOUR KEY"

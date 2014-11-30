@@ -352,6 +352,18 @@ $ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | j
 $ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | jq 'select(has("osxcollector_domains"))'
 ```
 
+### OpenDNSFilter
+`osxcollector.output_filters.opendns` lookups domains with OpenDNS. Domains associated with suspicious categories are futher enhanced with additional OpenDNS data. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | python -m osxcollector.output_filters.opendns | jq 'select(has("osxcollector_opendns"))'
+```
+
+### VTHashesFilter
+`osxcollector.output_filters.virustotal_hashes` lookups md5 hashes with VirusTotal. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.virustotal_hashes | jq 'select(has("osxcollector_vt_hashes"))'
+```
+
 ## OSXCollector Development
 
 We encourage you to extend the functionality of OSXCollector to suit your needs.
