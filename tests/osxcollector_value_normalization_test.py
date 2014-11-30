@@ -16,21 +16,26 @@ def _convert_to_utc(func):
 
     return wrapper
 
+
 @_convert_to_utc
 def _datetime_to_seconds_since_2001(dt):
     return (dt - osxcollector.DATETIME_2001).total_seconds()
+
 
 @_convert_to_utc
 def _datetime_to_seconds_since_epoch(dt):
     return (dt - osxcollector.DATETIME_1970).total_seconds()
 
+
 @_convert_to_utc
 def _datetime_to_microseconds_since_epoch(dt):
     return (dt - osxcollector.DATETIME_1970).total_seconds() * 1e6
 
+
 @_convert_to_utc
 def _datetime_to_microseconds_since_1601(dt):
     return (dt - osxcollector.DATETIME_1601).total_seconds() * 1e6
+
 
 DT_BEFORE_MIN = datetime(2002, 7, 8, 14, 28, 22)
 """Date before minimum date"""
@@ -41,6 +46,7 @@ DT_FUTURE = datetime(datetime.now().year + 1, 7, 8, 14, 28, 22)
 
 DT_VALID_AS_STRING = '2014-07-08 14:28:22'
 """String representation of DT_VALID"""
+
 
 class SecondsSince2001ToDatetimeTestCase(T.TestCase):
 
@@ -59,6 +65,7 @@ class SecondsSince2001ToDatetimeTestCase(T.TestCase):
         dt = osxcollector._seconds_since_2001_to_datetime(sec_since_2001)
         T.assert_equal(dt, None)
 
+
 class SecondsSinceEpochToDatetimeTestCase(T.TestCase):
 
     def test_seconds_since_epoch_to_datetime(self):
@@ -76,6 +83,7 @@ class SecondsSinceEpochToDatetimeTestCase(T.TestCase):
         dt = osxcollector._seconds_since_epoch_to_datetime(sec_since_epoch)
         T.assert_equal(dt, None)
 
+
 class MicrosecondsSinceEpochToDatetimeTestCase(T.TestCase):
 
     def test_microseconds_since_epoch_to_datetime(self):
@@ -92,6 +100,7 @@ class MicrosecondsSinceEpochToDatetimeTestCase(T.TestCase):
         microsec_since_epoch = _datetime_to_microseconds_since_epoch(DT_FUTURE)
         dt = osxcollector._microseconds_since_epoch_to_datetime(microsec_since_epoch)
         T.assert_equal(dt, None)
+
 
 class MicrosecondsSince1601ToDatetimeTestCase(T.TestCase):
 
@@ -137,6 +146,7 @@ class ValueToDatetimeTestCase(T.TestCase):
         dt = osxcollector._value_to_datetime(microsec_since_1601)
         T.assert_equal(dt, DT_VALID)
 
+
 class NormalizeValueTestCase(T.TestCase):
     """Tests _normalize_val function."""
 
@@ -174,6 +184,3 @@ class NormalizeValueTestCase(T.TestCase):
         not_a_date = "yes, it includes"
         val = osxcollector._normalize_val(not_a_date, "includes_dates")
         T.assert_equal(not_a_date, val)
-
-if __name__ == "__main__":
-    T.run()

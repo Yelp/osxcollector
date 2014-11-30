@@ -6,6 +6,7 @@ import simplejson
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
 
+
 class FirefoxHistoryFilter(OutputFilter):
     """Joins Firefox browser history 'visits' and 'urls' tables, producing a time sorted browser history.
 
@@ -31,16 +32,16 @@ class FirefoxHistoryFilter(OutputFilter):
             table = blob.get('osxcollector_table_name')
 
             if 'moz_historyvisits' == table:
-                if self._validate_visit(blob):                          
+                if self._validate_visit(blob):
                     self._visits_table[blob['place_id']] = blob
-                    line = None # Consume the line
+                    line = None  # Consume the line
             elif 'moz_places' == table:
                 if self._validate_places(blob):
                     self._places_table[blob['id']] = blob
-                    line = None # Consume the line
+                    line = None  # Consume the line
 
         return line
-        
+
     def end_of_lines(self):
         """Join the 'visits' and 'urls' tables into a single browser history and timeline."""
         history = list()
@@ -54,7 +55,7 @@ class FirefoxHistoryFilter(OutputFilter):
                     record[key] = visit[key]
 
                 history.append(record)
-        
+
         return ['{0}\n'.format(simplejson.dumps(blob)) for blob in sorted(history, key=lambda x: x['last_visit_date'], reverse=True)]
 
     @classmethod
@@ -77,7 +78,7 @@ class FirefoxHistoryFilter(OutputFilter):
             blob: a place dict
         Returns:
             boolean
-        """        
+        """
         required_fields = ['id']
         return all([field in blob for field in required_fields])
 
@@ -86,5 +87,5 @@ def main():
     run_filter(FirefoxHistoryFilter())
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()

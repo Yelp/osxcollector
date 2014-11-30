@@ -11,7 +11,7 @@ class OutputFilter(object):
         """Reads a dict of config for the filter
 
         Config is read from a YAML file named `osxcollector.yaml`
-        
+
         The file will be searched for first in the current directory, then in the
         home directory for the user, then by reading the OSXCOLLECTOR_CONF environment var.
 
@@ -22,7 +22,7 @@ class OutputFilter(object):
 
         full_config = None
         for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF'):
-            try: 
+            try:
                 with open(os.path.join(loc, 'osxcollector.yaml')) as source:
                     full_config = yaml.load(source.read())
                     break
@@ -68,12 +68,14 @@ class MissingConfigError(Exception):
     """An error to throw when configuration is missing"""
     pass
 
+
 def _unbuffered_stdin():
     """Unbuffered read allows lines to be processed before EOF is reached"""
     line = sys.stdin.readline()
     while bool(line):
         yield line.decode('latin-1')
         line = sys.stdin.readline()
+
 
 def run_filter(output_filter):
     """Feeds stdin to an instance of OutputFilter and spews to stdout.

@@ -54,15 +54,19 @@ ROOT_PATH = '/'
 DEBUG_MODE = False
 """Global debug mode flag for whether to enable breaking into pdb"""
 
+
 def debugbreak():
     """Break in debugger if global DEBUG_MODE is set"""
     global DEBUG_MODE
 
     if DEBUG_MODE:
-        import pdb; pdb.set_trace()
+        import pdb
+        pdb.set_trace()
+
 
 HomeDir = namedtuple('HomeDir', ['user_name', 'path'])
 """A simple tuple for storing info about a user"""
+
 
 def _get_homedirs():
     """Return a list of HomeDir objects
@@ -78,6 +82,7 @@ def _get_homedirs():
             homedirs.append(HomeDir(user_name, pathjoin(ROOT_PATH, 'Users', user_name)))
     return homedirs
 
+
 def listdir(dir_path):
     """Safe version of os.listdir will always return an enumerable value
 
@@ -92,10 +97,12 @@ def listdir(dir_path):
     ignored_files = ['.DS_Store', '.localized']
     return [val for val in os.listdir(dir_path) if val not in ignored_files]
 
+
 def _relative_path(path):
     if path.startswith('/'):
         return path[1:]
     return path
+
 
 def pathjoin(path, *args):
     """Version of os.path.join that assumes every argument after the first is a relative path
@@ -109,6 +116,7 @@ def pathjoin(path, *args):
         return os.path.join(path, *normed_args)
     else:
         return os.path.join(path)
+
 
 def _hash_file(file_path):
     """Return the md5, sha1, sha256 hash of a file.
@@ -133,6 +141,7 @@ def _hash_file(file_path):
         debugbreak()
         return ['', '', '']
 
+
 DATETIME_2001 = datetime(2001, 1, 1)
 """Constant to use for converting timestamps to strings"""
 DATETIME_1970 = datetime(1970, 1, 1)
@@ -141,12 +150,13 @@ DATETIME_1601 = datetime(1601, 1, 1)
 """Constant to use for converting timestamps to strings"""
 MIN_YEAR = 2004
 
+
 def _timestamp_errorhandling(func):
     """Timestamps that are less than MIN_YEAR or after the current date are invalid"""
     def wrapper(*args, **kwargs):
         try:
             dt = func(*args, **kwargs)
-            tomorrow = datetime.now() + timedelta(days=1) # just in case of some timezone issues
+            tomorrow = datetime.now() + timedelta(days=1)  # just in case of some timezone issues
             if dt.year < MIN_YEAR or dt > tomorrow:
                 return None
             return dt
@@ -154,6 +164,7 @@ def _timestamp_errorhandling(func):
             return None
 
     return wrapper
+
 
 def _convert_to_local(func):
     '''UTC to local time conversion
@@ -165,10 +176,12 @@ def _convert_to_local(func):
 
     return wrapper
 
+
 @_timestamp_errorhandling
 @_convert_to_local
 def _seconds_since_2001_to_datetime(seconds):
     return DATETIME_2001 + timedelta(seconds=seconds)
+
 
 @_timestamp_errorhandling
 @_convert_to_local
@@ -176,15 +189,18 @@ def _seconds_since_epoch_to_datetime(seconds):
     """Converts timestamp to datetime assuming the timestamp is expressed in seconds since epoch"""
     return DATETIME_1970 + timedelta(seconds=seconds)
 
+
 @_timestamp_errorhandling
 @_convert_to_local
 def _microseconds_since_epoch_to_datetime(microseconds):
     return DATETIME_1970 + timedelta(microseconds=microseconds)
 
+
 @_timestamp_errorhandling
 @_convert_to_local
 def _microseconds_since_1601_to_datetime(microseconds):
     return DATETIME_1601 + timedelta(microseconds=microseconds)
+
 
 def _value_to_datetime(val):
     # Try various versions of converting a number to a datetime.
@@ -199,6 +215,7 @@ def _value_to_datetime(val):
     return (_microseconds_since_epoch_to_datetime(val) or _microseconds_since_1601_to_datetime(val) or
             _seconds_since_epoch_to_datetime(val) or _seconds_since_2001_to_datetime(val))
 
+
 def _datetime_to_string(dt):
     try:
         return dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -206,7 +223,9 @@ def _datetime_to_string(dt):
         debugbreak()
         return None
 
+
 KMD_ITEM_WHERE_FROMS = "com.apple.metadata:kMDItemWhereFroms"
+
 
 def _get_where_froms(file_path):
     """Get kMDItemWhereFroms from a file, returns an array of strings or None if no value is set.
@@ -216,7 +235,8 @@ def _get_where_froms(file_path):
         plist = buffer(getxattr(file_path, KMD_ITEM_WHERE_FROMS))
         if plist:
             try:
-                plist_array, plist_format, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(plist, 0, None, None)
+                plist_array, plist_format, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
+                    plist, 0, None, None)
                 if plist_error:
                     Logger.log_error(message='plist deserialization error: {0}'.format(plist_error))
                     return None
@@ -226,6 +246,7 @@ def _get_where_froms(file_path):
     except KeyError:
         pass  # ignore missing key in xattr
     return None
+
 
 def _get_file_info(file_path, log_where_froms=False):
     """Gather info about a file including hash and dates
@@ -298,7 +319,7 @@ def _normalize_val(val, key=None):
             return dict([(k, _normalize_val(val.get(k), k)) for k in val.keys()])
         elif isinstance(val, Foundation.NSDate):
             # NSDate could have special case handling
-             return repr(val)
+            return repr(val)
         elif not val:
             return ''
         else:
@@ -310,6 +331,7 @@ def _normalize_val(val, key=None):
 
         debugbreak()
         return repr(val)
+
 
 class DictUtils(object):
     """A set of method for manipulating dictionaries."""
@@ -374,10 +396,10 @@ class Logger(object):
     """
 
     output_file = sys.stdout
-    ## File to write standard output to
+    # File to write standard output to
 
     lines_written = 0
-    ## Counter of lines of standard output written
+    # Counter of lines of standard output written
 
     @classmethod
     def set_output_file(cls, output_file):
@@ -440,7 +462,7 @@ class Logger(object):
         """A context class for adding additional params to be logged with every line written by Logger"""
 
         extras = {}
-        ## Class level dict for storing extras
+        # Class level dict for storing extras
 
         def __init__(self, key, val):
             self.key = key
@@ -451,12 +473,12 @@ class Logger(object):
             Logger.Extra.extras[self.key] = self.val
 
             if DEBUG_MODE:
-                sys.stderr.write(dumps({self.key:self.val}))
+                sys.stderr.write(dumps({self.key: self.val}))
                 sys.stderr.write('\n')
-
 
         def __exit__(self, type, value, traceback):
             del Logger.Extra.extras[self.key]
+
 
 class Collector(object):
     """Examines plists, sqlite dbs, and hashes files to gather info useful for analyzing a malware infection"""
@@ -534,8 +556,10 @@ class Collector(object):
             return {}
 
         try:
-            plist_nsdata, error_message = Foundation.NSData.dataWithContentsOfFile_options_error_(plist_path, Foundation.NSUncachedRead, None)
-            plist_dictionary, plist_format, error_message = Foundation.NSPropertyListSerialization.propertyListFromData_mutabilityOption_format_errorDescription_(plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
+            plist_nsdata, error_message = Foundation.NSData.dataWithContentsOfFile_options_error_(
+                plist_path, Foundation.NSUncachedRead, None)
+            plist_dictionary, _, _ = Foundation.NSPropertyListSerialization.propertyListFromData_mutabilityOption_format_errorDescription_(
+                plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
             return _normalize_val(plist_dictionary)
         except Exception as read_plist_e:
             Logger.log_exception(read_plist_e, message='_read_plist failed on {0}'.format(plist_path))
@@ -605,11 +629,14 @@ class Collector(object):
             file_info = _get_file_info(pathjoin(ROOT_PATH, file_path))
             Logger.log_dict(file_info)
 
+    def _should_walk(self, sub_dir_path):
+        return any([sub_dir_path.endswith(extension) for extension in ['.app', '.kext', '.osax', 'Contents']])
+
     def _log_packages_in_dir(self, dir_path):
         """Log the packages in a directory"""
         plist_file = 'Info.plist'
 
-        walk = [(sub_dir_path, file_names) for sub_dir_path, _, file_names in os.walk(dir_path) if any([sub_dir_path.endswith(extension) for extension in ['.app', '.kext', '.osax', 'Contents']])]
+        walk = [(sub_dir_path, file_names) for sub_dir_path, _, file_names in os.walk(dir_path) if self._should_walk(sub_dir_path)]
         for sub_dir_path, file_names in walk:
             if plist_file in file_names:
                 if sub_dir_path.endswith('Contents'):
@@ -645,8 +672,7 @@ class Collector(object):
             plist = self._read_plist(plist_path)
 
             try:
-                self._log_items_in_plist(plist, 'Provides',
-                    transform=lambda x: _get_file_info(pathjoin(dir_path, entry, x)))
+                self._log_items_in_plist(plist, 'Provides', transform=lambda x: _get_file_info(pathjoin(dir_path, entry, x)))
             except Exception as log_startup_items_e:
                 Logger.log_exception(log_startup_items_e)
 
@@ -696,7 +722,7 @@ class Collector(object):
         They are visible in 'System Preferences'->'Users & Groups'->'Login Items'
 
         The name of the item is in 'SessionItems.CustomListItems.Name'
-        The application to launch is in 'SessionItems.CustomListItems.Alias' but this appears to be a binary structure which is hard to read.
+        The application to launch is in 'SessionItems.CustomListItems.Alias' but this binary structure is hard to read.
         """
 
         plist_path = pathjoin(homedir.path, 'Library/Preferences/com.apple.loginitems.plist')
@@ -800,8 +826,7 @@ class Collector(object):
                     Logger.log_dict(record)
 
             except Exception as per_table_e:
-                Logger.log_exception(per_table_e,
-                    message='failed _log_sqlite_table')
+                Logger.log_exception(per_table_e, message='failed _log_sqlite_table')
 
     def _log_sqlite_db(self, sqlite_db_path):
         """Dump a SQLite database file as JSON.
@@ -819,7 +844,7 @@ class Collector(object):
                 with connect(sqlite_db_path) as conn:
                     cursor = conn.cursor()
                     cursor.execute('SELECT * from sqlite_master WHERE type = "table"')
-                    tables =  cursor.fetchall()
+                    tables = cursor.fetchall()
                     table_names = [table[2] for table in tables]
 
                     for table_name in table_names:
@@ -829,13 +854,12 @@ class Collector(object):
                 if isinstance(connection_e, OperationalError) and -1 != connection_e.message.find('locked'):
                     Logger.log_error('!!LOCKED DB!! DID YOU FORGET TO CLOSE CHROME?')
 
-                Logger.log_exception(connection_e,
-                    message='failed _log_sqlite_db')
+                Logger.log_exception(connection_e, message='failed _log_sqlite_db')
 
     @_foreach_homedir
     def _collect_firefox(self, homedir):
         """Log the different SQLite databases in a Firefox profile"""
-        #Most useful See http://kb.mozillazine.org/Profile_folder_-_Firefox
+        # Most useful See http://kb.mozillazine.org/Profile_folder_-_Firefox
 
         all_profiles_path = pathjoin(homedir.path, 'Library/Application Support/Firefox/Profiles')
         if not os.path.isdir(all_profiles_path):
@@ -978,7 +1002,9 @@ class Collector(object):
             user_details['home'] = [val for val in sys_user_plist.get('home', [])]
             user_details['uid'] = [val for val in sys_user_plist.get('uid', [])]
             user_details['gid'] = [val for val in sys_user_plist.get('gid', [])]
-            user_details['generateduid'] = [{'name': val, 'is_admin': (val in self.admins)} for val in sys_user_plist.get('generateduid', [])]
+            user_details['generateduid'] = []
+            for val in sys_user_plist.get('generateduid', []):
+                user_details['generateduid'].append({'name': val, 'is_admin': (val in self.admins)})
 
             Logger.log_dict(user_details)
 
@@ -1040,6 +1066,7 @@ class Collector(object):
         for mail_path in mail_paths:
             self._log_file_info_for_directory(pathjoin(homedir.path, mail_path))
 
+
 class LogFileArchiver(object):
 
     def archive_logs(self, target_dir_path):
@@ -1073,6 +1100,7 @@ class LogFileArchiver(object):
             debugbreak()
             Logger.log_exception(compress_directory_e)
 
+
 def main():
 
     global DEBUG_MODE
@@ -1082,11 +1110,16 @@ def main():
     egid = os.getegid()
 
     parser = OptionParser(usage='usage: %prog [options]', version='%prog ' + __version__)
-    parser.add_option('-i', '--id', dest='incident_prefix', default='osxcollect', help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
-    parser.add_option('-o', '--outputfile', dest='output_file_name', default=None, help='[OPTIONAL] Name of the output file. Default name uses the timestamp. Try \'/dev/stdout\' for fun!')
-    parser.add_option('-p', '--path', dest='rootpath', default='/', help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited if not specified.')
-    parser.add_option('-s', '--section', dest='section_list', default=[], action='append', help='[OPTIONAL] Just run the named section.  May be specified more than once.')
-    parser.add_option('-d', '--debug', action='store_true', default=False, help='[OPTIONAL] Enable verbose output and python breakpoints.')
+    parser.add_option('-i', '--id', dest='incident_prefix', default='osxcollect',
+                      help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
+    parser.add_option('-o', '--outputfile', dest='output_file_name', default=None,
+                      help='[OPTIONAL] Name of the output file. Default name uses the timestamp. Try \'/dev/stdout\' for fun!')
+    parser.add_option('-p', '--path', dest='rootpath', default='/',
+                      help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited by default.')
+    parser.add_option('-s', '--section', dest='section_list', default=[], action='append',
+                      help='[OPTIONAL] Just run the named section.  May be specified more than once.')
+    parser.add_option('-d', '--debug', action='store_true', default=False,
+                      help='[OPTIONAL] Enable verbose output and python breakpoints.')
     options, _ = parser.parse_args()
 
     DEBUG_MODE = options.debug

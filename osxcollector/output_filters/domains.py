@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import re
 import simplejson
-import sys
+
 from urlparse import urlsplit
 from urllib import unquote_plus
 

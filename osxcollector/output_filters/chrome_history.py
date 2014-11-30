@@ -5,6 +5,7 @@ import simplejson
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
 
+
 class ChromeHistoryFilter(OutputFilter):
     """Joins Chrome browser history 'visits' and 'urls' tables, producing a time sorted browser history.
 
@@ -30,16 +31,16 @@ class ChromeHistoryFilter(OutputFilter):
             table = blob.get('osxcollector_table_name')
 
             if 'visits' == table:
-                if self._validate_visit(blob):                          
+                if self._validate_visit(blob):
                     self._visits_table[blob['id']] = blob
-                    line = None # Consume the line
+                    line = None  # Consume the line
             elif 'urls' == table:
                 if self._validate_urls(blob):
                     self._urls_table[blob['id']] = blob
-                    line = None # Consume the line
+                    line = None  # Consume the line
 
         return line
-        
+
     def end_of_lines(self):
         """Join the 'visits' and 'urls' tables into a single browser history and timeline."""
         history = list()
@@ -65,7 +66,7 @@ class ChromeHistoryFilter(OutputFilter):
                         record[key] = url[key]
 
                 history.append(record)
-        
+
         return ['{0}\n'.format(simplejson.dumps(blob)) for blob in sorted(history, key=lambda x: x['last_visit_time'], reverse=True)]
 
     @classmethod
@@ -88,14 +89,14 @@ class ChromeHistoryFilter(OutputFilter):
             blob: a url dict
         Returns:
             boolean
-        """        
+        """
         required_fields = ['id', 'url', 'title', 'last_visit_time']
         return all([field in blob for field in required_fields])
 
     class PAGE_TRANSITION:
         """Constants that detail page transitions in the Chrome 'visits' table.
 
-        These constants comes from: 
+        These constants comes from:
         <http://src.chromium.org/svn/trunk/src/content/public/common/page_transition_types_list.h>_
         """
         # User got to this page by clicking a link on another page.
@@ -175,7 +176,7 @@ class ChromeHistoryFilter(OutputFilter):
         def get_core_transition(cls, value):
             """Translates a numeric page transition into a human readable description.
 
-            Args: 
+            Args:
                 value: A numeric value represented as a Number or String
 
             Returns:
@@ -205,7 +206,7 @@ class ChromeHistoryFilter(OutputFilter):
                 return 'keyword'
             elif cls.CORE_KEYWORD_GENERATED == value:
                 return 'generated'
-            return 'UNKNOWN'        
+            return 'UNKNOWN'
 
         # A managed user attempted to visit a URL but was blocked.
         QUALIFIER_BLOCKED = 0x00800000
@@ -272,5 +273,5 @@ def main():
     run_filter(ChromeHistoryFilter())
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()

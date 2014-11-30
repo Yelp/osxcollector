@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import re
 import simplejson
-import sys
 
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.output_filter import MissingConfigError
@@ -60,33 +59,30 @@ class BlacklistFilter(OutputFilter):
             return line
 
         for config_chunk in self._blacklist_config:
-            _look_for_blacklist_match(blob, config_chunk)
+            for key in config_chunk['blacklist_keys']:
+                values = DictUtils.get_deep(blob, key)
+                if not values:
+                    continue
+                if not isinstance(values, list):
+                    values = [values]
 
-    def _look_for_blacklist_match(self, blob, config_chunk):
-        for key in config_chunk['blacklist_keys']:
-            values = DictUtils.get_deep(blob, key)
-            if not values:
-                continue
-            if not isinstance(values, list):
-                values = [values]
+                found_match = False
+                for val in values:
+                    if found_match:
+                        break
 
-            found_match = False
-            for val in values:
+                    if config_chunk['blacklist_is_regex']:
+                        if any([regex_to_match.match(val) for regex_to_match in config_chunk['blacklist_values']]):
+                            found_match = True
+                    else:
+                        if any([val_to_match == val for val_to_match in config_chunk['blacklist_values']]):
+                            found_match = True
+
                 if found_match:
+                    blob.setdefault('osxcollector_blacklist', [])
+                    blob['osxcollector_blacklist'].append(config_chunk['blacklist_name'])
+                    line = '{0}\n'.format(simplejson.dumps(blob))
                     break
-
-                if config_chunk['blacklist_is_regex']:
-                    if any([regex_to_match.match(val) for regex_to_match in config_chunk['blacklist_values']]):
-                        found_match = True
-                else:
-                    if any([val_to_match == val for val_to_match in config_chunk['blacklist_values']]):
-                        found_match = True
-
-            if found_match:
-                blob.setdefault('osxcollector_blacklist', [])
-                blob['osxcollector_blacklist'].append(config_chunk['blacklist_name'])
-                line = '{0}\n'.format(simplejson.dumps(blob))
-                break
 
         return line
 

@@ -1,14 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import sys
-import simplejson
-import urlparse
 from time import sleep
 
 from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.output_filter import run_filter
 
-from virus_total_apis import PublicApi 
+from virus_total_apis import PublicApi
 
 
 class VTHashesFilter(ThreatFeedFilter):
@@ -26,9 +23,10 @@ class VTHashesFilter(ThreatFeedFilter):
             self._threat_info_by_iocs[ioc] = report
             sleep(15)
 
+
 def main():
     run_filter(VTHashesFilter())
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()

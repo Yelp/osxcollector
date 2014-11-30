@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import simplejson
 
 from osxcollector.output_filters.output_filter import OutputFilter
@@ -54,7 +53,7 @@ class ThreatFeedFilter(OutputFilter):
         try:
             blob = simplejson.loads(line)
         except:
-            return line      
+            return line
 
         if self._ioc_key in blob:
             ioc_list = blob[self._ioc_key]
@@ -77,9 +76,6 @@ class ThreatFeedFilter(OutputFilter):
         self._lookup_iocs()
         self._add_threat_info_to_blobs()
         return ['{0}\n'.format(simplejson.dumps(blob)) for blob in self._blobs_with_iocs]
-
-
-
 
     def _add_threat_info_to_blobs(self):
         """Adds threat info to blobs"""

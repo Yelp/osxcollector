@@ -1,0 +1,6 @@
+investigate==1.0.0
+pre-commit==0.3.2
+pyflakes==0.8.1
+simplejson==3.6.5
+testify==0.5.3
+virustotal-api==1.0.5

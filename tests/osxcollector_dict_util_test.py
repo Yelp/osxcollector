@@ -3,6 +3,7 @@ import testify as T
 
 from osxcollector import osxcollector
 
+
 class DateUtilsTestCase(T.TestCase):
 
     def test_link_path_to_chain(self):
@@ -34,9 +35,9 @@ class DateUtilsTestCase(T.TestCase):
     def test_get_deep_by_chain(self):
         d = {
             'Session': {
-                'Items': 'test-items', 
+                'Items': 'test-items',
                 'Account': ['account1', 'account2']
-            }, 
+            },
             23: 'twenty-three'
         }
 
@@ -55,9 +56,9 @@ class DateUtilsTestCase(T.TestCase):
     def test_get_deep(self):
         d = {
             'SessionItems': {
-                'CustomListItems': 'list items', 
+                'CustomListItems': 'list items',
                 'Default': 'default list item'
-            }, 
+            },
             'SessionId': 140
         }
 
@@ -80,6 +81,3 @@ class DateUtilsTestCase(T.TestCase):
         # test correct path
         value = osxcollector.DictUtils.get_deep(d, 'SessionItems.CustomListItems', 'no items')
         T.assert_equal('list items', value)
-
-if __name__ == '__main__':
-    T.run()

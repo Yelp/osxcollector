@@ -7,6 +7,7 @@ from osxcollector.osxcollector import Collector
 from osxcollector.osxcollector import HomeDir
 from osxcollector.osxcollector import Logger
 
+
 class CollectorTestCase(T.TestCase):
 
     @T.setup_teardown
