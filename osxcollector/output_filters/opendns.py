@@ -5,12 +5,11 @@ import simplejson
 import investigate
 import urlparse
 
-from osxcollector.output_filters.output_filter import OutputFilter
-from osxcollector.output_filters.output_filter import MissingConfigError
+from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.output_filter import run_filter
 
 
-class OpenDNSFilter(OutputFilter):
+class OpenDNSFilter(ThreatFeedFilter):
     """A class to find suspicious domains using OpenDNS Investigate API."""
 
     # Domain categories to consider suspicious
@@ -26,66 +25,19 @@ class OpenDNSFilter(OutputFilter):
         ]
 
     def __init__(self):
-        super(OpenDNSFilter, self).__init__()
+        super(OpenDNSFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns')
 
-        self._api_key = self.get_config('api_key')
-        self._blobs_with_domains = list()
-        self._all_domains = set()
-        self._threat_info_by_domain = dict()
-
-    def filter_line(self, line):
-        """Accumulate domains to categorize and lines to add categorized data to.
-
-        Args:
-            line: A string line of output
-
-        Returns:
-            A string or None
-        """
-        try:
-            blob = simplejson.loads(line)
-        except:
-            return line      
-
-        if 'osxcollector_domains' in blob:
-            for domain in blob['osxcollector_domains']:
-                self._all_domains.add(domain)
-            self._blobs_with_domains.append(blob)
-            return None
-        else:
-            return line
-
-    def end_of_lines(self):
-        """Caches the OpenDNS info for a set of domains
-
-        Returns:
-            An array of strings
-        """
-        self._lookup_domains()
-        self._add_opendns_info_to_blobs()
-        return ['{0}\n'.format(simplejson.dumps(blob)) for blob in self._blobs_with_domains]
-
-
-    def _lookup_domains(self):
+    def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
         opendns = investigate.Investigate(self._api_key)
-        categorized = opendns.categorization(list(self._all_domains), labels=True)
+        categorized = opendns.categorization(list(self._all_iocs), labels=True)
 
         for domain in categorized.keys():
             if self._is_suspicious(categorized[domain]):
-                self._threat_info_by_domain[domain] = {
+                self._threat_info_by_iocs[domain] = {
                     'categorization': categorized[domain],
                     'security': opendns.security(domain)
                 }
-
-    def _add_opendns_info_to_blobs(self):
-        """Adds osxcollector_opendns key to blobs"""
-        for blob in self._blobs_with_domains:
-            for domain in blob['osxcollector_domains']:
-                opendns_info = self._threat_info_by_domain.get(domain)
-                if opendns_info:
-                    blob.setdefault('osxcollector_opendns', [])
-                    blob['osxcollector_opendns'].append(opendns_info)
 
     @classmethod
     def _is_suspicious(cls, opendns_info):

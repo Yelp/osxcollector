@@ -6,7 +6,12 @@ from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
 
 class ChromeHistoryFilter(OutputFilter):
-    """Joins Chrome browser history 'visits' and 'urls' tables, producing a time sorted browser history."""
+    """Joins Chrome browser history 'visits' and 'urls' tables, producing a time sorted browser history.
+
+    In the output look for lines where:
+    ('osxcollector_section' == 'chrome' and 'osxcollector_subsection' == 'history' and 'osxcollector_table_name' == 'visits')
+    for some snazzy browser history stuff.
+    """
 
     def __init__(self):
         super(ChromeHistoryFilter, self).__init__()
