@@ -28,11 +28,7 @@ class OpenDNSFilter(OutputFilter):
     def __init__(self):
         super(OpenDNSFilter, self).__init__()
 
-        try:
-            self.api_key = self.config['api_key']
-        except:
-            raise MissingConfigError('OpenDNSFilter requires an api_key')
-
+        self._api_key = self.get_config('api_key')
         self._blobs_with_domains = list()
         self._all_domains = set()
         self._threat_info_by_domain = dict()
@@ -72,7 +68,7 @@ class OpenDNSFilter(OutputFilter):
 
     def _lookup_domains(self):
         """Caches the OpenDNS info for a set of domains"""
-        opendns = investigate.Investigate(self.api_key)
+        opendns = investigate.Investigate(self._api_key)
         categorized = opendns.categorization(list(self._all_domains), labels=True)
 
         for domain in categorized.keys():

@@ -18,7 +18,7 @@ class OutputFilter(object):
         The config for each filter is it's own top level key in the YAML file.
         The name of the toplevel key is the name of the filter class.
         """
-        self.config = None
+        self._config = None
 
         full_config = None
         for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF'):
@@ -30,8 +30,14 @@ class OutputFilter(object):
                 pass
 
         if full_config:
-            section = self.__class__.__name__
-            self.config = full_config.get(section)
+            self._config_section = self.__class__.__name__
+            self._config = full_config.get(self._config_section)
+
+    def get_config(self, key):
+        try:
+            return self._config[key]
+        except:
+            raise MissingConfigError('Missing value[{0}] from config section[{1}]'.format(key, self._config_section))
 
     def filter_line(self, line):
         """Each line of output will be passed to filter_line.
