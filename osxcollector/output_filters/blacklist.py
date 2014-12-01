@@ -10,11 +10,13 @@ from osxcollector.output_filters.output_filter import run_filter
 
 
 class BlacklistFilter(OutputFilter):
+
     """Adds 'osxcollector_blacklist' key to lines matching a blacklist.
 
     This filters compares each line of input to a set of blacklists and marks lines
     that match the blacklist. This is useful for filtering known hashes, known bad kext, bad domains, etc.
     """
+
     def __init__(self):
         super(BlacklistFilter, self).__init__()
         self._blacklist_config = self._init_config()

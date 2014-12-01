@@ -7,6 +7,7 @@ from osxcollector.output_filters.output_filter import run_filter
 
 
 class OpenDNSFilter(ThreatFeedFilter):
+
     """A class to find suspicious domains using OpenDNS Investigate API."""
 
     # Domain categories to consider suspicious
@@ -19,7 +20,7 @@ class OpenDNSFilter(ThreatFeedFilter):
         'High Risk Sites and Locations',
         'Malware',
         'Phishing'
-        ]
+    ]
 
     def __init__(self):
         super(OpenDNSFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns')

@@ -7,6 +7,7 @@ from osxcollector.output_filters.output_filter import run_filter
 
 
 class ChromeHistoryFilter(OutputFilter):
+
     """Joins Chrome browser history 'visits' and 'urls' tables, producing a time sorted browser history.
 
     In the output look for lines where:
@@ -49,10 +50,10 @@ class ChromeHistoryFilter(OutputFilter):
             url = self._urls_table.get(visit.get('url'))
             if url:
                 record = {
-                    'url':             url['url'].encode('utf-8'),
-                    'title':           url['title'].encode('utf-8'),
+                    'url': url['url'].encode('utf-8'),
+                    'title': url['title'].encode('utf-8'),
                     'last_visit_time': url['last_visit_time'],
-                    'visit_time':      visit['visit_time'],
+                    'visit_time': visit['visit_time'],
                     'core_transition': self.PAGE_TRANSITION.get_core_transition(visit['transition']),
                     'page_transition': self.PAGE_TRANSITION.get_qualifier_transitions(visit['transition'])
                 }
@@ -94,6 +95,7 @@ class ChromeHistoryFilter(OutputFilter):
         return all([field in blob for field in required_fields])
 
     class PAGE_TRANSITION:
+
         """Constants that detail page transitions in the Chrome 'visits' table.
 
         These constants comes from:
@@ -214,19 +216,19 @@ class ChromeHistoryFilter(OutputFilter):
         # User used the Forward or Back button to navigate among browsing history.
         QUALIFIER_FORWARD_BACK = 0x01000000
 
-        # # User used the address bar to trigger this navigation.
+        # User used the address bar to trigger this navigation.
         QUALIFIER_FROM_ADDRESS_BAR = 0x02000000
 
-        # # User is navigating to the home page.
+        # User is navigating to the home page.
         QUALIFIER_HOME_PAGE = 0x04000000
 
-        # # The beginning of a navigation chain.
+        # The beginning of a navigation chain.
         QUALIFIER_CHAIN_START = 0x10000000
 
-        # # The last transition in a redirect chain.
+        # The last transition in a redirect chain.
         QUALIFIER_CHAIN_END = 0x20000000
 
-        # # Redirects caused by JavaScript or a meta refresh tag on the page.
+        # Redirects caused by JavaScript or a meta refresh tag on the page.
         QUALIFIER_CLIENT_REDIRECT = 0x40000000
 
         # Redirects sent from the server by HTTP headers. It might be nice to

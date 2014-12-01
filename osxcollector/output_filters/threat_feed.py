@@ -5,6 +5,7 @@ from osxcollector.output_filters.output_filter import OutputFilter
 
 
 class ThreatFeedFilter(OutputFilter):
+
     """A base class to find suspicious IOC using some random API.
 
     Derrived classes need only to implement _lookup_iocs()

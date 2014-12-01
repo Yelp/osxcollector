@@ -121,6 +121,7 @@ class MicrosecondsSince1601ToDatetimeTestCase(T.TestCase):
 
 
 class ValueToDatetimeTestCase(T.TestCase):
+
     """Tests whether the _value_to_datetime function works correctly for all of the different
     date formats. That way we should know that the heuristic regarding the order
     of the convertion calls for the specific date format inside this function works fine.
@@ -148,6 +149,7 @@ class ValueToDatetimeTestCase(T.TestCase):
 
 
 class NormalizeValueTestCase(T.TestCase):
+
     """Tests _normalize_val function."""
 
     def test_normalize_basestring(self):

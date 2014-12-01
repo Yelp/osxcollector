@@ -5,6 +5,7 @@ import yaml
 
 
 class OutputFilter(object):
+
     """An OutputFilter transforms the output from OSXCollector."""
 
     def __init__(self):
@@ -65,6 +66,7 @@ class OutputFilter(object):
 
 
 class MissingConfigError(Exception):
+
     """An error to throw when configuration is missing"""
     pass
 

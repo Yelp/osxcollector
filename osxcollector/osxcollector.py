@@ -132,7 +132,7 @@ def _hash_file(file_path):
 
     try:
         with open(file_path, 'rb') as f:
-            for chunk in iter(partial(f.read, 1024*1024), ''):
+            for chunk in iter(partial(f.read, 1024 * 1024), ''):
                 for hasher in hashers:
                     hasher.update(chunk)
 
@@ -263,12 +263,12 @@ def _get_file_info(file_path, log_where_froms=False):
         ctime = _datetime_to_string(datetime.fromtimestamp(os.path.getctime(file_path)))
         md5_hash, sha1_hash, sha2_hash = _hash_file(file_path)
         file_info = {
-            'md5':       md5_hash,
-            'sha1':      sha1_hash,
-            'sha2':      sha2_hash,
+            'md5': md5_hash,
+            'sha1': sha1_hash,
+            'sha2': sha2_hash,
             'file_path': file_path,
-            'mtime':     mtime,
-            'ctime':     ctime
+            'mtime': mtime,
+            'ctime': ctime
         }
         if log_where_froms:
             file_info['where_froms'] = _get_where_froms(file_path)
@@ -334,6 +334,7 @@ def _normalize_val(val, key=None):
 
 
 class DictUtils(object):
+
     """A set of method for manipulating dictionaries."""
 
     @classmethod
@@ -385,6 +386,7 @@ class DictUtils(object):
 
 
 class Logger(object):
+
     """Logging class writes JSON to stdout and stderr
 
     Additionally, the Logger allows for "extra" key/value pairs to be set.  These will then
@@ -459,6 +461,7 @@ class Logger(object):
         cls.log_error(to_print)
 
     class Extra(object):
+
         """A context class for adding additional params to be logged with every line written by Logger"""
 
         extras = {}
@@ -481,6 +484,7 @@ class Logger(object):
 
 
 class Collector(object):
+
     """Examines plists, sqlite dbs, and hashes files to gather info useful for analyzing a malware infection"""
 
     def __init__(self):
@@ -501,18 +505,18 @@ class Collector(object):
         """
 
         sections = [
-            ('version',         self._version_string),
-            ('system_info',     self._collect_system_info),
-            ('kext',            self._collect_kext),
-            ('startup',         self._collect_startup),
-            ('applications',    self._collect_applications),
-            ('quarantines',     self._collect_quarantines),
-            ('downloads',       self._collect_downloads),
-            ('chrome',          self._collect_chrome),
-            ('firefox',         self._collect_firefox),
-            ('safari',          self._collect_safari),
-            ('accounts',        self._collect_accounts),
-            ('mail',            self._collect_mail),
+            ('version', self._version_string),
+            ('system_info', self._collect_system_info),
+            ('kext', self._collect_kext),
+            ('startup', self._collect_startup),
+            ('applications', self._collect_applications),
+            ('quarantines', self._collect_quarantines),
+            ('downloads', self._collect_downloads),
+            ('chrome', self._collect_chrome),
+            ('firefox', self._collect_firefox),
+            ('safari', self._collect_safari),
+            ('accounts', self._collect_accounts),
+            ('mail', self._collect_mail),
         ]
 
         for section_name, collection_method in sections:
@@ -532,6 +536,7 @@ class Collector(object):
 
         As a side-effect, this adds the 'osxcollector_username' key to Logger output.
         """
+
         def wrapper(self, *args, **kwargs):
             for homedir in self.homedirs:
                 with Logger.Extra('osxcollector_username', homedir.user_name):
@@ -792,8 +797,8 @@ class Collector(object):
         """Hash all users's downloaded files"""
 
         directories_to_hash = [
-            ('downloads',           'Downloads'),
-            ('email_downloads',     'Library/Mail Downloads'),
+            ('downloads', 'Downloads'),
+            ('email_downloads', 'Library/Mail Downloads'),
             ('old_email_downloads', 'Library/Containers/com.apple.mail/Data/Library/Mail Downloads')
         ]
 
@@ -870,14 +875,14 @@ class Collector(object):
             profile_path = pathjoin(all_profiles_path, profile_name)
 
             sqlite_dbs = [
-                ('cookies',       'cookies.sqlite'),
-                ('downloads',     'downloads.sqlite'),
-                ('formhistory',   'formhistory.sqlite'),
-                ('history',       'places.sqlite'),
-                ('signons',       'signons.sqlite'),
-                ('permissions',   'permissions.sqlite'),
-                ('addons',        'addons.sqlite'),
-                ('extension',     'extensions.sqlite'),
+                ('cookies', 'cookies.sqlite'),
+                ('downloads', 'downloads.sqlite'),
+                ('formhistory', 'formhistory.sqlite'),
+                ('history', 'places.sqlite'),
+                ('signons', 'signons.sqlite'),
+                ('permissions', 'permissions.sqlite'),
+                ('addons', 'addons.sqlite'),
+                ('extension', 'extensions.sqlite'),
                 ('content_prefs', 'content-prefs.sqlite'),
                 ('health_report', 'healthreport.sqlite'),
                 ('webapps_store', 'webappsstore.sqlite'),
@@ -897,8 +902,8 @@ class Collector(object):
             return
 
         plists = [
-            ('downloads',    'Downloads.plist', 'DownloadHistory'),
-            ('history',      'History.plist',   'WebHistoryDates'),
+            ('downloads', 'Downloads.plist', 'DownloadHistory'),
+            ('history', 'History.plist', 'WebHistoryDates'),
         ]
 
         for subsection_name, plist_name, key_to_log in plists:
@@ -908,7 +913,7 @@ class Collector(object):
                 self._log_items_in_plist(plist, key_to_log)
 
         directories_of_dbs = [
-            ('databases',    'Databases'),
+            ('databases', 'Databases'),
             ('localstorage', 'LocalStorage')
         ]
         for subsection_name, dir_name in directories_of_dbs:
@@ -927,19 +932,19 @@ class Collector(object):
             return
 
         sqlite_dbs = [
-            ('history',          'History'),
+            ('history', 'History'),
             ('archived_history', 'Archived History'),
-            ('cookies',          'Cookies'),
-            ('login_data',       'Login Data'),
-            ('top_sites',        'Top Sites'),
-            ('web_data',         'Web Data')
+            ('cookies', 'Cookies'),
+            ('login_data', 'Login Data'),
+            ('top_sites', 'Top Sites'),
+            ('web_data', 'Web Data')
         ]
         for subsection_name, db_name in sqlite_dbs:
             with Logger.Extra('osxcollector_subsection', subsection_name):
                 self._log_sqlite_db(pathjoin(chrome_path, db_name))
 
         directories_of_dbs = [
-            ('databases',     'databases'),
+            ('databases', 'databases'),
             ('local_storage', 'Local Storage')
         ]
         for subsection_name, dir_name in directories_of_dbs:
@@ -964,10 +969,10 @@ class Collector(object):
     def _collect_accounts(self):
         """Log users's accounts"""
         accounts = [
-            ('system_admins',   self._collect_accounts_system_admins),
-            ('system_users',    self._collect_accounts_system_users),
+            ('system_admins', self._collect_accounts_system_admins),
+            ('system_users', self._collect_accounts_system_users),
             ('social_accounts', self._collect_accounts_social_accounts),
-            ('recent_items',    self._collect_accounts_recent_items)
+            ('recent_items', self._collect_accounts_recent_items)
         ]
         for subsection_name, collector in accounts:
             with Logger.Extra('osxcollector_subsection', subsection_name):
@@ -1022,10 +1027,10 @@ class Collector(object):
         recents_plist = self._read_plist(recent_items_account_plist_path)
 
         recents = [
-            ('server',      'RecentServers'),
-            ('document',    'RecentDocuments'),
+            ('server', 'RecentServers'),
+            ('document', 'RecentDocuments'),
             ('application', 'RecentApplications'),
-            ('host',        'Hosts')
+            ('host', 'Hosts')
         ]
 
         for recent_type, recent_key in recents:

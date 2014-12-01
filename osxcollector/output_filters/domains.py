@@ -11,12 +11,14 @@ from osxcollector.output_filters.output_filter import run_filter
 
 
 class DomainsFilter(OutputFilter):
+
     """Adds 'osxcollector_domains' key to output lines.
 
     This filters parses domains out of anywhere in an output line and adds them to a clean array in the line.
     This is helpful as a pre-processing step before sending the domains off to threat APIs or matching against
     threat feeds.
     """
+
     def __init__(self):
         super(DomainsFilter, self).__init__()
 

@@ -9,6 +9,7 @@ from virus_total_apis import PublicApi
 
 
 class VTHashesFilter(ThreatFeedFilter):
+
     """A class to find suspicious hashes using VirusTotal API."""
 
     def __init__(self):

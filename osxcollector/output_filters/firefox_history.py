@@ -8,6 +8,7 @@ from osxcollector.output_filters.output_filter import run_filter
 
 
 class FirefoxHistoryFilter(OutputFilter):
+
     """Joins Firefox browser history 'visits' and 'urls' tables, producing a time sorted browser history.
 
     In the output look for lines where:
