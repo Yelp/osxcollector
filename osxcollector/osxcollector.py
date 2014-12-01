@@ -137,7 +137,7 @@ def _hash_file(file_path):
                     hasher.update(chunk)
 
             return [hasher.hexdigest() for hasher in hashers]
-    except:
+    except Exception:
         debugbreak()
         return ['', '', '']
 
@@ -160,7 +160,7 @@ def _timestamp_errorhandling(func):
             if dt.year < MIN_YEAR or dt > tomorrow:
                 return None
             return dt
-        except:
+        except Exception:
             return None
 
     return wrapper
@@ -209,7 +209,7 @@ def _value_to_datetime(val):
     if (isinstance(val, basestring)):
         try:
             val = float(val)
-        except:
+        except Exception:
             return None
 
     return (_microseconds_since_epoch_to_datetime(val) or _microseconds_since_1601_to_datetime(val) or
@@ -219,7 +219,7 @@ def _value_to_datetime(val):
 def _datetime_to_string(dt):
     try:
         return dt.strftime('%Y-%m-%d %H:%M:%S')
-    except:
+    except Exception:
         debugbreak()
         return None
 
@@ -307,7 +307,7 @@ def _normalize_val(val, key=None):
             # Not all buffers will contain text so this is expected to fail
             try:
                 return unicode(val).decode(encoding='utf-16le', errors='ignore')
-            except:
+            except Exception:
                 return repr(val)
         elif isinstance(val, Number):
             return val

@@ -53,7 +53,7 @@ class ThreatFeedFilter(OutputFilter):
         """
         try:
             blob = simplejson.loads(line)
-        except:
+        except Exception:
             return line
 
         if self._ioc_key in blob:

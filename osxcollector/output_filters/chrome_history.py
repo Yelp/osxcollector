@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import simplejson
 
@@ -25,7 +25,7 @@ class ChromeHistoryFilter(OutputFilter):
         """Cache the 'visits' and 'urls' tables."""
         try:
             blob = simplejson.loads(line)
-        except:
+        except Exception:
             return line
 
         if 'chrome' == blob.get('osxcollector_section') and 'history' == blob.get('osxcollector_subsection'):

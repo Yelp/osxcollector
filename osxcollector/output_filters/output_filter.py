@@ -37,7 +37,7 @@ class OutputFilter(object):
     def get_config(self, key):
         try:
             return self._config[key]
-        except:
+        except Exception:
             raise MissingConfigError('Missing value[{0}] from config section[{1}]'.format(key, self._config_section))
 
     def filter_line(self, line):

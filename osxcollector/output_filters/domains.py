@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
 import simplejson
@@ -29,7 +29,7 @@ class DomainsFilter(OutputFilter):
         try:
             blob = simplejson.loads(line)
             self._domains = set()
-        except:
+        except Exception:
             return line
 
         self._look_for_domains(blob)
@@ -71,7 +71,7 @@ class DomainsFilter(OutputFilter):
         """
         try:
             url = unquote_plus(val).decode(encoding='utf-8', errors='ignore')
-        except:
+        except Exception:
             # In the case that a substring can't be unquoted, the potential domain is lost
             return
 

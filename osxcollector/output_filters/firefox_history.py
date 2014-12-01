@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import copy
 import simplejson
@@ -26,7 +26,7 @@ class FirefoxHistoryFilter(OutputFilter):
         """Cache the 'visits' and 'urls' tables."""
         try:
             blob = simplejson.loads(line)
-        except:
+        except Exception:
             return line
 
         if 'firefox' == blob.get('osxcollector_section') and 'history' == blob.get('osxcollector_subsection'):

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
 import simplejson
@@ -57,7 +57,7 @@ class BlacklistFilter(OutputFilter):
         """Find blacklisted values in a line."""
         try:
             blob = simplejson.loads(line)
-        except:
+        except Exception:
             return line
 
         for config_chunk in self._blacklist_config:
