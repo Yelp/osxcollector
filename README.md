@@ -334,6 +334,71 @@ $ cat INCIDENT32.json | jq 'select(.osxcollector_username=="ivanlei")|.'
 
 We're huge fans of ElasticSearch/Logstash/Kibana. They create an awesome pipeline for searching visualizing, and correlating JSON.
 
+## Automated Analysis With Output Filters
+
+The `osxcollector.output_filters` package contains filters the process and transform the output of OSXCollector. The goal of filters is to make it easier to understand output.
+
+Each filter has a single purpose. They do one thing and they do it right.
+
+### Running Filters
+Unlike `osxcollector.py` filters have dependencies that aren't already installed on a new Mac. The best solution for ensure dependencies can be found is to use virtualenv.
+
+To setup a virtualenv for the first time use:
+```
+$ sudo pip install virtualenv
+$ virtualenv --system-site-packages venv_osxcollector
+$ source ./venv_osxcollector/bin/activate
+$ sudo pip install -r ./requirements-dev.txt
+```
+
+### Filter Configuration
+Many filters require configuration, like API keys or details on a blacklist. The configuration for filters is done in a YAML file. The file is named `osxcollector.yaml`. The filter will look for the config file in:
+- The current directory.
+- The user's home directory
+- The path pointed to by the environment variable OSXCOLLECTOR_CONF
+
+### DomainsFilter
+`osxcollector.output_filters.domains` attempts to find domain names in a line. Any domains that are found are added to the line with the key `osxcollector_domains`. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | jq 'select(has("osxcollector_domains"))'
+```
+
+### ChromeHistoryFilter
+`osxcollector.output_filters.chome_history` builds a really nice Chrome browser history sorted in descending time order. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
+```
+
+### FirefoxHistoryFilter
+`osxcollector.output_filters.firefox_history` builds a really nice Firefox browser history sorted in descending time order. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.firefox_history | jq 'select(.osxcollector_section=="firefox" and .osxcollector_subsection=="history" and .osxcollector_table_name =="moz_places")'
+```
+
+### OpenDNSFilter
+`osxcollector.output_filters.opendns` lookups domains with OpenDNS. Domains associated with suspicious categories are futher enhanced with additional OpenDNS data. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | python -m osxcollector.output_filters.opendns | jq 'select(has("osxcollector_opendns"))'
+```
+
+### VTHashesFilter
+`osxcollector.output_filters.virustotal_hashes` lookups md5 hashes with VirusTotal. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.virustotal_hashes | jq 'select(has("osxcollector_vt_hashes"))'
+```
+
+### BlacklistFilter
+`osxcollector.output_filters.blacklist` reads a set of blacklists from the `osxcollector.yaml` and marks any lines with values on the blacklist. The BlacklistFilter allows for multiple blacklists to be compared against at once. Each blacklists requires:
+ - blacklist_name, A name
+ - blacklist_keys, JSON paths. These can be of the form "a.b" to look at "b" in {"a": {"b": "foo"}}
+ - value_file, the path to a file containing values considered blacklisted. Any line starting with # is skipped
+ - blacklist_is_regex, should values in the file be treated as Python regex
+
+Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.blacklist | jq 'select(has("osxcollector_blacklist"))'
+```
+
 ## OSXCollector Development
 
 We encourage you to extend the functionality of OSXCollector to suit your needs.

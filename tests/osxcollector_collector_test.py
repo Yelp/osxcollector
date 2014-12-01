@@ -7,6 +7,7 @@ from osxcollector.osxcollector import Collector
 from osxcollector.osxcollector import HomeDir
 from osxcollector.osxcollector import Logger
 
+
 class CollectorTestCase(T.TestCase):
 
     @T.setup_teardown
@@ -27,17 +28,17 @@ class CollectorTestCase(T.TestCase):
             yield
 
     def test_log_items_in_plist(self):
-            plist = {
-                'system': {
-                    'name': ['os x']
-                },
-                'version': {
-                    'minor': '3'
-                }
+        plist = {
+            'system': {
+                'name': ['os x']
+            },
+            'version': {
+                'minor': '3'
             }
+        }
 
-            self.collector._log_items_in_plist(plist, 'system.name')
-            self.mock_log_dict.assert_called_with('os x')
+        self.collector._log_items_in_plist(plist, 'system.name')
+        self.mock_log_dict.assert_called_with('os x')
 
     def _really_expected_file_info(self, expected):
         really_expected = {}
@@ -151,18 +152,18 @@ class CollectorTestCase(T.TestCase):
             }
         }
         recents = [
-            {'server_name':         'presidio'},
-            {'server_name':         'marina'},
-            {'server_name':         'sunset'},
-            {'document_name':       'russian_hill.jpg'},
-            {'document_name':       'nob_hill.jpg'},
-            {'document_name':       'rincon_hill.jpg'},
-            {'application_name':    'Golden Gate Park'},
-            {'application_name':    'Glen Park'},
-            {'application_name':    'Jordan Park'},
-            {'host_name':           'South of Market',      'host_url': 'afp://sfo/soma'},
-            {'host_name':           'Financial District',   'host_url': 'afp://sfo/fidi'},
-            {'host_name':           'North Beach',          'host_url': 'afp://sfo/nobe'}
+            {'server_name': 'presidio'},
+            {'server_name': 'marina'},
+            {'server_name': 'sunset'},
+            {'document_name': 'russian_hill.jpg'},
+            {'document_name': 'nob_hill.jpg'},
+            {'document_name': 'rincon_hill.jpg'},
+            {'application_name': 'Golden Gate Park'},
+            {'application_name': 'Glen Park'},
+            {'application_name': 'Jordan Park'},
+            {'host_name': 'South of Market', 'host_url': 'afp://sfo/soma'},
+            {'host_name': 'Financial District', 'host_url': 'afp://sfo/fidi'},
+            {'host_name': 'North Beach', 'host_url': 'afp://sfo/nobe'}
         ]
         with mock.patch.object(Collector, '_read_plist', autospec=True, return_value=plist) as mock_read_plist:
             self.collector._collect_accounts_recent_items()

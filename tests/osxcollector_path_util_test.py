@@ -3,6 +3,7 @@ import testify as T
 
 from osxcollector import osxcollector
 
+
 class PathUtilsTestCase(T.TestCase):
 
     def _test_pathjoin(self, expected, path, *args):
@@ -19,6 +20,3 @@ class PathUtilsTestCase(T.TestCase):
 
     def test_single_arg(self):
         self._test_pathjoin('/foo/bar', '/foo/bar')
-
-if __name__ == '__main__':
-    T.run()

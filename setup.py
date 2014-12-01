@@ -6,8 +6,8 @@ from osxcollector.osxcollector import __version__
 setup(
     name="osxcollector",
     version=__version__,
-    author="Jakub Sendor",
-    author_email="jsendor@yelp.com",
-    description="Gathers information from plists, sqlite DBs, and the local filesystem to get information for analyzing a malware infection.",
+    author="Yelp Security",
+    author_email="opensource@yelp.com",
+    description="A tool for answering \"How'd that malware get there?\"",
     packages=["osxcollector"],
 )
