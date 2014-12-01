@@ -15,7 +15,7 @@ With the output of OSXCollector we quickly correlate between browser history, st
 
 ## So what does it do?
 
-OSXCollector gathers information from plists, sqlite databases and the local filesystems to get the information for analyzing a malware infection. The output is JSON which makes it easy to process it further by other tools.
+OSXCollector gathers information from plists, sqlite databases and the local filesystems to get the information for analyzing a malware infection. The output is JSON which makes it easy to process further with other tools. Check out the [output filters](https://github.com/Yelp/osxcollector/wiki/Automated-Analysis-With-Output-Filters) we use at Yelp to automate analysis.
 
 [Visit our wiki for more info!](https://github.com/Yelp/osxcollector/wiki)
 
