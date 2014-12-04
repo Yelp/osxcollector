@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sys
 import re
 import simplejson
 
@@ -43,7 +44,7 @@ class BlacklistFilter(OutputFilter):
                 with open(config_chunk['value_file'], 'r') as value_file:
                     lines = [line.rstrip('\n') for line in value_file.readlines() if not line.startswith('#')]
                     if config_chunk['blacklist_is_regex']:
-                        lines = [re.compile(line) for line in lines]
+                        lines = [re.compile(self._alter_regex(line)) for line in lines]
                     del config_chunk['value_file']
                     config_chunk['blacklist_values'] = lines
             except IOError as e:
@@ -51,15 +52,16 @@ class BlacklistFilter(OutputFilter):
 
             blacklist_config.append(config_chunk)
 
+        # sys.stderr.write(simplejson.dumps(blacklist_config, indent=2))
         return blacklist_config
 
-    def filter_line(self, line):
-        """Find blacklisted values in a line."""
-        try:
-            blob = simplejson.loads(line)
-        except Exception:
-            return line
+    def _alter_regex(self, regex):
+        if self.get_config('domain_to_regex', False):
+            return '(.+\.)?{0}'.format(regex.replace('.', '\.').replace('-', '\-'))
+        return regex
 
+    def filter_line(self, blob):
+        """Find blacklisted values in a line."""
         for config_chunk in self._blacklist_config:
             for key in config_chunk['blacklist_keys']:
                 values = DictUtils.get_deep(blob, key)
@@ -83,10 +85,9 @@ class BlacklistFilter(OutputFilter):
                 if found_match:
                     blob.setdefault('osxcollector_blacklist', [])
                     blob['osxcollector_blacklist'].append(config_chunk['blacklist_name'])
-                    line = '{0}\n'.format(simplejson.dumps(blob))
                     break
 
-        return line
+        return blob
 
 
 def main():

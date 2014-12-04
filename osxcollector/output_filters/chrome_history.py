@@ -21,26 +21,21 @@ class ChromeHistoryFilter(OutputFilter):
         self._visits_table = dict()
         self._urls_table = dict()
 
-    def filter_line(self, line):
+    def filter_line(self, blob):
         """Cache the 'visits' and 'urls' tables."""
-        try:
-            blob = simplejson.loads(line)
-        except Exception:
-            return line
-
         if 'chrome' == blob.get('osxcollector_section') and 'history' == blob.get('osxcollector_subsection'):
             table = blob.get('osxcollector_table_name')
 
             if 'visits' == table:
                 if self._validate_visit(blob):
                     self._visits_table[blob['id']] = blob
-                    line = None  # Consume the line
+                    blob = None  # Consume the line
             elif 'urls' == table:
                 if self._validate_urls(blob):
                     self._urls_table[blob['id']] = blob
-                    line = None  # Consume the line
+                    blob = None  # Consume the line
 
-        return line
+        return blob
 
     def end_of_lines(self):
         """Join the 'visits' and 'urls' tables into a single browser history and timeline."""
@@ -68,7 +63,7 @@ class ChromeHistoryFilter(OutputFilter):
 
                 history.append(record)
 
-        return ['{0}\n'.format(simplejson.dumps(blob)) for blob in sorted(history, key=lambda x: x['last_visit_time'], reverse=True)]
+        return sorted(history, key=lambda x: x['last_visit_time'], reverse=True)
 
     @classmethod
     def _validate_visit(cls, blob):

@@ -21,25 +21,18 @@ class DomainsFilter(OutputFilter):
 
     def __init__(self):
         super(DomainsFilter, self).__init__()
-
         self._domains = set()
 
-    def filter_line(self, line):
+    def filter_line(self, blob):
         """Find domains in a line."""
-        try:
-            blob = simplejson.loads(line)
-            self._domains = set()
-        except Exception:
-            return line
-
+        self._domains = set()
         self._look_for_domains(blob)
 
         # self._domains accumulates domains during calls to _look_for_domains
         if len(self._domains):
             blob['osxcollector_domains'] = list(self._domains)
-            line = '{0}\n'.format(simplejson.dumps(blob))
 
-        return line
+        return blob
 
     def _look_for_domains(self, val, key=None):
         """Given a value and perhaps a key, look for domains.

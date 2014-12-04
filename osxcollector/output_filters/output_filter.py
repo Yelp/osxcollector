@@ -3,6 +3,8 @@ import os
 import sys
 import yaml
 
+import simplejson
+
 
 class OutputFilter(object):
 
@@ -34,35 +36,38 @@ class OutputFilter(object):
             self._config_section = self.__class__.__name__
             self._config = full_config.get(self._config_section)
 
-    def get_config(self, key):
+    def get_config(self, key, default=None):
         try:
             return self._config[key]
         except Exception:
+            if default is not None:
+                return default
+
             raise MissingConfigError('Missing value[{0}] from config section[{1}]'.format(key, self._config_section))
 
-    def filter_line(self, line):
-        """Each line of output will be passed to filter_line.
+    def filter_line(self, blob):
+        """Each Line of osxcollector output will be passed to filter_line.
 
         The OutputFilter should return the line, either modified or unmodified.
         The OutputFilter can also choose to return nothing, effectively swalling the line.
 
         Args:
-            line: A string line of output
+            output_line: A dict
 
         Returns:
-            A string or None
+            A dict or None
         """
-        return line
+        return blob
 
     def end_of_lines(self):
-        """Called after all output has been fed to filter_line.
+        """Called after all lines have been fed to filter_output_line.
 
         The OutputFilter can do any batch processing on that requires the complete input.
 
         Returns:
-            An array of strings or None
+            An array of dicts (empty array if no lines remain)
         """
-        return None
+        return []
 
 
 class MissingConfigError(Exception):
@@ -85,12 +90,18 @@ def run_filter(output_filter):
     Args:
         output_filter: An instance of an OutputFilter
     """
-    for line in _unbuffered_stdin():
-        line = output_filter.filter_line(line)
-        if line:
-            sys.stdout.write(line)
+    for json_string in _unbuffered_stdin():
+        try:
+            blob = simplejson.loads(json_string)
+        except Exception:
+            pass
 
-    final_lines = output_filter.end_of_lines()
-    if final_lines:
-        for line in final_lines:
-            sys.stdout.write(line)
+        blob = output_filter.filter_line(blob)
+        if blob:
+            sys.stdout.write(simplejson.dumps(blob))
+            sys.stdout.write('\n')
+
+    final_blobs = output_filter.end_of_lines()
+    for blob in final_blobs:
+        sys.stdout.write(simplejson.dumps(blob))
+        sys.stdout.write('\n')
