@@ -7,8 +7,9 @@ from osxcollector.output_filters.domains import DomainsFilter
 from osxcollector.output_filters.firefox_history import FirefoxHistoryFilter
 from osxcollector.output_filters.opendns import OpenDNSFilter
 from osxcollector.output_filters.output_filter import run_filter
-# from osxcollector.output_filters.virustotal_domains import VTDomainsFilter
-# from osxcollector.output_filters.virustotal_hashes import VTHashesFilter
+from osxcollector.output_filters.related_to_files import RelatedToFiles
+from osxcollector.output_filters.virustotal_domains import VTDomainsFilter
+from osxcollector.output_filters.virustotal_hashes import VTHashesFilter
 
 
 class SummarizeFilter(ChainFilter):
@@ -20,17 +21,21 @@ class SummarizeFilter(ChainFilter):
         # def when_suspicious(blob):
         #     return 'osxcollector_opendns' in blob or 'osxcollector_blacklist' in blob
 
-        def is_suspicious_when_on_blacklist(blob):
+        def when_is_suspicious(blob):
+            return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob
+
+        def when_on_blacklist(blob):
             return 'osxcollector_blacklist' in blob
 
         filter_chain = [
             DomainsFilter(),
             BlacklistFilter(),
+            RelatedToFiles(when=when_on_blacklist),
             FirefoxHistoryFilter(),
             ChromeHistoryFilter(),
-            OpenDNSFilter(is_suspicious_when=is_suspicious_when_on_blacklist)  # only_lookup_when=when_blacklist)
-            # VTDomainsFilter(when=when_suspicious),
-            # VTHashesFilter(when=when_suspicious),
+            OpenDNSFilter(is_suspicious_when=when_is_suspicious),
+            VTDomainsFilter(when=when_is_suspicious),
+            VTHashesFilter(when=when_is_suspicious)
         ]
         super(SummarizeFilter, self).__init__(filter_chain)
 
