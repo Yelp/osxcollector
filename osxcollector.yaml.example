@@ -24,3 +24,4 @@ BlacklistFilter:
          - "osxcollector_domains"
         value_file: "/tmp/domain_blacklist.txt"
         blacklist_is_regex: True
+        domain_to_regex: True

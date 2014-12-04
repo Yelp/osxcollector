@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
-import simplejson
 
 from urlparse import urlsplit
 from urllib import unquote_plus
@@ -48,7 +47,7 @@ class DomainsFilter(OutputFilter):
                 for part in re.split('[ \'\(\)\"\[\]\{\}\;\n\t]+', val):
                     if part.startswith('http'):
                         self._add_domain(part)
-            elif key in ['host']:
+            elif key in ['host', 'host_key']:
                 self._domains.add(val.rstrip('.').lstrip('.'))
         elif isinstance(val, list):
             for elem in val:

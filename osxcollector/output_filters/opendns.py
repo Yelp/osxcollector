@@ -79,6 +79,12 @@ class OpenDNSFilter(ThreatFeedFilter):
         for domain in categorized.keys():
             if self._is_suspicious(domain, categorized[domain]):
                 security = opendns.security(domain)
+
+                # 'dga_score'
+                dga_score = security.get('dga_score', 0)
+                if dga_score > 0:
+                    security['dga_score'] = -1 * dga_score
+
                 if self._should_add_to_blob(domain, categorized[domain], security):
 
                     # There's a lot of info in the security section, trim it

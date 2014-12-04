@@ -69,11 +69,11 @@ class SummarizeFilter(ChainFilter):
             DomainsFilter(),
             BlacklistFilter(),
             RelatedToFiles(initial_terms=initial_terms, when=is_on_blacklist),
-            FirefoxHistoryFilter(),
-            ChromeHistoryFilter(),
             OpenDNSFilter(is_suspicious_when=is_suspicious),
             # VTDomainsFilter(only_lookup_when=when_is_suspicious),
             VTHashesFilter(only_lookup_when=is_suspicious),
+            FirefoxHistoryFilter(),
+            ChromeHistoryFilter(),
             _SummaryOutputFilter()
         ]
         super(SummarizeFilter, self).__init__(filter_chain)
