@@ -13,8 +13,8 @@ class VTHashesFilter(ThreatFeedFilter):
     """A class to find suspicious hashes using VirusTotal API."""
 
     def __init__(self, only_lookup_when=None, is_suspicious_when=None):
-        super(VTHashesFilter, self).__init__('md5', 'osxcollector_vt_hashes', 
-            only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when)
+        super(VTHashesFilter, self).__init__('md5', 'osxcollector_vt_hashes',
+                                             only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when)
 
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""

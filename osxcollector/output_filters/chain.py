@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
-import simplejson
-import sys
-
-from osxcollector.osxcollector import DictUtils
-
 from osxcollector.output_filters.output_filter import OutputFilter
 
 
@@ -21,7 +15,6 @@ class ChainFilter(OutputFilter):
             prev_link = cur_link
 
         self._head_of_chain = chain[0]
-
 
     def filter_line(self, blob):
         """Find blacklisted values in a line."""
