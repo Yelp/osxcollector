@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import simplejson
-
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
 
@@ -179,7 +177,10 @@ class ChromeHistoryFilter(OutputFilter):
             Returns:
                 A string
             """
-            value = int(value) & cls.CORE_MASK
+            try:
+                value = int(value) & cls.CORE_MASK
+            except ValueError:
+                return 'ERROR'
 
             if cls.CORE_LINK == value:
                 return 'link'
@@ -237,7 +238,10 @@ class ChromeHistoryFilter(OutputFilter):
         def get_qualifier_transitions(cls, value):
             qualifiers = []
 
-            value = int(value) & cls.QUALIFIER_MASK
+            try:
+                value = int(value) & cls.QUALIFIER_MASK
+            except ValueError:
+                return qualifiers
 
             if cls.QUALIFIER_BLOCKED & value:
                 qualifiers.append('blocked')

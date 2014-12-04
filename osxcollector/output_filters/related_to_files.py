@@ -40,13 +40,22 @@ class RelatedToFiles(OutputFilter):
         'bin'  # 10
     ]
 
-    def __init__(self, when):
+    def __init__(self, when, initial_terms=None):
         super(RelatedToFiles, self).__init__()
         self._all_blobs = list()
         self._terms = set()
         self._usernames = set()
 
         self._when = when
+
+        if initial_terms:
+            for val in initial_terms:
+                self._create_terms(val)
+
+    def _create_terms(self, val):
+        for term in os.path.normpath(val.lower()).split(os.path.sep):
+            if len(term) > 1 and term not in self.STOP_WORDS:
+                self._terms.add(term)
 
     def filter_line(self, blob):
         self._all_blobs.append(blob)
@@ -55,9 +64,7 @@ class RelatedToFiles(OutputFilter):
             for key in self.FILE_NAME_KEYS:
                 val = DictUtils.get_deep(blob, key)
                 if val:
-                    for term in os.path.normpath(val.lower()).split(os.path.sep):
-                        if len(term) > 1 and term not in self.STOP_WORDS:
-                            self._terms.add(term)
+                    self._create_terms(val)
         if 'osxcollector_username' in blob:
             self._usernames.add(blob['osxcollector_username'].lower())
 

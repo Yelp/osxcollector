@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import re
-import simplejson
 
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.output_filter import MissingConfigError
@@ -57,7 +56,10 @@ class BlacklistFilter(OutputFilter):
 
     def _alter_regex(self, regex):
         if self.get_config('domain_to_regex', False):
-            return '(.+\.)?{0}'.format(regex.replace('.', '\.').replace('-', '\-'))
+            regex = '(.+\.)?{0}'.format(regex.replace('.', '\.').replace('-', '\-'))
+            sys.stderr.write(regex)
+            sys.stderr.write('\n')
+            sys.stderr.flush()
         return regex
 
     def filter_line(self, blob):
@@ -76,7 +78,7 @@ class BlacklistFilter(OutputFilter):
                         break
 
                     if config_chunk['blacklist_is_regex']:
-                        if any([regex_to_match.match(val) for regex_to_match in config_chunk['blacklist_values']]):
+                        if any([regex_to_match.search(val) for regex_to_match in config_chunk['blacklist_values']]):
                             found_match = True
                     else:
                         if any([val_to_match == val for val_to_match in config_chunk['blacklist_values']]):

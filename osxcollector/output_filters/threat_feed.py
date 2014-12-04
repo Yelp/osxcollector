@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import simplejson
-
 from osxcollector.output_filters.output_filter import OutputFilter
 
 
@@ -60,6 +58,9 @@ class ThreatFeedFilter(OutputFilter):
             ioc_list = blob[self._ioc_key]
             if isinstance(ioc_list, basestring):
                 ioc_list = [ioc_list]
+
+            if len(ioc_list) > 10:
+                return blob
 
             is_suspicious = self._is_suspicious_when and self._is_suspicious_when(blob)
             for ioc in ioc_list:
