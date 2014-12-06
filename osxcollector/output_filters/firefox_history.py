@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import copy
-import simplejson
 
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter

@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import sys
-import tldextract
 
-# from osxcollector.osxcollector import DictUtils
+import tldextract
 from osxcollector.output_filters.opendns import Investigate
 from osxcollector.output_filters.output_filter import OutputFilter
+
+
+# from osxcollector.osxcollector import DictUtils
 
 
 class RelatedToOpenDNS(OutputFilter):

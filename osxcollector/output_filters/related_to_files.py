@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import simplejson
 import os.path
 import re
 
+import simplejson
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.output_filter import OutputFilter
 

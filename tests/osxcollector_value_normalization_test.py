@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
-import testify as T
-
 from datetime import datetime
+
+import testify as T
 from osxcollector import osxcollector
 
 

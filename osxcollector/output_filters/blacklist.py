@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys
 import re
+import sys
 
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.output_filter import MissingConfigError

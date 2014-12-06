@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
-
-from urlparse import urlsplit
 from urllib import unquote_plus
+from urlparse import urlsplit
 
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter

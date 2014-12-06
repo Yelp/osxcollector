@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-import yaml
 
 import simplejson
+import yaml
 
 
 class OutputFilter(object):

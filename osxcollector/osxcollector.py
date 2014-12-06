@@ -25,12 +25,10 @@
 # * Process NSDates in plists
 #
 
-import Foundation
 import calendar
 import os
-import sys
 import shutil
-
+import sys
 from collections import namedtuple
 from datetime import datetime
 from datetime import timedelta
@@ -44,6 +42,8 @@ from optparse import OptionParser
 from sqlite3 import connect
 from sqlite3 import OperationalError
 from traceback import extract_tb
+
+import Foundation
 from xattr import getxattr
 
 __version__ = '1.0'

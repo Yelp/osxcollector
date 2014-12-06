@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import simplejson
+from optparse import OptionParser
 
+import simplejson
 from osxcollector.output_filters.blacklist import BlacklistFilter
 from osxcollector.output_filters.chain import ChainFilter
 from osxcollector.output_filters.chrome_history import ChromeHistoryFilter
 from osxcollector.output_filters.domains import DomainsFilter
 from osxcollector.output_filters.firefox_history import FirefoxHistoryFilter
 from osxcollector.output_filters.opendns import OpenDNSFilter
-from osxcollector.output_filters.output_filter import run_filter
 from osxcollector.output_filters.output_filter import OutputFilter
+from osxcollector.output_filters.output_filter import run_filter
 from osxcollector.output_filters.related_to_files import RelatedToFiles
 from osxcollector.output_filters.related_to_opendns import RelatedToOpenDNS
 from osxcollector.output_filters.virustotal_hashes import VTHashesFilter
-
-from optparse import OptionParser
 
 
 def is_suspicious(blob):

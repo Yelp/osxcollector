@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from osxcollector.osxcollector import DictUtils
-from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.output_filter import run_filter
-
+from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 from virus_total_apis import PublicApi
 
 
