@@ -11,13 +11,14 @@ from osxcollector.output_filters.opendns import OpenDNSFilter
 from osxcollector.output_filters.output_filter import run_filter
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.related_to_files import RelatedToFiles
+from osxcollector.output_filters.related_to_opendns import RelatedToOpenDNS
 from osxcollector.output_filters.virustotal_hashes import VTHashesFilter
 
 from optparse import OptionParser
 
 
 def is_suspicious(blob):
-    return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob
+    return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob or 'quarantinues' == blob['osxcollector_section']
 
 
 def is_on_blacklist(blob):
@@ -64,11 +65,12 @@ class _SummaryOutputFilter(OutputFilter):
 
 class SummarizeFilter(ChainFilter):
 
-    def __init__(self, initial_terms=None):
+    def __init__(self, initial_file_terms=None, initial_domains=None, initial_ips=None):
         filter_chain = [
             DomainsFilter(),
             BlacklistFilter(),
-            RelatedToFiles(initial_terms=initial_terms, when=is_on_blacklist),
+            RelatedToFiles(initial_terms=initial_file_terms, when=is_on_blacklist),
+            RelatedToOpenDNS(initial_domains=initial_domains, initial_ips=initial_ips),
             OpenDNSFilter(is_suspicious_when=is_suspicious),
             # VTDomainsFilter(only_lookup_when=when_is_suspicious),
             VTHashesFilter(only_lookup_when=is_suspicious),
@@ -81,11 +83,15 @@ class SummarizeFilter(ChainFilter):
 
 def main():
     parser = OptionParser(usage='usage: %prog [options]')
-    parser.add_option('-t', '--term', dest='terms', default=[], action='append',
-                      help='[OPTIONAL] Terms to search for.  May be specified more than once.')
+    parser.add_option('-f', '--file-term', dest='file_terms', default=[], action='append',
+                      help='[OPTIONAL] Suspicious terms to use in pivoting through file names.  May be specified more than once.')
+    parser.add_option('-d', '--domain', dest='domain_terms', default=[], action='append',
+                      help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
+    parser.add_option('-i', '--ip', dest='ip_terms', default=[], action='append',
+                      help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
     options, _ = parser.parse_args()
 
-    run_filter(SummarizeFilter(initial_terms=options.terms))
+    run_filter(SummarizeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms, initial_ips=options.ip_terms))
 
 
 if __name__ == "__main__":

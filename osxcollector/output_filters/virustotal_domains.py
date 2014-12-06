@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys
-from time import sleep
-
 from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.output_filter import run_filter
 
@@ -24,8 +21,6 @@ class VTDomainsFilter(ThreatFeedFilter):
         for ioc in self._all_iocs:
             report = vt.get_domain_report(ioc)
             self._threat_info_by_iocs[ioc] = report
-            sys.stderr.write('sleep {0}\n'.format(ioc))
-            sleep(15)
 
 
 def main():

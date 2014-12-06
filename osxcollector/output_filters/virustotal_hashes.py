@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys
-from time import sleep
-
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.output_filter import run_filter
@@ -27,8 +24,6 @@ class VTHashesFilter(ThreatFeedFilter):
             if DictUtils.get_deep(report, 'results.scans'):
                 del report['results']['scans']
             self._threat_info_by_iocs[ioc] = report
-            sys.stderr.write('sleep {0}\n'.format(ioc))
-            sleep(15)
 
 
 def main():

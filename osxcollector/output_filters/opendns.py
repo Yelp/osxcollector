@@ -2,9 +2,46 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
 import investigate
+import requests
+import requests.exceptions
+import sys
 
 from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.output_filter import run_filter
+
+
+def investigate_error_handling(fn):
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except requests.exceptions.ConnectionError as e:
+            de_args = repr([a for a in args]) or ''
+            de_kwargs = repr([(a, kwargs[a]) for a in kwargs]) or ''
+            sys.stderr.write('[ERROR calling {0} {1} {2}'.format(fn.__name__, de_args, de_kwargs))
+            raise e
+    return wrapper
+
+
+class Investigate(object):
+
+    def __init__(self, api_key):
+        self._opendns = investigate.Investigate(api_key)
+
+    @investigate_error_handling
+    def categorization(self, domains, labels=False):
+        return self._opendns.categorization(domains, labels=labels)
+
+    @investigate_error_handling
+    def security(self, domain):
+        return self._opendns.security(domain)
+
+    @investigate_error_handling
+    def cooccurrences(self, domain):
+        return self._opendns.cooccurrences(domain)
+
+    @investigate_error_handling
+    def rr_history(self, ip):
+        return self._opendns.rr_history(ip)
 
 
 class OpenDNSFilter(ThreatFeedFilter):
@@ -44,9 +81,9 @@ class OpenDNSFilter(ThreatFeedFilter):
         # Suspicious rank for a domain that reviews based on the lookup behavior of client IP for the domain.
         # Securerank is designed to identify hostnames requested by known infected clients but never requested
         # by clean clients, assuming these domains are more likely to be bad.
-        # Scores returned range from -100 (suspicious) to 0 (benign).
+        # Scores returned range from -100 (suspicious) to 100 (benign).
         # <http://labs.opendns.com/2013/03/28/secure-rank-a-large-scale-discovery-algorithm-for-predictive-detection/>
-        SecurityCheck('securerank2', -100, 100, -20),
+        SecurityCheck('securerank2', -100, 100, -10),
 
         # ASN reputation score, ranges from -100 to 0 with -100 being very suspicious
         SecurityCheck('asn_score', -100, 0, -50),
@@ -73,12 +110,12 @@ class OpenDNSFilter(ThreatFeedFilter):
 
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
-        opendns = investigate.Investigate(self._api_key)
-        categorized = opendns.categorization(list(self._all_iocs), labels=True)
+        investigate = Investigate(self._api_key)
+        categorized = investigate.categorization(list(self._all_iocs), labels=True)
 
         for domain in categorized.keys():
             if self._is_suspicious(domain, categorized[domain]):
-                security = opendns.security(domain)
+                security = investigate.security(domain)
 
                 # 'dga_score'
                 dga_score = security.get('dga_score', 0)
@@ -117,7 +154,7 @@ class OpenDNSFilter(ThreatFeedFilter):
             return True
         elif any([cat in self.SUSPICIOUS_CATEGORIES for cat in category_info['security_categories']]):
             return True
-        elif domain in self._suspicious_iocs:
+        elif domain in self._suspicious_iocs and 0 == category_info['status']:
             return True
 
         return False
@@ -138,8 +175,8 @@ class OpenDNSFilter(ThreatFeedFilter):
         elif(any([security_info.get(key, None) for key in self.SECURITY_BAD_KEYS])):
             return True
 
-        elif domain in self._suspicious_iocs:
-            return True
+        # elif domain in self._suspicious_iocs and 0 == category_info['status']:
+        #    return True
 
         else:
             for security_check in self.SECURITY_CHECKS:

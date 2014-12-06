@@ -77,7 +77,8 @@ class RelatedToFiles(OutputFilter):
             line = simplejson.dumps(blob).lower()
             for term in look_for:
                 if re.search(term, line):
-                    blob['osxcollector_related'] = 'files'
+                    blob.setdefault('osxcollector_related', [])
+                    blob['osxcollector_related'].append('files')
                     break
 
         return self._all_blobs
