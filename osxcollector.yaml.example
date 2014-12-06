@@ -4,7 +4,7 @@ OpenDNSFilter:
 
 # The VTHashesFilter requires an API key for VirusTotal
 VTHashesFilter:
-	api_key: "ADD YOUR KEY"
+    api_key: "ADD YOUR KEY"
 
 # The BlacklistFilter allows for multiple blacklists to be compared against at once
 # Each blacklists requires:
