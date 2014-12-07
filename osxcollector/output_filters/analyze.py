@@ -56,6 +56,11 @@ def is_on_blacklist(blob):
     return 'osxcollector_blacklist' in blob
 
 
+def include_in_summary(blob):
+    interesting_keys = ['osxcollector_blacklist', 'osxcollector_related', 'osxcollector_opendns', 'osxcollector_virustotal']
+    return any([key in blob for key in interesting_keys])
+
+
 class _SummaryOutputFilter(OutputFilter):
 
     def __init__(self):
@@ -85,9 +90,9 @@ class _SummaryOutputFilter(OutputFilter):
         Returns:
             An array of dicts (empty array if no lines remain)
         """
-        with open('./suspicious.json', 'w') as fp:
+        with open('./analyze.json', 'w') as fp:
             for blob in self._all_blobs:
-                if is_suspicious(blob):
+                if include_in_summary(blob):
                     fp.write(simplejson.dumps(blob))
                     fp.write('\n')
 

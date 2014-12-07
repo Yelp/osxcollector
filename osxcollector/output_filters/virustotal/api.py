@@ -13,8 +13,14 @@ class VirusTotalApi(object):
         self._api_key = api_key
 
     def _make_requests(self, endpoint_url, params):
-        requests = [grequests.get(endpoint_url, params=param) for param in params]
-        responses = grequests.map(requests)
+        MAX_SIMULTANEOUS_REQUESTS = 64
+
+        responses = []
+        chunks = [params[pos:pos + MAX_SIMULTANEOUS_REQUESTS] for pos in xrange(0, len(params), MAX_SIMULTANEOUS_REQUESTS)]
+        for chunk in chunks:
+            requests = [grequests.get(endpoint_url, params=param) for param in chunk]
+            responses.extend(grequests.map(requests))
+
         return [response.json() for response in responses]
 
     def get_domain_reports(self, domains):

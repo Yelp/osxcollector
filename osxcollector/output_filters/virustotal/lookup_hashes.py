@@ -15,7 +15,7 @@ class LookupHashesFilter(ThreatFeedFilter):
     """A class to find suspicious hashes using VirusTotal API."""
 
     def __init__(self, only_lookup_when=None, is_suspicious_when=None):
-        super(LookupHashesFilter, self).__init__('md5', 'osxcollector_vt_hashes',
+        super(LookupHashesFilter, self).__init__('md5', 'osxcollector_virustotal',
                                                  only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
                                                  api_key='virustotal')
 
@@ -26,6 +26,8 @@ class LookupHashesFilter(ThreatFeedFilter):
 
         for md5 in reports.keys():
             report = reports[md5]
+
+            # TODO(ivanlei): Should score the VT results here and only add them if they're interesting
             if 1 == report.get('response_code'):
                 self._threat_info_by_iocs[md5] = reports[md5]
 
