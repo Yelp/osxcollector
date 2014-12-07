@@ -21,7 +21,7 @@ from osxcollector.output_filters.virustotal. \
     lookup_hashes import LookupHashesFilter as VtLookupHashesFilter
 
 
-class SummarizeFilter(ChainFilter):
+class AnalyzeFilter(ChainFilter):
 
     def __init__(self, initial_file_terms=None, initial_domains=None, initial_ips=None):
         filter_chain = [
@@ -45,7 +45,7 @@ class SummarizeFilter(ChainFilter):
             # Summarize what has happened
             _SummaryOutputFilter(),
         ]
-        super(SummarizeFilter, self).__init__(filter_chain)
+        super(AnalyzeFilter, self).__init__(filter_chain)
 
 
 def is_suspicious(blob):
@@ -104,7 +104,7 @@ def main():
                       help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
     options, _ = parser.parse_args()
 
-    run_filter(SummarizeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms, initial_ips=options.ip_terms))
+    run_filter(AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms, initial_ips=options.ip_terms))
 
 
 if __name__ == "__main__":
