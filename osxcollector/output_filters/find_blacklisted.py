@@ -4,7 +4,6 @@
 #
 # FindBlacklistedFilter adds 'osxcollector_blacklist' key to lines matching a blacklist.
 #
-
 import re
 
 from osxcollector.osxcollector import DictUtils

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# RelatedDomains uses OpenDNS to find domains related to input domains or ips.
+# RelatedDomains uses OpenDNS to find domains related to input domains or ips and adds 'osxcollector_related' key when it finds them.
 #
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter

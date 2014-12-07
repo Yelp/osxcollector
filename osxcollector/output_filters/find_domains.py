@@ -4,7 +4,6 @@
 #
 # FindDomainsFilter looks for domains in all input lines and adds those domains into the 'osxcollector_domains' key.
 #
-
 import re
 from urllib import unquote_plus
 from urlparse import urlsplit

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # VirusTotalApi makes calls to the VirusTotal API.
+# It uses the grequests library to make many calls in parrallel.
 #
 import grequests
 

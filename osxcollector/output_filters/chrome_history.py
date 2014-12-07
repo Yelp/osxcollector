@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 # -*- coding: utf-8 -*-
+#
+# ChromeHistoryFilter creates a clean sorted Chrome browser history and tags lines with {'osxcollector_browser_history': 'chrome'}
+#
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 
@@ -49,7 +52,8 @@ class ChromeHistoryFilter(OutputFilter):
                     'last_visit_time': url['last_visit_time'],
                     'visit_time': visit['visit_time'],
                     'core_transition': self.PAGE_TRANSITION.get_core_transition(visit['transition']),
-                    'page_transition': self.PAGE_TRANSITION.get_qualifier_transitions(visit['transition'])
+                    'page_transition': self.PAGE_TRANSITION.get_qualifier_transitions(visit['transition']),
+                    'osxcollector_browser_history': 'chrome'
                 }
 
                 # Add all the OSXCollector specific keys to the record

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# ThreatFeedFilter is a base class to find suspicious IOC using some random API.
+#
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 

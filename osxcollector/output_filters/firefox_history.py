@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 # -*- coding: utf-8 -*-
+#
+# FirefoxHistoryFilter creates a clean sorted Firefox browser history and tags lines with {'osxcollector_browser_history': 'firefox'}
+#
 import copy
 
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
@@ -49,6 +52,7 @@ class FirefoxHistoryFilter(OutputFilter):
                 record = copy.deepcopy(place)
                 for key in add_keys:
                     record[key] = visit[key]
+                record['osxcollector_browser_history'] = 'firefox'
 
                 history.append(record)
 

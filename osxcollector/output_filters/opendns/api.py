@@ -2,6 +2,8 @@
 #
 # InvestigateApi makes calls to the OpenDNS Investigate API.
 #
+# TODO: Replace investigate module with custom calls to OpenDNS and parrallelize with grequests.
+#
 import sys
 from collections import namedtuple
 

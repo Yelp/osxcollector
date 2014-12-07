@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+#
+# RelatedFilesFilter finds files related to specific terms or file names.
+#
 import os.path
 import re
 
@@ -9,48 +12,12 @@ from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 class RelatedFilesFilter(OutputFilter):
 
-    FILE_NAME_KEYS = [
-        'file_path',
-        'osxcollector_plist_path'
-    ]
+    """RelatedFilesFilter finds files related to specific terms or file names.
 
-    STOP_WORDS = [
-        'applications',
-        'bin',
-        'contents',
-        'cores',
-        'coreservices',
-        'dev',
-        'downloads',
-        'extensions',
-        'frameworks',
-        'helpers',
-        'home',
-        'information',
-        'libexec',
-        'libraries',
-        'library',
-        'macos',
-        'malware',
-        'net',
-        'network',
-        'opt',
-        'plugins',
-        'private',
-        'privateframeworks',
-        'python',
-        'resources',
-        'sbin',
-        'support',
-        'system',
-        'tmp',
-        'user',
-        'users',
-        'usr',
-        'utilities',
-        'versions',
-        'var'
-    ]
+    The file paths passed to the filter during creation are split into arrays of
+    directory or file names. Anything matching a stop list of common directory names
+    is discarded.
+    """
 
     def __init__(self, when, initial_terms=None):
         super(RelatedFilesFilter, self).__init__()
@@ -94,3 +61,48 @@ class RelatedFilesFilter(OutputFilter):
                     break
 
         return self._all_blobs
+
+    # Keys to look in to find file paths
+    FILE_NAME_KEYS = [
+        'file_path',
+        'osxcollector_plist_path'
+    ]
+
+    # Words that can never be terms
+    STOP_WORDS = [
+        'applications',
+        'bin',
+        'contents',
+        'cores',
+        'coreservices',
+        'dev',
+        'downloads',
+        'extensions',
+        'frameworks',
+        'helpers',
+        'home',
+        'information',
+        'libexec',
+        'libraries',
+        'library',
+        'macos',
+        'malware',
+        'net',
+        'network',
+        'opt',
+        'plugins',
+        'private',
+        'privateframeworks',
+        'python',
+        'resources',
+        'sbin',
+        'support',
+        'system',
+        'tmp',
+        'user',
+        'users',
+        'usr',
+        'utilities',
+        'versions',
+        'var'
+    ]

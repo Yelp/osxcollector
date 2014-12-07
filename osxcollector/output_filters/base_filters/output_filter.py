@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # An OutputFilter transforms the output from OSXCollector.
+# Every filter must derive from OutputFilter.
 #
 
 import os
