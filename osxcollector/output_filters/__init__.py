@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-logging.basicConfig()
+
+# Suppress output from tldextract module
+logging.getLogger('tldextract').addHandler(logging.NullHandler())

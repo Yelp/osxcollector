@@ -8,8 +8,8 @@ from collections import namedtuple
 import investigate
 import requests
 import requests.exceptions
-from osxcollector.output_filters.domains import clean_domain
-from osxcollector.output_filters.domains import expand_domain
+from osxcollector.output_filters.find_domains import clean_domain
+from osxcollector.output_filters.find_domains import expand_domain
 
 
 def investigate_error_handling(fn):

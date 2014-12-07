@@ -2,8 +2,6 @@
 #
 # RelatedDomains uses OpenDNS to find domains related to input domains or ips.
 #
-import sys
-
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.opendns.api import InvestigateApi
@@ -41,7 +39,6 @@ class RelatedDomainsFilter(OutputFilter):
 
         if ips:
             for domain in self._investigate.rr_history(ips):
-                sys.stderr.write('{0}\n'.format(domain))
                 related_domains.add(domain)
 
         return related_domains

@@ -4,10 +4,7 @@
 #
 # LookupDomainsFilter uses VirusTotal to lookup the values in 'osxcollector_domains' and add 'osxcollector_virustotal' key.
 #
-import sys
-
-import simplejson
-from osxcollector.output_filters.ase_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
@@ -30,7 +27,6 @@ class LookupDomainsFilter(ThreatFeedFilter):
             report = reports[domain]
             if 1 == report.get('response_code'):
                 self._threat_info_by_iocs[domain] = reports[domain]
-        sys.stderr.write(simplejson.dumps(reports, indent=2))
 
 
 def main():

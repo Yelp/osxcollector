@@ -14,7 +14,7 @@ from osxcollector.output_filters.opendns. \
     lookup_domains import LookupDomainsFilter as OpenDnsLookupDomainsFilter
 from osxcollector.output_filters.opendns. \
     related_domains import RelatedDomainsFilter as OpenDnsRelatedDomainsFilter
-from osxcollector.output_filters.related_to_files import RelatedFilesFilter
+from osxcollector.output_filters.related_files import RelatedFilesFilter
 from osxcollector.output_filters.virustotal. \
     lookup_domains import LookupDomainsFilter as VtLookupDomainsFilter
 from osxcollector.output_filters.virustotal. \
