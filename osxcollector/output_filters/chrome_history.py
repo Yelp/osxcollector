@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from osxcollector.output_filters.output_filter import OutputFilter
-from osxcollector.output_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
 class ChromeHistoryFilter(OutputFilter):

@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
-# OpenDNSFilter uses OpenDNS to lookup the values in 'osxcollector_domains' and add 'osxcollector_opendns' key.
+# InvestigateApi makes calls to the OpenDNS Investigate API.
 #
 import sys
 from collections import namedtuple
@@ -11,50 +9,7 @@ import investigate
 import requests
 import requests.exceptions
 from osxcollector.output_filters.domains import clean_domain
-from osxcollector.output_filters.domains import extract_domains
-from osxcollector.output_filters.output_filter import run_filter
-from osxcollector.output_filters.threat_feed import ThreatFeedFilter
-
-
-class OpenDNSFilter(ThreatFeedFilter):
-
-    """Uses OpenDNS to lookup the values in 'osxcollector_domains' and add 'osxcollector_opendns' key."""
-
-    def __init__(self, only_lookup_when=None, is_suspicious_when=None):
-        super(OpenDNSFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns',
-                                            only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
-                                            api_key='opendns')
-
-    def _lookup_iocs(self):
-        """Caches the OpenDNS info for a set of domains"""
-        investigate = Investigate(self._api_key)
-        categorized = investigate.categorization(list(self._all_iocs))
-
-        for domain in categorized.keys():
-            categorized_info = categorized[domain]
-            if self._should_get_security_info(domain, categorized_info):
-                security = investigate.security(domain)
-                if self._should_store_ioc_info(categorized_info, security):
-                    self._threat_info_by_iocs[domain] = {
-                        'domain': domain,
-                        'categorization': categorized_info,
-                        'security': security,
-                        'link': 'https://investigate.opendns.com/domain-view/name/{0}/view'.format(domain)
-                    }
-
-    def _should_get_security_info(self, domain, categorized_info):
-        """Figure out whether the info on the domain is interesting enough to gather more data."""
-        if categorized_info['is_suspicious']:
-            return True
-        if 0 == categorized_info['status']:
-            return True
-        if domain in self._suspicious_iocs:
-            return True
-        return False
-
-    def _should_store_ioc_info(self, categorized_info, security):
-        """Figure out whether the data gathered is interesting enough to store in the output."""
-        return categorized_info['is_suspicious'] or security['is_suspicious']
+from osxcollector.output_filters.domains import expand_domain
 
 
 def investigate_error_handling(fn):
@@ -70,7 +25,7 @@ def investigate_error_handling(fn):
     return wrapper
 
 
-class Investigate(object):
+class InvestigateApi(object):
 
     """Wrap the OpenDNS investigate API"""
 
@@ -88,7 +43,7 @@ class Investigate(object):
         """
         result = self._opendns.categorization(domains, labels=True)
         for domain in result.keys():
-            result[domain]['is_suspicious'] = self._is_categorization_suspicious(result, result[domain])
+            result[domain]['is_suspicious'] = self._is_categorization_suspicious(result[domain])
         return result
 
     @investigate_error_handling
@@ -119,7 +74,7 @@ class Investigate(object):
         for domain in domains:
             cooccur = self._opendns.cooccurrences(domain)
             for occur in cooccur.get('pfs2', []):
-                for domain in extract_domains(occur[0]):
+                for domain in expand_domain(occur[0]):
                     cooccur_domains.add(clean_domain(domain))
         return cooccur_domains
 
@@ -136,7 +91,7 @@ class Investigate(object):
         for ip in ips:
             history = self._opendns.rr_history(ip)
             for record in history.get('rrs', []):
-                for domain in extract_domains(record['rr']):
+                for domain in expand_domain(record['rr']):
                     rr_domains.add(domain)
         return rr_domains
 
@@ -243,11 +198,3 @@ class Investigate(object):
         # Returns blank if no known threat associated with domain.
         'threat_type'
     ]
-
-
-def main():
-    run_filter(OpenDNSFilter())
-
-
-if __name__ == "__main__":
-    main()

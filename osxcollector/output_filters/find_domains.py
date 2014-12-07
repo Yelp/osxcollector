@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 #
-# DomainsFilter looks for domains in all input lines and adds those domains into the 'osxcollector_domains' key.
+# FindDomainsFilter looks for domains in all input lines and adds those domains into the 'osxcollector_domains' key.
 #
 
 import re
@@ -10,11 +10,11 @@ from urllib import unquote_plus
 from urlparse import urlsplit
 
 import tldextract
-from osxcollector.output_filters.output_filter import OutputFilter
-from osxcollector.output_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
-class DomainsFilter(OutputFilter):
+class FindDomainsFilter(OutputFilter):
 
     """Adds 'osxcollector_domains' key to output lines.
 
@@ -24,7 +24,7 @@ class DomainsFilter(OutputFilter):
     """
 
     def __init__(self):
-        super(DomainsFilter, self).__init__()
+        super(FindDomainsFilter, self).__init__()
         self._domains = set()
 
     def filter_line(self, blob):
@@ -82,12 +82,13 @@ class DomainsFilter(OutputFilter):
         return None
 
     def _add_domain(self, domain):
+        """Clean a domain and store it internally"""
         if not domain:
             return
 
         try:
             domain = clean_domain(domain)
-            for extracted in extract_domains(domain):
+            for extracted in expand_domain(domain):
                 self._domains.add(extracted)
         except BadDomainError:
             pass
@@ -95,7 +96,14 @@ class DomainsFilter(OutputFilter):
     SCHEMES = re.compile('((https?)|ftp)')
 
 
-def extract_domains(domain):
+def expand_domain(domain):
+    """A generator that returns the input with and without the subdomain
+
+    Args:
+        domain - string
+    Returns:
+        generator that returns strings
+    """
     extraction = tldextract.extract(domain)
     if extraction.subdomain:
         yield '.'.join(extraction)
@@ -127,7 +135,7 @@ class BadDomainError(Exception):
 
 
 def main():
-    run_filter(DomainsFilter())
+    run_filter(FindDomainsFilter())
 
 
 if __name__ == "__main__":

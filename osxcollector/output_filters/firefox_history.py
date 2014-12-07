@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 import copy
 
-from osxcollector.output_filters.output_filter import OutputFilter
-from osxcollector.output_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
 class FirefoxHistoryFilter(OutputFilter):

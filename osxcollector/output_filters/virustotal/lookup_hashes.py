@@ -1,9 +1,13 @@
 #!/usr/bin/env python
+
 # -*- coding: utf-8 -*-
-from osxcollector.osxcollector import DictUtils
-from osxcollector.output_filters.output_filter import run_filter
-from osxcollector.output_filters.threat_feed import ThreatFeedFilter
-from virus_total_apis import PublicApi
+#
+# LookupDomainsFilter uses VirusTotal to lookup the values in 'md5' and add 'osxcollector_virustotal' key.
+#
+from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters. \
+    threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
 class VTHashesFilter(ThreatFeedFilter):
@@ -17,13 +21,13 @@ class VTHashesFilter(ThreatFeedFilter):
 
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
-        vt = PublicApi(self._api_key)
+        vt = VirusTotalApi(self._api_key)
+        reports = vt.get_domain_reports(self._all_iocs)
 
-        for ioc in self._all_iocs:
-            report = vt.get_file_report(ioc)
-            if DictUtils.get_deep(report, 'results.scans'):
-                del report['results']['scans']
-            self._threat_info_by_iocs[ioc] = report
+        for md5 in reports.keys():
+            report = reports[md5]
+            if 1 == report.get('response_code'):
+                self._threat_info_by_iocs[md5] = reports[md5]
 
 
 def main():

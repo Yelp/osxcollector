@@ -2,19 +2,20 @@
 
 # -*- coding: utf-8 -*-
 #
-# BlacklistFilter adds 'osxcollector_blacklist' key to lines matching a blacklist.
+# FindBlacklistedFilter adds 'osxcollector_blacklist' key to lines matching a blacklist.
 #
 
 import re
 
 from osxcollector.osxcollector import DictUtils
-from osxcollector.output_filters.domains import clean_domain
-from osxcollector.output_filters.output_filter import MissingConfigError
-from osxcollector.output_filters.output_filter import OutputFilter
-from osxcollector.output_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters. \
+    output_filter import MissingConfigError
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.find_domains import clean_domain
 
 
-class BlacklistFilter(OutputFilter):
+class FindBlacklistedFilter(OutputFilter):
 
     """Adds 'osxcollector_blacklist' key to lines matching a blacklist.
 
@@ -30,7 +31,7 @@ class BlacklistFilter(OutputFilter):
     """
 
     def __init__(self):
-        super(BlacklistFilter, self).__init__()
+        super(FindBlacklistedFilter, self).__init__()
         self._blacklists = self._init_blacklists()
 
     def _init_blacklists(self):
@@ -122,7 +123,7 @@ class BlacklistFilter(OutputFilter):
 
 
 def main():
-    run_filter(BlacklistFilter())
+    run_filter(FindBlacklistedFilter())
 
 
 if __name__ == "__main__":

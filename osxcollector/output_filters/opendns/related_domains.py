@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 #
-# RelatedToOpenDNSFilter uses OpenDNS to find domains related to input domains or ips.
+# RelatedDomains uses OpenDNS to find domains related to input domains or ips.
 #
 import sys
 
-from osxcollector.output_filters.opendns import Investigate
-from osxcollector.output_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.opendns.api import InvestigateApi
 
 
-class RelatedToOpenDNSFilter(OutputFilter):
+class RelatedDomainsFilter(OutputFilter):
 
     """Uses OpenDNS to find domains related to input domains or ips."""
 
-    def __init__(self, initial_domains=None, initial_ips=None, depth=1):
-        super(RelatedToOpenDNSFilter, self).__init__()
-        self._investigate = Investigate(self.config.get_config('api_key.opendns'))
+    def __init__(self, initial_domains=None, initial_ips=None, depth=2):
+        super(RelatedDomainsFilter, self).__init__()
+        self._investigate = InvestigateApi(self.config.get_config('api_key.opendns'))
 
         initial_domains = initial_domains or []
         initial_ips = initial_ips or []
@@ -26,15 +27,10 @@ class RelatedToOpenDNSFilter(OutputFilter):
 
         while depth > 0:
             domains = self._find_related_domains(domains, ips)
-            sys.stderr.write(repr(list(domains)))
             ips = None
 
-            sys.stderr.write('+' + repr(list(domains)) + '\n')
             self._related_domains |= domains
-            sys.stderr.write('-' + repr(list(domains)) + '\n')
             depth -= 1
-
-        sys.stderr.write('*' + repr(list(self._related_domains)) + '\n')
 
     def _find_related_domains(self, domains, ips):
         related_domains = set()
@@ -57,3 +53,11 @@ class RelatedToOpenDNSFilter(OutputFilter):
                 blob['osxcollector_related'].append('domains')
 
         return blob
+
+
+def main():
+    run_filter(RelatedDomainsFilter())
+
+
+if __name__ == "__main__":
+    main()

@@ -7,7 +7,7 @@
 # without having to `python -m FilterOne | python -m FilterTwo | python -m FilterThreee`
 #
 
-from osxcollector.output_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 
 class ChainFilter(OutputFilter):

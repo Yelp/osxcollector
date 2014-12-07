@@ -4,7 +4,7 @@ import re
 
 import simplejson
 from osxcollector.osxcollector import DictUtils
-from osxcollector.output_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 
 class RelatedToFilesFilter(OutputFilter):
