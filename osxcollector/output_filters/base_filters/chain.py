@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# -*- coding: utf-8 -*-
 #
 # ChainFilter is a base class that passes each line through a chain of OutputFilters.
 # This is useful for constructing a single OutputFilter that does everything you want
