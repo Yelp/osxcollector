@@ -41,7 +41,7 @@ from traceback import extract_tb
 import Foundation
 from xattr import getxattr
 
-__version__ = '1.0'
+__version__ = '1.2'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
