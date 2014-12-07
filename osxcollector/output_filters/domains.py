@@ -51,11 +51,9 @@ class DomainsFilter(OutputFilter):
                 # Try splitting the string on non-URL related punctuation
                 for maybe_url in re.split('[ \'\(\)\"\[\]\{\}\;\n\t#@\^&\*=]+', val):
                     domain = self._url_to_domain(maybe_url)
-                    if domain:
-                        self._domains.add(domain)
+                    self._add_domain(domain)
             elif key in ['host', 'host_key']:
-                domain = clean_domain(val)
-                self._domains.add(domain)
+                self._add_domain(domain)
         elif isinstance(val, list):
             for elem in val:
                 self._look_for_domains(elem)
@@ -75,18 +73,33 @@ class DomainsFilter(OutputFilter):
             a string representing the domain or None
         """
         if self.SCHEMES.match(maybe_url):
-            url = unquote_plus(maybe_url).decode(encoding='utf-8', errors='ignore')
+            url = unquote_plus(maybe_url)
 
             split_url = urlsplit(url)
             if split_url.hostname:
-                try:
-                    return clean_domain(split_url.hostname)
-                except BadDomainError:
-                    pass
+                return split_url.hostname
 
         return None
 
+    def _add_domain(self, domain):
+        if not domain:
+            return
+
+        try:
+            domain = clean_domain(domain)
+            for extracted in extract_domains(domain):
+                self._domains.add(extracted)
+        except BadDomainError:
+            pass
+
     SCHEMES = re.compile('((https?)|ftp)')
+
+
+def extract_domains(domain):
+    extraction = tldextract.extract(domain)
+    if extraction.subdomain:
+        yield '.'.join(extraction)
+    yield '.'.join(extraction[1:])
 
 
 def clean_domain(unclean_domain):

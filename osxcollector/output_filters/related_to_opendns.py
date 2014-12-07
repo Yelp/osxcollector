@@ -1,37 +1,52 @@
 # -*- coding: utf-8 -*-
+#
+# RelatedToOpenDNSFilter uses OpenDNS to find domains related to input domains or ips.
+#
+import sys
+
 from osxcollector.output_filters.opendns import Investigate
 from osxcollector.output_filters.output_filter import OutputFilter
 
 
-# from osxcollector.osxcollector import DictUtils
-
-
 class RelatedToOpenDNSFilter(OutputFilter):
+
+    """Uses OpenDNS to find domains related to input domains or ips."""
 
     def __init__(self, initial_domains=None, initial_ips=None, depth=1):
         super(RelatedToOpenDNSFilter, self).__init__()
-        self._investigate = Investigate(self.get_config('api_key'))
+        self._investigate = Investigate(self.config.get_config('api_key.opendns'))
 
-        self._related_domains = set()
-        self._related_domains.union(initial_domains)
+        initial_domains = initial_domains or []
+        initial_ips = initial_ips or []
+
+        self._related_domains = set(initial_domains)
 
         domains = initial_domains
         ips = initial_ips
 
         while depth > 0:
             domains = self._find_related_domains(domains, ips)
+            sys.stderr.write(repr(list(domains)))
             ips = None
 
-            self._related_domains.union(domains)
+            sys.stderr.write('+' + repr(list(domains)) + '\n')
+            self._related_domains |= domains
+            sys.stderr.write('-' + repr(list(domains)) + '\n')
             depth -= 1
 
-    def _find_related_domains(self, initial_domains, initial_ips):
-        related_domains = set()
-        if initial_domains:
-            related_domains.union(self._investigate.cooccurrences(initial_domains))
+        sys.stderr.write('*' + repr(list(self._related_domains)) + '\n')
 
-        if initial_ips:
-            related_domains.union(self._investigate.rr_history(initial_domains))
+    def _find_related_domains(self, domains, ips):
+        related_domains = set()
+
+        if domains:
+            for domain in self._investigate.cooccurrences(domains):
+                related_domains.add(domain)
+
+        if ips:
+            for domain in self._investigate.rr_history(ips):
+                sys.stderr.write('{0}\n'.format(domain))
+                related_domains.add(domain)
 
         return related_domains
 

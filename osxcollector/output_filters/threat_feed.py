@@ -11,7 +11,7 @@ class ThreatFeedFilter(OutputFilter):
     It is assumed that the API uses an api_key stored in the config.
     """
 
-    def __init__(self, ioc_key, output_key, only_lookup_when=None, is_suspicious_when=None, has_api_key=True):
+    def __init__(self, ioc_key, output_key, only_lookup_when=None, is_suspicious_when=None, api_key=None):
         """Read API config
 
         Args:
@@ -19,12 +19,12 @@ class ThreatFeedFilter(OutputFilter):
             output_key: key to use to add threat info to the output
             only_lookup_when: a boolean function to call to decide whether to try a lookup for a blob
             is_suspicious_when: a boolean function to call to decide whether a blob is already known to be suspicious
-            has_api_key: boolean as to whether to look for an API key in the config file
+            api_key: name of the key in the 'api_key' section of config
         """
         super(ThreatFeedFilter, self).__init__()
 
-        if has_api_key:
-            self._api_key = self.get_config('api_key')
+        if api_key:
+            self._api_key = self.config.get_config('api_key.{0}'.format(api_key))
 
         self._only_lookup_when = only_lookup_when
         self._is_suspicious_when = is_suspicious_when

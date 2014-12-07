@@ -58,10 +58,14 @@ class BlacklistFilter(OutputFilter):
                 is_regex = blacklist_is_domains or config_chunk['blacklist_is_regex']
 
                 with open(config_chunk['blacklist_file_path'], 'r') as value_file:
-                    blacklisted_values = [line.rstrip('\n') for line in value_file.readlines() if not line.startswith('#')]
+                    blacklisted_values = []
+                    for line in value_file.readlines():
+                        if not line.startswith('#'):
+                            line = line.rstrip('\n')
+                            if line:
+                                blacklisted_values.append(line)
                     if is_regex:
                         blacklisted_values = [self._convert_to_regex(val, blacklist_is_domains) for val in blacklisted_values]
-                    del config_chunk['value_file']
                     config_chunk['blacklist_values'] = blacklisted_values
             except IOError as e:
                 raise MissingConfigError(e.msg)
@@ -79,7 +83,7 @@ class BlacklistFilter(OutputFilter):
         Returns:
             a compliled regex object
         """
-        if self.get_config('blacklist_is_domains', False):
+        if blacklist_is_domains:
             domain = clean_domain(blacklisted_value)
             blacklisted_value = '(.+\.)?{0}'.format(domain.replace('.', '\.').replace('-', '\-'))
         return re.compile(blacklisted_value)

@@ -10,8 +10,8 @@ from collections import namedtuple
 import investigate
 import requests
 import requests.exceptions
-import tldextract
-from osxcollector.output_filters.opendns import clean_domain
+from osxcollector.output_filters.domains import clean_domain
+from osxcollector.output_filters.domains import extract_domains
 from osxcollector.output_filters.output_filter import run_filter
 from osxcollector.output_filters.threat_feed import ThreatFeedFilter
 
@@ -22,7 +22,8 @@ class OpenDNSFilter(ThreatFeedFilter):
 
     def __init__(self, only_lookup_when=None, is_suspicious_when=None):
         super(OpenDNSFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns',
-                                            only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when)
+                                            only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
+                                            api_key='opendns')
 
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
@@ -118,7 +119,7 @@ class Investigate(object):
         for domain in domains:
             cooccur = self._opendns.cooccurrences(domain)
             for occur in cooccur.get('pfs2', []):
-                for domain in self._extract_domains(occur[0]):
+                for domain in extract_domains(occur[0]):
                     cooccur_domains.add(clean_domain(domain))
         return cooccur_domains
 
@@ -133,9 +134,9 @@ class Investigate(object):
         """
         rr_domains = set()
         for ip in ips:
-            history = self._investigate.rr_history(ip)
+            history = self._opendns.rr_history(ip)
             for record in history.get('rrs', []):
-                for domain in self._extract_domains(record['rr']):
+                for domain in extract_domains(record['rr']):
                     rr_domains.add(domain)
         return rr_domains
 
@@ -191,12 +192,6 @@ class Investigate(object):
                 return True
 
         return False
-
-    def _extract_domains(self, domain):
-        extraction = tldextract.extract(domain)
-        if extraction.subdomain:
-            yield '.'.join(extraction)
-        yield '.'.join(extraction[1:])
 
     # Domain categories to consider suspicious
     SUSPICIOUS_CATEGORIES = [

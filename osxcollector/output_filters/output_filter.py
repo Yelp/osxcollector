@@ -112,19 +112,19 @@ def run_filter(output_filter):
     Args:
         output_filter: An instance of an OutputFilter
     """
-
     def _unbuffered_stdin():
         """Unbuffered read allows lines to be processed before EOF is reached"""
         line = sys.stdin.readline()
         while bool(line):
-            yield line.decode('latin-1')
+            yield line.decode('latin-1', errors='ignore')
             line = sys.stdin.readline()
 
     for json_string in _unbuffered_stdin():
         try:
             blob = simplejson.loads(json_string)
+        # TODO: Just catch a simplejson failure
         except Exception:
-            pass
+            continue
 
         blob = output_filter.filter_line(blob)
         if blob:

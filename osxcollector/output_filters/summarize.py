@@ -5,16 +5,15 @@ from optparse import OptionParser
 import simplejson
 from osxcollector.output_filters.blacklist import BlacklistFilter
 from osxcollector.output_filters.chain import ChainFilter
-from osxcollector.output_filters.chrome_history import ChromeHistoryFilter
+# from osxcollector.output_filters.chrome_history import ChromeHistoryFilter
 from osxcollector.output_filters.domains import DomainsFilter
-from osxcollector.output_filters.firefox_history import FirefoxHistoryFilter
-from osxcollector.output_filters.opendns import OpenDNSFilter
+# from osxcollector.output_filters.firefox_history import FirefoxHistoryFilter
+# from osxcollector.output_filters.opendns import OpenDNSFilter
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
 from osxcollector.output_filters.related_to_files import RelatedToFilesFilter
-from osxcollector.output_filters. \
-    related_to_opendns import RelatedToOpenDNSFilter
-from osxcollector.output_filters.virustotal_hashes import VTHashesFilter
+from osxcollector.output_filters.related_to_opendns import RelatedToOpenDNSFilter
+# from osxcollector.output_filters.virustotal_hashes import VTHashesFilter
 
 
 def is_suspicious(blob):
@@ -71,12 +70,12 @@ class SummarizeFilter(ChainFilter):
             BlacklistFilter(),
             RelatedToFilesFilter(initial_terms=initial_file_terms, when=is_on_blacklist),
             RelatedToOpenDNSFilter(initial_domains=initial_domains, initial_ips=initial_ips),
-            OpenDNSFilter(is_suspicious_when=is_suspicious),
+            # OpenDNSFilter(is_suspicious_when=is_suspicious),
             # VTDomainsFilter(only_lookup_when=when_is_suspicious),
-            VTHashesFilter(only_lookup_when=is_suspicious),
-            FirefoxHistoryFilter(),
-            ChromeHistoryFilter(),
-            _SummaryOutputFilter()
+            # VTHashesFilter(only_lookup_when=is_suspicious),
+            # FirefoxHistoryFilter(),
+            # ChromeHistoryFilter(),
+            _SummaryOutputFilter(),
         ]
         super(SummarizeFilter, self).__init__(filter_chain)
 
