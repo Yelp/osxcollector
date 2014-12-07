@@ -1,10 +1,25 @@
 # -*- coding: utf-8 -*-
+
+# -*- coding: utf-8 -*-
+#
+# ChainFilter is a base class that passes each line through a chain of OutputFilters.
+# This is useful for constructing a single OutputFilter that does everything you want
+# without having to `python -m FilterOne | python -m FilterTwo | python -m FilterThreee`
+#
+
 from osxcollector.output_filters.output_filter import OutputFilter
 
 
 class ChainFilter(OutputFilter):
 
+    """A base class that passes each line through a chain of OutputFilters."""
+
     def __init__(self, chain):
+        """Add the next pointer to each OutputFilter in the chain
+
+        Args:
+            chain - an enumerable of OutputFilters
+        """
         super(ChainFilter, self).__init__()
 
         prev_link = None
@@ -17,18 +32,34 @@ class ChainFilter(OutputFilter):
         self._head_of_chain = chain[0]
 
     def filter_line(self, blob):
-        """Find blacklisted values in a line."""
+        """Pass the line to the filter at the head of the chain."""
         return self._on_filter_line(blob, self._head_of_chain)
 
     def _on_filter_line(self, blob, link):
+        """Pass the line to a link in the chain and pass any output to the next link.
+
+        Args:
+            blob - a dict representing osxcollector output
+            link - an OutputFilter
+        Returns:
+            A dict or None
+        """
         if not link or not blob:
             return blob
         return self._on_filter_line(link.filter_line(blob), link._next_link)
 
     def end_of_lines(self):
+        """Pass end_of_lines to the filter at the head of the chain."""
         return self._on_end_of_lines(self._head_of_chain)
 
     def _on_end_of_lines(self, link):
+        """Pass end_of_lines to a link in the chain and pass any output to the next link.
+
+        Args:
+            link - an OutputFilter
+        Returns:
+            A list of dicts (or an empty list)
+        """
         if not link._next_link:
             return link.end_of_lines()
 

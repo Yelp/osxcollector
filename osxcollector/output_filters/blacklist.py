@@ -1,9 +1,14 @@
 #!/usr/bin/env python
+
 # -*- coding: utf-8 -*-
+#
+# BlacklistFilter adds 'osxcollector_blacklist' key to lines matching a blacklist.
+#
+
 import re
-import sys
 
 from osxcollector.osxcollector import DictUtils
+from osxcollector.output_filters.domains import clean_domain
 from osxcollector.output_filters.output_filter import MissingConfigError
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
@@ -13,26 +18,35 @@ class BlacklistFilter(OutputFilter):
 
     """Adds 'osxcollector_blacklist' key to lines matching a blacklist.
 
-    This filters compares each line of input to a set of blacklists and marks lines
-    that match the blacklist. This is useful for filtering known hashes, known bad kext, bad domains, etc.
+    This filters compares each line to a set of blacklists and marks lines that match the blacklist.
+    This is proving useful for filtering known hashes, known bad filenames, known bad domains, etc.
+
+    Configuation Keys:
+        blacklist_name       - [REQUIRED] the name of the blacklist
+        blacklist_keys       - [REQUIRED] get the value of these keys and compare against the blacklist
+        blacklist_is_regex   - [REQUIRED] should the values in the blacklist file be treated as regex
+        blacklist_file_path  - [REQUIRED] path to a file with the actual values to blacklist
+        blacklist_is_domains - [OPTIONAL] interpret values as domains and do some smart regex and subdomain stuff with them
     """
 
     def __init__(self):
         super(BlacklistFilter, self).__init__()
-        self._blacklist_config = self._init_config()
+        self._blacklists = self._init_blacklists()
 
-    def _init_config(self):
-        """Reads the config and builds a list of config dictionaries.
+    def _init_blacklists(self):
+        """Reads the config and builds a list of blacklist dictionaries.
 
         The blacklist config is sufficiently complex that much of this method deals with simply validating config
 
         Returns:
-            A list of config dicts. Each dict has the keys (blacklist_name, blacklist_keys, blacklist_values, blacklist_is_regex)
+            A list of config dicts.
+        Raises:
+            MissingConfigError - when required key does not exist.
         """
-        blacklist_config = []
-        for config_chunk in self.get_config('blacklists'):
+        blacklists = []
+        for config_chunk in self.config.get_config('blacklists'):
 
-            required_keys = ['blacklist_name', 'blacklist_keys', 'blacklist_is_regex', 'value_file']
+            required_keys = ['blacklist_name', 'blacklist_keys', 'blacklist_is_regex', 'blacklist_file_path']
             if not all([key in config_chunk.keys() for key in required_keys]):
                 raise MissingConfigError('Blacklist config is missing a required key.\nRequired keys are: {0}'.format(repr(required_keys)))
 
@@ -40,31 +54,42 @@ class BlacklistFilter(OutputFilter):
                 raise MissingConfigError('The value of \'blacklist_keys\' in Blacklist config must be a list')
 
             try:
-                with open(config_chunk['value_file'], 'r') as value_file:
-                    lines = [line.rstrip('\n') for line in value_file.readlines() if not line.startswith('#')]
-                    if config_chunk['blacklist_is_regex']:
-                        lines = [re.compile(self._alter_regex(line)) for line in lines]
+                blacklist_is_domains = config_chunk.get('blacklist_is_domains', False)
+                is_regex = blacklist_is_domains or config_chunk['blacklist_is_regex']
+
+                with open(config_chunk['blacklist_file_path'], 'r') as value_file:
+                    blacklisted_values = [line.rstrip('\n') for line in value_file.readlines() if not line.startswith('#')]
+                    if is_regex:
+                        blacklisted_values = [self._convert_to_regex(val, blacklist_is_domains) for val in blacklisted_values]
                     del config_chunk['value_file']
-                    config_chunk['blacklist_values'] = lines
+                    config_chunk['blacklist_values'] = blacklisted_values
             except IOError as e:
                 raise MissingConfigError(e.msg)
 
-            blacklist_config.append(config_chunk)
+            blacklists.append(config_chunk)
 
-        # sys.stderr.write(simplejson.dumps(blacklist_config, indent=2))
-        return blacklist_config
+        return blacklists
 
-    def _alter_regex(self, regex):
-        if self.get_config('domain_to_regex', False):
-            regex = '(.+\.)?{0}'.format(regex.replace('.', '\.').replace('-', '\-'))
-            sys.stderr.write(regex)
-            sys.stderr.write('\n')
-            sys.stderr.flush()
-        return regex
+    def _convert_to_regex(self, blacklisted_value, blacklist_is_domains):
+        """Convert a blacklisted_value to a regex.
+
+        Args:
+            blacklisted_value - string of value on a blacklist
+            blacklist_is_domains - Boolean if true, the blacklisted_value is treated as a domain.
+        Returns:
+            a compliled regex object
+        """
+        if self.get_config('blacklist_is_domains', False):
+            domain = clean_domain(blacklisted_value)
+            blacklisted_value = '(.+\.)?{0}'.format(domain.replace('.', '\.').replace('-', '\-'))
+        return re.compile(blacklisted_value)
 
     def filter_line(self, blob):
-        """Find blacklisted values in a line."""
-        for config_chunk in self._blacklist_config:
+        """Find blacklisted values in a line.
+
+        Lines are never cached, every line in produces a line out.
+        """
+        for config_chunk in self._blacklists:
             for key in config_chunk['blacklist_keys']:
                 values = DictUtils.get_deep(blob, key)
                 if not values:

@@ -19,11 +19,6 @@
 #  Non-fatal errors are only written to stderr when the --debug flag is passed to the script.
 #  They can also be found in the JSON output as lines with a key 'osxcollector_warn'
 #
-# TODO:
-# * Try to kill off processes like chrome and firefox
-# * Normalize/sanitize timezones
-# * Process NSDates in plists
-#
 
 import calendar
 import os

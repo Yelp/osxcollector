@@ -1,49 +1,26 @@
 # -*- coding: utf-8 -*-
+#
+# An OutputFilter transforms the output from OSXCollector.
+#
+
 import os
 import sys
 
 import simplejson
 import yaml
+from osxcollector.osxcollector import DictUtils
 
 
 class OutputFilter(object):
 
-    """An OutputFilter transforms the output from OSXCollector."""
+    """An OutputFilter transforms the output from OSXCollector.
+
+    Attributes:
+        _config: An instance of the Config
+    """
 
     def __init__(self):
-        """Reads a dict of config for the filter
-
-        Config is read from a YAML file named `osxcollector.yaml`
-
-        The file will be searched for first in the current directory, then in the
-        home directory for the user, then by reading the OSXCOLLECTOR_CONF environment var.
-
-        The config for each filter is it's own top level key in the YAML file.
-        The name of the toplevel key is the name of the filter class.
-        """
-        self._config = None
-
-        full_config = None
-        for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF'):
-            try:
-                with open(os.path.join(loc, 'osxcollector.yaml')) as source:
-                    full_config = yaml.load(source.read())
-                    break
-            except IOError:
-                pass
-
-        if full_config:
-            self._config_section = self.__class__.__name__
-            self._config = full_config.get(self._config_section)
-
-    def get_config(self, key, default=None):
-        try:
-            return self._config[key]
-        except Exception:
-            if default is not None:
-                return default
-
-            raise MissingConfigError('Missing value[{0}] from config section[{1}]'.format(key, self._config_section))
+        self.config = Config(self.__class__.__name__)
 
     def filter_line(self, blob):
         """Each Line of osxcollector output will be passed to filter_line.
@@ -52,7 +29,7 @@ class OutputFilter(object):
         The OutputFilter can also choose to return nothing, effectively swalling the line.
 
         Args:
-            output_line: A dict
+            blob: A dict representing one line of output from osxcollector
 
         Returns:
             A dict or None
@@ -70,18 +47,63 @@ class OutputFilter(object):
         return []
 
 
+class Config(object):
+
+    """Reads a config for the filter
+
+    Config is read from a YAML file named `osxcollector.yaml`
+
+    The file will be searched for first in the current directory, then in the
+    home directory for the user, then by reading the OSXCOLLECTOR_CONF environment var.
+    """
+
+    def __init__(self, filter_name):
+
+        self._config = None
+        for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF'):
+            try:
+                with open(os.path.join(loc, 'osxcollector.yaml')) as source:
+                    self._config = yaml.load(source.read())
+                    break
+            except IOError:
+                pass
+
+        if self._config:
+            self._filter_name = filter_name
+
+    def get_filter_config(self, key, default=None):
+        """Reads config from subsection of the YAML with the same name as the filter class.
+
+        Arguments:
+            key - A string in the 'parentKey.subKey.andThenUnderThat' format.
+            default - A default value to return if the key does not exist.
+
+        Raises:
+            MissingConfigError - when key does not exist and no default is supplied.
+        """
+        full_key = '{0}.{1}'.format(self._filter_name, key)
+        return self.get_config(full_key, default)
+
+    def get_config(self, key, default=None):
+        """Reads config from a top level key with the same name as the filter class.
+
+        Arguments:
+            key - A string in the 'parentKey.subKey.andThenUnderThat' format.
+            default - A default value to return if the key does not exist.
+
+        Raises:
+            MissingConfigError - when key does not exist and no default is supplied.
+        """
+        val = DictUtils.get_deep(self._config, key, default)
+        if not val:
+            raise MissingConfigError('Missing value[{0}]'.format(key))
+        return val
+
+
 class MissingConfigError(Exception):
 
     """An error to throw when configuration is missing"""
     pass
-
-
-def _unbuffered_stdin():
-    """Unbuffered read allows lines to be processed before EOF is reached"""
-    line = sys.stdin.readline()
-    while bool(line):
-        yield line.decode('latin-1')
-        line = sys.stdin.readline()
 
 
 def run_filter(output_filter):
@@ -90,6 +112,14 @@ def run_filter(output_filter):
     Args:
         output_filter: An instance of an OutputFilter
     """
+
+    def _unbuffered_stdin():
+        """Unbuffered read allows lines to be processed before EOF is reached"""
+        line = sys.stdin.readline()
+        while bool(line):
+            yield line.decode('latin-1')
+            line = sys.stdin.readline()
+
     for json_string in _unbuffered_stdin():
         try:
             blob = simplejson.loads(json_string)

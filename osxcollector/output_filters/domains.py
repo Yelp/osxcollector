@@ -1,9 +1,15 @@
 #!/usr/bin/env python
+
 # -*- coding: utf-8 -*-
+#
+# DomainsFilter looks for domains in all input lines and adds those domains into the 'osxcollector_domains' key.
+#
+
 import re
 from urllib import unquote_plus
 from urlparse import urlsplit
 
+import tldextract
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
 
@@ -43,11 +49,13 @@ class DomainsFilter(OutputFilter):
             if -1 != val.find('http'):
                 # Sometimes values are complex strings, like JSON or pickle encoded stuff.
                 # Try splitting the string on non-URL related punctuation
-                for part in re.split('[ \'\(\)\"\[\]\{\}\;\n\t]+', val):
-                    if part.startswith('http'):
-                        self._add_domain(part)
+                for maybe_url in re.split('[ \'\(\)\"\[\]\{\}\;\n\t]+', val):
+                    domain = self._url_to_domain(maybe_url)
+                    if domain:
+                        self._add_domain(domain)
             elif key in ['host', 'host_key']:
-                self._domains.add(val.rstrip('.').lstrip('.'))
+                domain = clean_domain(val)
+                self._add_domain(domain)
         elif isinstance(val, list):
             for elem in val:
                 self._look_for_domains(elem)
@@ -55,22 +63,49 @@ class DomainsFilter(OutputFilter):
             for key, elem in val.iteritems():
                 self._look_for_domains(elem, key)
 
-    def _add_domain(self, val):
-        """Accumulates domain names in self._domains
+    def _url_to_domain(self, maybe_url):
+        """Converts an URL to a domain.
 
-        The code deals with ecentricities of both unquote_plus and split_url
+        The code deals with ecentricities of both unquote_plus and split_url.
+
+        Args:
+            maybe_url - a string that might be an URL.
+        Returns:
+            a string representing the domain or None
         """
-        try:
-            url = unquote_plus(val).decode(encoding='utf-8', errors='ignore')
-        except Exception:
-            # In the case that a substring can't be unquoted, the potential domain is lost
-            return
+        if maybe_url.startswith('http'):
+            url = unquote_plus(maybe_url).decode(encoding='utf-8', errors='ignore')
 
-        split_url = urlsplit(url)
-        if split_url.hostname:
-            domain = split_url.hostname.split('\\')[-1].rstrip('.').lstrip('.')
-            if -1 != domain.find('.'):
-                self._domains.add(domain)
+            split_url = urlsplit(url)
+            if split_url.hostname:
+                try:
+                    return clean_domain(split_url.hostname)
+                except BadDomainError:
+                    pass
+
+        return None
+
+
+def clean_domain(unclean_domain):
+    """Removing errant characters and stuff from a domain name.
+
+    Args:
+        unclean_domain: string
+    Returns:
+        string domain name
+    Raises:
+        BadDomainError - when a clean domain can't be made
+    """
+    extracted = tldextract.extract(unclean_domain)
+    if extracted.domain and extracted.suffix:
+        return '.'.join(extracted)
+    raise BadDomainError('Can not clean {0}'.format(unclean_domain))
+
+
+class BadDomainError(Exception):
+
+    """An error to throw when a domain is invalid."""
+    pass
 
 
 def main():
