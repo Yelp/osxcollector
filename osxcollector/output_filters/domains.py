@@ -46,22 +46,23 @@ class DomainsFilter(OutputFilter):
             key: A string key associated with the value.
         """
         if isinstance(val, basestring):
-            if -1 != val.find('http'):
+            if -1 != self.SCHEMES.search(val):
                 # Sometimes values are complex strings, like JSON or pickle encoded stuff.
                 # Try splitting the string on non-URL related punctuation
-                for maybe_url in re.split('[ \'\(\)\"\[\]\{\}\;\n\t]+', val):
+                for maybe_url in re.split('[ \'\(\)\"\[\]\{\}\;\n\t#@\^&\*=]+', val):
                     domain = self._url_to_domain(maybe_url)
                     if domain:
-                        self._add_domain(domain)
+                        self._domains.add(domain)
             elif key in ['host', 'host_key']:
                 domain = clean_domain(val)
-                self._add_domain(domain)
+                self._domains.add(domain)
         elif isinstance(val, list):
             for elem in val:
                 self._look_for_domains(elem)
         elif isinstance(val, dict):
             for key, elem in val.iteritems():
                 self._look_for_domains(elem, key)
+                self._look_for_domains(key)
 
     def _url_to_domain(self, maybe_url):
         """Converts an URL to a domain.
@@ -73,7 +74,7 @@ class DomainsFilter(OutputFilter):
         Returns:
             a string representing the domain or None
         """
-        if maybe_url.startswith('http'):
+        if self.SCHEMES.match(maybe_url):
             url = unquote_plus(maybe_url).decode(encoding='utf-8', errors='ignore')
 
             split_url = urlsplit(url)
@@ -84,6 +85,8 @@ class DomainsFilter(OutputFilter):
                     pass
 
         return None
+
+    SCHEMES = re.compile('((https?)|ftp)')
 
 
 def clean_domain(unclean_domain):
@@ -98,7 +101,9 @@ def clean_domain(unclean_domain):
     """
     extracted = tldextract.extract(unclean_domain)
     if extracted.domain and extracted.suffix:
-        return '.'.join(extracted)
+        start_index = 1 if not extracted.subdomain else 0
+        domain = '.'.join(extracted[start_index:]).lstrip('.')
+        return domain
     raise BadDomainError('Can not clean {0}'.format(unclean_domain))
 
 

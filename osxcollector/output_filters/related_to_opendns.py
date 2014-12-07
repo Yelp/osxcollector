@@ -6,10 +6,10 @@ from osxcollector.output_filters.output_filter import OutputFilter
 # from osxcollector.osxcollector import DictUtils
 
 
-class RelatedToOpenDNS(OutputFilter):
+class RelatedToOpenDNSFilter(OutputFilter):
 
     def __init__(self, initial_domains=None, initial_ips=None, depth=1):
-        super(RelatedToOpenDNS, self).__init__()
+        super(RelatedToOpenDNSFilter, self).__init__()
         self._investigate = Investigate(self.get_config('api_key'))
 
         self._related_domains = set()

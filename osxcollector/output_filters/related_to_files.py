@@ -7,7 +7,7 @@ from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.output_filter import OutputFilter
 
 
-class RelatedToFiles(OutputFilter):
+class RelatedToFilesFilter(OutputFilter):
 
     FILE_NAME_KEYS = [
         'file_path',
@@ -15,33 +15,45 @@ class RelatedToFiles(OutputFilter):
     ]
 
     STOP_WORDS = [
-        'contents',  # 925
-        'malware',  # 898
-        'macos',  # 624
-        'library',  # 565
-        'system',  # 546
-        'extensions',  # 374
-        'users',  # 335
-        'downloads',  # 334
-        'plugins',  # 228
-        'applications',  # 193
-        'usr',  # 127
-        'resources',  # 93
-        'frameworks',  # 82
-        'libexec',  # 75
-        'coreservices',  # 72
-        'versions',  # 53
-        'sbin',  # 47
-        'utilities',  # 44
-        'privateframeworks',  # 41
-        'support',  # 26
-        'libraries',  # 11
-        'helpers',  # 11
-        'bin'  # 10
+        'applications',
+        'bin',
+        'contents',
+        'cores',
+        'coreservices',
+        'dev',
+        'downloads',
+        'extensions',
+        'frameworks',
+        'helpers',
+        'home',
+        'information',
+        'libexec',
+        'libraries',
+        'library',
+        'macos',
+        'malware',
+        'net',
+        'network',
+        'opt',
+        'plugins',
+        'private',
+        'privateframeworks',
+        'python',
+        'resources',
+        'sbin',
+        'support',
+        'system',
+        'tmp',
+        'user',
+        'users',
+        'usr',
+        'utilities',
+        'versions',
+        'var'
     ]
 
     def __init__(self, when, initial_terms=None):
-        super(RelatedToFiles, self).__init__()
+        super(RelatedToFilesFilter, self).__init__()
         self._all_blobs = list()
         self._terms = set()
         self._usernames = set()
@@ -71,11 +83,11 @@ class RelatedToFiles(OutputFilter):
         return None
 
     def end_of_lines(self):
-        look_for = list(self._terms - self._usernames)
+        self._terms = self._terms - self._usernames
 
         for blob in self._all_blobs:
             line = simplejson.dumps(blob).lower()
-            for term in look_for:
+            for term in self._terms:
                 if re.search(term, line):
                     blob.setdefault('osxcollector_related', [])
                     blob['osxcollector_related'].append('files')

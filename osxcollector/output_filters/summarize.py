@@ -11,8 +11,9 @@ from osxcollector.output_filters.firefox_history import FirefoxHistoryFilter
 from osxcollector.output_filters.opendns import OpenDNSFilter
 from osxcollector.output_filters.output_filter import OutputFilter
 from osxcollector.output_filters.output_filter import run_filter
-from osxcollector.output_filters.related_to_files import RelatedToFiles
-from osxcollector.output_filters.related_to_opendns import RelatedToOpenDNS
+from osxcollector.output_filters.related_to_files import RelatedToFilesFilter
+from osxcollector.output_filters. \
+    related_to_opendns import RelatedToOpenDNSFilter
 from osxcollector.output_filters.virustotal_hashes import VTHashesFilter
 
 
@@ -68,8 +69,8 @@ class SummarizeFilter(ChainFilter):
         filter_chain = [
             DomainsFilter(),
             BlacklistFilter(),
-            RelatedToFiles(initial_terms=initial_file_terms, when=is_on_blacklist),
-            RelatedToOpenDNS(initial_domains=initial_domains, initial_ips=initial_ips),
+            RelatedToFilesFilter(initial_terms=initial_file_terms, when=is_on_blacklist),
+            RelatedToOpenDNSFilter(initial_domains=initial_domains, initial_ips=initial_ips),
             OpenDNSFilter(is_suspicious_when=is_suspicious),
             # VTDomainsFilter(only_lookup_when=when_is_suspicious),
             VTHashesFilter(only_lookup_when=is_suspicious),
