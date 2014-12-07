@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import testify as T
-from osxcollector.output_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 
 class OutputFilterTest(T.TestCase):

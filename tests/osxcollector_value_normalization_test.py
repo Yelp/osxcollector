@@ -158,7 +158,7 @@ class NormalizeValueTestCase(T.TestCase):
         T.assert_equal(s, val)
 
     def test_normalize_unicode(self):
-        u = u'\u20AC'
+        u = '\u20AC'
         val = osxcollector._normalize_val(u)
         T.assert_true(isinstance(val, unicode))
 

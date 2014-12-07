@@ -14,7 +14,7 @@ from osxcollector.output_filters.opendns. \
     lookup_domains import LookupDomainsFilter as OpenDnsLookupDomainsFilter
 from osxcollector.output_filters.opendns. \
     related_domains import RelatedDomainsFilter as OpenDnsRelatedDomainsFilter
-from osxcollector.output_filters.related_to_files import RelatedToFilesFilter
+from osxcollector.output_filters.related_to_files import RelatedFilesFilter
 from osxcollector.output_filters.virustotal. \
     lookup_domains import LookupDomainsFilter as VtLookupDomainsFilter
 from osxcollector.output_filters.virustotal. \
@@ -30,7 +30,7 @@ class SummarizeFilter(ChainFilter):
             FindBlacklistedFilter(),
 
             # Find stuff related to suspicious stuff
-            RelatedToFilesFilter(initial_terms=initial_file_terms, when=is_on_blacklist),
+            RelatedFilesFilter(initial_terms=initial_file_terms, when=is_on_blacklist),
             OpenDnsRelatedDomainsFilter(initial_domains=initial_domains, initial_ips=initial_ips),
 
             # Lookup threat info on suspicious and related stuff

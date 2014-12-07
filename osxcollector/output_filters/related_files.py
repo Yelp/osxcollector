@@ -7,7 +7,7 @@ from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 
-class RelatedToFilesFilter(OutputFilter):
+class RelatedFilesFilter(OutputFilter):
 
     FILE_NAME_KEYS = [
         'file_path',
@@ -53,7 +53,7 @@ class RelatedToFilesFilter(OutputFilter):
     ]
 
     def __init__(self, when, initial_terms=None):
-        super(RelatedToFilesFilter, self).__init__()
+        super(RelatedFilesFilter, self).__init__()
         self._all_blobs = list()
         self._terms = set()
         self._usernames = set()

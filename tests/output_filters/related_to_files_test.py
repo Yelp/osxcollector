@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import testify as T
-from osxcollector.output_filters.related_to_files import RelatedToFilesFilter
+from osxcollector.output_filters.related_files import RelatedFilesFilter
 
 
 def when_anytime(blob):
@@ -37,7 +37,7 @@ class CreateTermsTest(T.TestCase):
         self._test_create_terms(initial_terms, expected, blob)
 
     def _test_create_terms(self, initial_terms, expected, blob=None):
-        output_filter = RelatedToFilesFilter(when=when_anytime, initial_terms=initial_terms)
+        output_filter = RelatedFilesFilter(when=when_anytime, initial_terms=initial_terms)
         if blob:
             output_filter.filter_line(blob)
         output_filter.end_of_lines()
@@ -50,7 +50,7 @@ class FindUserNamesTest(T.TestCase):
         blob = {'osxcollector_username': 'bob'}
         expected = ['bob']
 
-        output_filter = RelatedToFilesFilter(when=when_anytime)
+        output_filter = RelatedFilesFilter(when=when_anytime)
         output_filter.filter_line(blob)
         T.assert_equal(sorted(expected), sorted(output_filter._usernames))
 
@@ -63,7 +63,7 @@ class FindUserNamesTest(T.TestCase):
         ]
         expected = ['bob', 'jim']
 
-        output_filter = RelatedToFilesFilter(when=when_anytime)
+        output_filter = RelatedFilesFilter(when=when_anytime)
         for blob in blobs:
             output_filter.filter_line(blob)
         T.assert_equal(sorted(expected), sorted(output_filter._usernames))
