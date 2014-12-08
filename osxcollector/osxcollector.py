@@ -19,18 +19,11 @@
 #  Non-fatal errors are only written to stderr when the --debug flag is passed to the script.
 #  They can also be found in the JSON output as lines with a key 'osxcollector_warn'
 #
-# TODO:
-# * Try to kill off processes like chrome and firefox
-# * Normalize/sanitize timezones
-# * Process NSDates in plists
-#
 
-import Foundation
 import calendar
 import os
-import sys
 import shutil
-
+import sys
 from collections import namedtuple
 from datetime import datetime
 from datetime import timedelta
@@ -44,9 +37,11 @@ from optparse import OptionParser
 from sqlite3 import connect
 from sqlite3 import OperationalError
 from traceback import extract_tb
+
+import Foundation
 from xattr import getxattr
 
-__version__ = '1.0'
+__version__ = '1.2'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""

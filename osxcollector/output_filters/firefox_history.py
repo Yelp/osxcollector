@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import copy
-import simplejson
 
-from osxcollector.output_filters.output_filter import OutputFilter
-from osxcollector.output_filters.output_filter import run_filter
+# -*- coding: utf-8 -*-
+#
+# FirefoxHistoryFilter creates a clean sorted Firefox browser history and tags lines with {'osxcollector_browser_history': 'firefox'}
+#
+import copy
+
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
 class FirefoxHistoryFilter(OutputFilter):
@@ -22,26 +25,21 @@ class FirefoxHistoryFilter(OutputFilter):
         self._visits_table = dict()
         self._places_table = dict()
 
-    def filter_line(self, line):
+    def filter_line(self, blob):
         """Cache the 'visits' and 'urls' tables."""
-        try:
-            blob = simplejson.loads(line)
-        except Exception:
-            return line
-
         if 'firefox' == blob.get('osxcollector_section') and 'history' == blob.get('osxcollector_subsection'):
             table = blob.get('osxcollector_table_name')
 
             if 'moz_historyvisits' == table:
                 if self._validate_visit(blob):
                     self._visits_table[blob['place_id']] = blob
-                    line = None  # Consume the line
+                    blob = None  # Consume the line
             elif 'moz_places' == table:
                 if self._validate_places(blob):
                     self._places_table[blob['id']] = blob
-                    line = None  # Consume the line
+                    blob = None  # Consume the line
 
-        return line
+        return blob
 
     def end_of_lines(self):
         """Join the 'visits' and 'urls' tables into a single browser history and timeline."""
@@ -54,10 +52,11 @@ class FirefoxHistoryFilter(OutputFilter):
                 record = copy.deepcopy(place)
                 for key in add_keys:
                     record[key] = visit[key]
+                record['osxcollector_browser_history'] = 'firefox'
 
                 history.append(record)
 
-        return ['{0}\n'.format(simplejson.dumps(blob)) for blob in sorted(history, key=lambda x: x['last_visit_date'], reverse=True)]
+        return sorted(history, key=lambda x: x['last_visit_date'], reverse=True)
 
     @classmethod
     def _validate_visit(cls, blob):

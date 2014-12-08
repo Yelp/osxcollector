@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import simplejson
 
-from osxcollector.output_filters.output_filter import OutputFilter
-from osxcollector.output_filters.output_filter import run_filter
+# -*- coding: utf-8 -*-
+#
+# ChromeHistoryFilter creates a clean sorted Chrome browser history and tags lines with {'osxcollector_browser_history': 'chrome'}
+#
+from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
 class ChromeHistoryFilter(OutputFilter):
@@ -21,26 +23,21 @@ class ChromeHistoryFilter(OutputFilter):
         self._visits_table = dict()
         self._urls_table = dict()
 
-    def filter_line(self, line):
+    def filter_line(self, blob):
         """Cache the 'visits' and 'urls' tables."""
-        try:
-            blob = simplejson.loads(line)
-        except Exception:
-            return line
-
         if 'chrome' == blob.get('osxcollector_section') and 'history' == blob.get('osxcollector_subsection'):
             table = blob.get('osxcollector_table_name')
 
             if 'visits' == table:
                 if self._validate_visit(blob):
                     self._visits_table[blob['id']] = blob
-                    line = None  # Consume the line
+                    blob = None  # Consume the line
             elif 'urls' == table:
                 if self._validate_urls(blob):
                     self._urls_table[blob['id']] = blob
-                    line = None  # Consume the line
+                    blob = None  # Consume the line
 
-        return line
+        return blob
 
     def end_of_lines(self):
         """Join the 'visits' and 'urls' tables into a single browser history and timeline."""
@@ -55,7 +52,8 @@ class ChromeHistoryFilter(OutputFilter):
                     'last_visit_time': url['last_visit_time'],
                     'visit_time': visit['visit_time'],
                     'core_transition': self.PAGE_TRANSITION.get_core_transition(visit['transition']),
-                    'page_transition': self.PAGE_TRANSITION.get_qualifier_transitions(visit['transition'])
+                    'page_transition': self.PAGE_TRANSITION.get_qualifier_transitions(visit['transition']),
+                    'osxcollector_browser_history': 'chrome'
                 }
 
                 # Add all the OSXCollector specific keys to the record
@@ -68,7 +66,7 @@ class ChromeHistoryFilter(OutputFilter):
 
                 history.append(record)
 
-        return ['{0}\n'.format(simplejson.dumps(blob)) for blob in sorted(history, key=lambda x: x['last_visit_time'], reverse=True)]
+        return sorted(history, key=lambda x: x['last_visit_time'], reverse=True)
 
     @classmethod
     def _validate_visit(cls, blob):
@@ -184,7 +182,10 @@ class ChromeHistoryFilter(OutputFilter):
             Returns:
                 A string
             """
-            value = int(value) & cls.CORE_MASK
+            try:
+                value = int(value) & cls.CORE_MASK
+            except ValueError:
+                return 'ERROR'
 
             if cls.CORE_LINK == value:
                 return 'link'
@@ -242,7 +243,10 @@ class ChromeHistoryFilter(OutputFilter):
         def get_qualifier_transitions(cls, value):
             qualifiers = []
 
-            value = int(value) & cls.QUALIFIER_MASK
+            try:
+                value = int(value) & cls.QUALIFIER_MASK
+            except ValueError:
+                return qualifiers
 
             if cls.QUALIFIER_BLOCKED & value:
                 qualifiers.append('blocked')

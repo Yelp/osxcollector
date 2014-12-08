@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
-import testify as T
-
 from datetime import datetime
+
+import testify as T
 from osxcollector import osxcollector
 
 
@@ -158,7 +158,7 @@ class NormalizeValueTestCase(T.TestCase):
         T.assert_equal(s, val)
 
     def test_normalize_unicode(self):
-        u = u'\u20AC'
+        u = '\u20AC'
         val = osxcollector._normalize_val(u)
         T.assert_true(isinstance(val, unicode))
 

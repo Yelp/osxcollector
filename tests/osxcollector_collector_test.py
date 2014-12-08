@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import contextlib
+
 import mock
 import testify as T
-
 from osxcollector.osxcollector import Collector
 from osxcollector.osxcollector import HomeDir
 from osxcollector.osxcollector import Logger
@@ -55,8 +55,8 @@ class CollectorTestCase(T.TestCase):
     def test_log_launch_agents_just_program_no_arguments(self):
         # ProgramArguments value contains only program name
         expected = {
-            'label': u'com.apple.csuseragent',
-            'program': u'/System/Library/CoreServices/CSUserAgent',
+            'label': 'com.apple.csuseragent',
+            'program': '/System/Library/CoreServices/CSUserAgent',
             'osxcollector_plist': 'tests/data/launch_agents/csuseragent/csuseragent.plist'
         }
         self._test_log_launch_agents('tests/data/launch_agents/csuseragent/', expected)
@@ -64,8 +64,8 @@ class CollectorTestCase(T.TestCase):
     def test_log_launch_agents_program(self):
         # no ProgramArguments, program name is under Program key in plist
         expected = {
-            'label': u'com.apple.appleseed.seedusaged',
-            'program': u'/System/Library/CoreServices/Feedback Assistant.app/Contents/Library/LaunchServices/seedusaged',
+            'label': 'com.apple.appleseed.seedusaged',
+            'program': '/System/Library/CoreServices/Feedback Assistant.app/Contents/Library/LaunchServices/seedusaged',
             'osxcollector_plist': 'tests/data/launch_agents/seedusaged/seedusaged.plist'
         }
         self._test_log_launch_agents('tests/data/launch_agents/seedusaged/', expected)
@@ -73,9 +73,9 @@ class CollectorTestCase(T.TestCase):
     def test_log_launch_agents_program_and_arguments(self):
         # ProgramArguments value contains both program name arguments
         expected = {
-            'label': u'com.apple.VoiceOver',
-            'program': u'/System/Library/CoreServices/VoiceOver.app/Contents/MacOS/VoiceOver',
-            'arguments': [u'launchd', u'-s'],
+            'label': 'com.apple.VoiceOver',
+            'program': '/System/Library/CoreServices/VoiceOver.app/Contents/MacOS/VoiceOver',
+            'arguments': ['launchd', '-s'],
             'osxcollector_plist': 'tests/data/launch_agents/voice_over/com.apple.VoiceOver.plist'
         }
         self._test_log_launch_agents('tests/data/launch_agents/voice_over/', expected)

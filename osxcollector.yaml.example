@@ -17,10 +17,10 @@ BlacklistFilter:
      -  blacklist_name: "Bad Hashes"
         blacklist_keys:
          - "md5"
-        value_file: "/tmp/hash_blacklist.txt"
+        blacklist_file_path: "/tmp/hash_blacklist.txt"
         blacklist_is_regex: False
      -  blacklist_name: "Bad Domains"
         blacklist_keys: 
          - "osxcollector_domains"
-        value_file: "/tmp/domain_blacklist.txt"
-        blacklist_is_regex: True
+        blacklist_file_path: "/tmp/domain_blacklist.txt"
+        blacklist_is_domains: True
