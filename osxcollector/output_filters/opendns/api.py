@@ -19,10 +19,16 @@ def investigate_error_handling(fn):
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.RequestException as e:
             de_args = repr([a for a in args]) or ''
             de_kwargs = repr([(a, kwargs[a]) for a in kwargs]) or ''
-            sys.stderr.write('[ERROR calling {0} {1} {2}'.format(fn.__name__, de_args, de_kwargs))
+            sys.stderr.write('[ERROR calling {0} {1} {2}\n'.format(fn.__name__, de_args, de_kwargs))
+
+            if hasattr(e, 'response'):
+                sys.stderr.write('[ERROR request {0}\n'.format(repr(e.response)))
+            if hasattr(e, 'request'):
+                sys.stderr.write('[ERROR request {0}\n'.format(repr(e.request)))
+
             raise e
     return wrapper
 
