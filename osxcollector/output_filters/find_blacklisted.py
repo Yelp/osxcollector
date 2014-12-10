@@ -21,7 +21,7 @@ class FindBlacklistedFilter(OutputFilter):
     This filters compares each line to a set of blacklists and marks lines that match the blacklist.
     This is proving useful for filtering known hashes, known bad filenames, known bad domains, etc.
 
-    Configuation Keys:
+    Configuration Keys:
         blacklist_name       - [REQUIRED] the name of the blacklist
         blacklist_keys       - [REQUIRED] get the value of these keys and compare against the blacklist
         blacklist_is_regex   - [REQUIRED] should the values in the blacklist file be treated as regex
