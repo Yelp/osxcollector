@@ -45,14 +45,15 @@ class FindDomainsFilter(OutputFilter):
             key: A string key associated with the value.
         """
         if isinstance(val, basestring):
+            if key in self.HOST_KEYS:
+                self._add_domain(val)
+                return
             if -1 != self.SCHEMES.search(val):
                 # Sometimes values are complex strings, like JSON or pickle encoded stuff.
                 # Try splitting the string on non-URL related punctuation
                 for maybe_url in re.split('[ \'\(\)\"\[\]\{\}\;\n\t#@\^&\*=]+', val):
                     domain = self._url_to_domain(maybe_url)
                     self._add_domain(domain)
-            elif key in ['host', 'host_key']:
-                self._add_domain(domain)
         elif isinstance(val, list):
             for elem in val:
                 self._look_for_domains(elem)
@@ -93,6 +94,7 @@ class FindDomainsFilter(OutputFilter):
             pass
 
     SCHEMES = re.compile('((https?)|ftp)')
+    HOST_KEYS = ['host', 'host_key', 'baseDomain']
 
 
 def expand_domain(domain):
