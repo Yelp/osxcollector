@@ -88,6 +88,16 @@ class DomainsFilterTest(T.TestCase):
         ]
         self._test_look_for_domains(blob, expected)
 
+    def test_special_keys_domain(self):
+        blob = {'host': 'www.example.com'}
+        expected = ['www.example.com', 'example.com']
+        self._test_look_for_domains(blob, expected)
+
+    def test_special_keys_url(self):
+        blob = {'host': 'https://www.example.com'}
+        expected = ['www.example.com', 'example.com']
+        self._test_look_for_domains(blob, expected)
+
     def _test_look_for_domains(self, blob, domains):
         output = self._output_filter.filter_line(blob)
         T.assert_equal(sorted(output.get('osxcollector_domains', None)), sorted(domains))
