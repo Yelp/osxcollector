@@ -22,7 +22,7 @@ class LookupHashesFilter(ThreatFeedFilter):
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
         vt = VirusTotalApi(self._api_key)
-        reports = vt.get_domain_reports(self._all_iocs)
+        reports = vt.get_file_reports(self._all_iocs)
 
         for md5 in reports.keys():
             report = reports[md5]
