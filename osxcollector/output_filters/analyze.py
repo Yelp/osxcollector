@@ -20,10 +20,13 @@ from osxcollector.output_filters.virustotal. \
 from osxcollector.output_filters.virustotal. \
     lookup_hashes import LookupHashesFilter as VtLookupHashesFilter
 
+DEFAULT_RELATED_DOMAINS_DEPTH = 2
+
 
 class AnalyzeFilter(ChainFilter):
 
-    def __init__(self, initial_file_terms=None, initial_domains=None, initial_ips=None):
+    def __init__(self, initial_file_terms=None, initial_domains=None, initial_ips=None,
+                 related_domains_depth=DEFAULT_RELATED_DOMAINS_DEPTH):
         filter_chain = [
             # Find suspicious stuff
             FindDomainsFilter(),
@@ -34,9 +37,9 @@ class AnalyzeFilter(ChainFilter):
             OpenDnsRelatedDomainsFilter(initial_domains=initial_domains, initial_ips=initial_ips),
 
             # Lookup threat info on suspicious and related stuff
-            OpenDnsLookupDomainsFilter(is_suspicious_when=is_suspicious),
-            VtLookupDomainsFilter(only_lookup_when=is_suspicious),
-            VtLookupHashesFilter(only_lookup_when=is_suspicious),
+            OpenDnsLookupDomainsFilter(is_suspicious_when=is_suspicious_when_opendns),
+            VtLookupDomainsFilter(only_lookup_when=lookup_domains_in_vt_when),
+            VtLookupHashesFilter(only_lookup_when=lookup_hashes_in_vt_when),
 
             # Sort browser history for maximum pretty
             FirefoxHistoryFilter(),
@@ -48,8 +51,30 @@ class AnalyzeFilter(ChainFilter):
         super(AnalyzeFilter, self).__init__(filter_chain)
 
 
-def is_suspicious(blob):
-    return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob or 'quarantinues' == blob['osxcollector_section']
+def lookup_domains_in_vt_when(blob):
+    """VT lookup is slow. Only do it when it seems useful."""
+    if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup']:
+        return True
+    elif blob.get('osxcollector_subsection') in ['extension']:
+        return True
+    elif any([k in blob for k in ['osxcollector_virustotal', 'osxcollector_opendns', 'osxcollector_blacklist', 'osxcollector_related']]):
+        return True
+    return False
+
+
+def lookup_hashes_in_vt_when(blob):
+    """VT lookup is slow. Only do it when it seems useful."""
+    if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup', 'kext', 'applications']:
+        return True
+    elif blob.get('osxcollector_subsection') in ['extension']:
+        return True
+    elif any([k in blob for k in ['osxcollector_virustotal', 'osxcollector_opendns', 'osxcollector_blacklist', 'osxcollector_related']]):
+        return True
+    return False
+
+
+def is_suspicious_when_opendns(blob):
+    return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob
 
 
 def is_on_blacklist(blob):
@@ -107,9 +132,12 @@ def main():
                       help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
     parser.add_option('-i', '--ip', dest='ip_terms', default=[], action='append',
                       help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
+    parser.add_option('--related-domains-depth', dest='related_domains_depth', default=DEFAULT_RELATED_DOMAINS_DEPTH,
+                      help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
     options, _ = parser.parse_args()
 
-    run_filter(AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms, initial_ips=options.ip_terms))
+    run_filter(AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms,
+                             initial_ips=options.ip_terms, related_domains_depth=options.related_domains_depth))
 
 
 if __name__ == "__main__":

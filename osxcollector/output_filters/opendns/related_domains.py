@@ -34,12 +34,10 @@ class RelatedDomainsFilter(OutputFilter):
         related_domains = set()
 
         if domains:
-            for domain in self._investigate.cooccurrences(domains):
-                related_domains.add(domain)
+            related_domains.update(self._investigate.cooccurrences(domains))
 
         if ips:
-            for domain in self._investigate.rr_history(ips):
-                related_domains.add(domain)
+            related_domains.update(self._investigate.rr_history(ips))
 
         return related_domains
 
