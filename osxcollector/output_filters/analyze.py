@@ -51,13 +51,22 @@ class AnalyzeFilter(ChainFilter):
         super(AnalyzeFilter, self).__init__(filter_chain)
 
 
+_SUSPICIOUS_KEYS = [
+    'osxcollector_vthash',
+    'osxcollector_vtdomain',
+    'osxcollector_opendns',
+    'osxcollector_blacklist',
+    'osxcollector_related'
+]
+
+
 def lookup_domains_in_vt_when(blob):
     """VT lookup is slow. Only do it when it seems useful."""
     if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup']:
         return True
     elif blob.get('osxcollector_subsection') in ['extension']:
         return True
-    elif any([k in blob for k in ['osxcollector_virustotal', 'osxcollector_opendns', 'osxcollector_blacklist', 'osxcollector_related']]):
+    elif any([key in blob for key in _SUSPICIOUS_KEYS]):
         return True
     return False
 
@@ -68,7 +77,7 @@ def lookup_hashes_in_vt_when(blob):
         return True
     elif blob.get('osxcollector_subsection') in ['extension']:
         return True
-    elif any([k in blob for k in ['osxcollector_virustotal', 'osxcollector_opendns', 'osxcollector_blacklist', 'osxcollector_related']]):
+    elif any([key in blob for key in _SUSPICIOUS_KEYS]):
         return True
     return False
 
@@ -82,8 +91,7 @@ def is_on_blacklist(blob):
 
 
 def include_in_summary(blob):
-    interesting_keys = ['osxcollector_blacklist', 'osxcollector_related', 'osxcollector_opendns', 'osxcollector_virustotal']
-    return any([key in blob for key in interesting_keys])
+    return any([key in blob for key in _SUSPICIOUS_KEYS])
 
 
 class _SummaryOutputFilter(OutputFilter):

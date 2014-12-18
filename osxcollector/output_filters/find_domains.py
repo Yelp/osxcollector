@@ -121,12 +121,13 @@ def clean_domain(unclean_domain):
     Raises:
         BadDomainError - when a clean domain can't be made
     """
+
     extracted = tldextract.extract(unclean_domain)
-    if extracted.domain and extracted.suffix:
+    if bool(extracted.domain and extracted.suffix):
         start_index = 1 if not extracted.subdomain else 0
         domain = '.'.join(extracted[start_index:]).lstrip('.')
         return domain
-    raise BadDomainError('Can not clean {0}'.format(unclean_domain))
+    raise BadDomainError('Can not clean {0} {1}'.format(unclean_domain, repr(extracted)))
 
 
 class BadDomainError(Exception):

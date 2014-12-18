@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 #
-# LookupDomainsFilter uses VirusTotal to lookup the values in 'md5' and add 'osxcollector_virustotal' key.
+# LookupDomainsFilter uses VirusTotal to lookup the values in 'md5' and add 'osxcollector_vthash' key.
 #
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
@@ -15,7 +15,7 @@ class LookupHashesFilter(ThreatFeedFilter):
     """A class to find suspicious hashes using VirusTotal API."""
 
     def __init__(self, only_lookup_when=None, is_suspicious_when=None):
-        super(LookupHashesFilter, self).__init__('md5', 'osxcollector_virustotal',
+        super(LookupHashesFilter, self).__init__('sha2', 'osxcollector_vthash',
                                                  only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
                                                  api_key='virustotal')
 
@@ -24,12 +24,29 @@ class LookupHashesFilter(ThreatFeedFilter):
         vt = VirusTotalApi(self._api_key)
         reports = vt.get_file_reports(self._all_iocs)
 
-        for md5 in reports.keys():
-            report = reports[md5]
+        for hash_val in reports.keys():
+            report = reports[hash_val]
 
-            # TODO(ivanlei): Should score the VT results here and only add them if they're interesting
-            if 1 == report.get('response_code'):
-                self._threat_info_by_iocs[md5] = reports[md5]
+            if self._should_store_ioc_info(report):
+                self._threat_info_by_iocs[hash_val] = self._trim_hash_report(reports[hash_val])
+
+    def _should_store_ioc_info(self, report):
+        return 1 == report.get('response_code') and 1 < report.get('positives', 0)
+
+    def _trim_hash_report(self, report):
+        copy_keys = [
+            'scan_id',
+            'sha1',
+            'sha256',
+            'md5',
+            'scan_date',
+            'permalink',
+            'positives',
+            'total',
+            'response_code'
+        ]
+
+        return dict([(key, report.get(key)) for key in copy_keys])
 
 
 def main():
