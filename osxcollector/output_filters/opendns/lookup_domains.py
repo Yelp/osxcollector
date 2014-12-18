@@ -22,25 +22,29 @@ class LookupDomainsFilter(ThreatFeedFilter):
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
         investigate = InvestigateApi(self._api_key)
-        categorized = investigate.categorization(list(self._all_iocs))
 
-        for domain in categorized.keys():
-            categorized_info = categorized[domain]
-            if self._should_get_security_info(domain, categorized_info):
-                security = investigate.security(domain)
-                if self._should_store_ioc_info(categorized_info, security):
-                    self._threat_info_by_iocs[domain] = {
-                        'domain': domain,
-                        'categorization': categorized_info,
-                        'security': security,
-                        'link': 'https://investigate.opendns.com/domain-view/name/{0}/view'.format(domain)
-                    }
+        categorized_responses = investigate.categorization(list(self._all_iocs))
+        for domain in categorized_responses.keys():
+            if not self._should_get_security_info(domain, categorized_responses[domain]):
+                del categorized_responses[domain]
+
+        security_responses = investigate.security(categorized_responses.keys())
+        for domain in security_responses.keys():
+            if self._should_store_ioc_info(categorized_responses[domain], security_responses[domain]):
+                self._threat_info_by_iocs[domain] = {
+                    'domain': domain,
+                    'categorization': categorized_responses[domain],
+                    'security': security_responses[domain],
+                    'link': 'https://investigate.opendns.com/domain-view/name/{0}/view'.format(domain)
+                }
 
     def _should_get_security_info(self, domain, categorized_info):
         """Figure out whether the info on the domain is interesting enough to gather more data."""
         if categorized_info['is_suspicious']:
             return True
-        if 0 == categorized_info['status']:
+        if (0 == categorized_info['status'] and
+                0 == len(categorized_info.get('content_categories', [])) and
+                0 == len(categorized_info.get('security_categories', []))):
             return True
         if domain in self._suspicious_iocs:
             return True

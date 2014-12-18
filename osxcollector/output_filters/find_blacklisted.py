@@ -61,7 +61,7 @@ class FindBlacklistedFilter(OutputFilter):
                     blacklisted_values = []
                     for line in value_file.readlines():
                         if not line.startswith('#'):
-                            line = line.rstrip('\n')
+                            line = line.strip()
                             if line:
                                 blacklisted_values.append(line)
                     if is_regex:
