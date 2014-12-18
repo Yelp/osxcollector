@@ -30,10 +30,25 @@ class LookupHashesFilter(ThreatFeedFilter):
             if self._should_store_ioc_info(report):
                 self._threat_info_by_iocs[hash_val] = self._trim_hash_report(reports[hash_val])
 
-    def _should_store_ioc_info(self, report):
-        return 1 == report.get('response_code') and 1 < report.get('positives', 0)
+    def _should_store_ioc_info(self, report, min_hits=1):
+        """Only store if the hash has > min_hits positive detections.
+
+        Args:
+            report - A dict response from get_file_reports
+            min_hits - Minimum number of VT positives
+        Returns:
+            boolean
+        """
+        return 1 == report.get('response_code') and min_hits < report.get('positives', 0)
 
     def _trim_hash_report(self, report):
+        """Copy just the required keys from the report into a new report.
+
+        Args:
+            report - A dict response from get_file_reports
+        Returns:
+            A smaller dict
+        """
         copy_keys = [
             'scan_id',
             'sha1',
