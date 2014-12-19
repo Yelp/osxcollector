@@ -16,6 +16,8 @@ blacklists:
  -  blacklist_name: "Bad Hashes"
     blacklist_keys:
      - "md5"
+     - "sha1"
+     - "sha2"
     blacklist_file_path: "/tmp/hash_blacklist.txt"
     blacklist_is_regex: False
  -  blacklist_name: "Bad Domains"
@@ -24,3 +26,13 @@ blacklists:
     blacklist_file_path: "/tmp/domain_blacklist.txt"
     blacklist_is_regex: False
     blacklist_is_domains: True
+
+# domain_whitelist is a special blacklist entry. Anything on this list won't be looked up with
+# OpenDNS or VirusTotal
+domain_whitelist:
+    blacklist_name: "Ignore Domains"
+    blacklist_keys:
+     - "osxcollector_domains"
+    blacklist_file_path: "/tmp/domain_whitelist.txt"
+    blacklist_is_domains: True
+    blacklist_is_regex: True

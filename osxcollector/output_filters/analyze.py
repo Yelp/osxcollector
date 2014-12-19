@@ -62,17 +62,17 @@ _SUSPICIOUS_KEYS = [
 
 def lookup_domains_in_vt_when(blob):
     """VT lookup is slow. Only do it when it seems useful."""
-    if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup']:
+    if any([key in blob for key in ['osxcollector_opendns', 'osxcollector_blacklist']]):
         return True
-    elif blob.get('osxcollector_subsection') in ['extension']:
+    if 'osxcollector_related' in blob and 'files' in blob.get['osxcollector_related']:
         return True
-    elif any([key in blob for key in _SUSPICIOUS_KEYS]):
-        return True
-    return False
 
 
 def lookup_hashes_in_vt_when(blob):
-    """VT lookup is slow. Only do it when it seems useful."""
+    """VT lookup is slow. Only do it when it seems useful.
+
+    TODO(ivanlei): Add an option to lookup all hashes
+    """
     if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup', 'kext', 'applications']:
         return True
     elif blob.get('osxcollector_subsection') in ['extension']:

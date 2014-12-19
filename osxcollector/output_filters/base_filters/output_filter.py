@@ -86,7 +86,7 @@ class Config(object):
         return self.get_config(full_key, default)
 
     def get_config(self, key, default=None):
-        """Reads config from a top level key with the same name as the filter class.
+        """Reads config from a top level key.
 
         Arguments:
             key - A string in the 'parentKey.subKey.andThenUnderThat' format.
@@ -117,7 +117,7 @@ def run_filter(output_filter):
         """Unbuffered read allows lines to be processed before EOF is reached"""
         line = sys.stdin.readline()
         while bool(line):
-            yield line.decode('latin-1', errors='ignore')
+            yield line.decode('latin-1', errors='ignore').encode('utf-8', errors='ignore')
             line = sys.stdin.readline()
 
     for json_string in _unbuffered_stdin():

@@ -225,10 +225,21 @@ class InvestigateApi(object):
             if key in security_info:
                 result[key] = security_info[key]
 
+        result['found'] = security_info.get('found', False)
+
         return result
 
     def _is_security_suspicious(self, security_info):
-        """Analyzes info from opendns and makes a boolean determination of suspicious or not."""
+        """Analyzes info from opendns and makes a boolean determination of suspicious or not.
+
+        Either looks for low values for a specific set of properties, looks for known participation in
+        a threat campaign, or looks for unknown domains.
+
+        Args:
+            security_info - The result of a call to the security endpoint
+        Returns:
+            boolean
+        """
         # Categorization of site
         if any([security_info.get(key, None) for key in self.SECURITY_BAD_KEYS]):
             return True
@@ -237,7 +248,7 @@ class InvestigateApi(object):
             if security_info.get(security_check.key, security_check.max) <= security_check.threshold:
                 return True
 
-        if 0 == security_info.get('securerank2', 0):
+        if not security_info.get('found', False):
             return True
 
         return False
