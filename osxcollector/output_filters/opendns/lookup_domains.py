@@ -3,7 +3,6 @@
 # -*- coding: utf-8 -*-
 #
 # LookupDomainsFilter uses OpenDNS to lookup the values in 'osxcollector_domains' and add 'osxcollector_opendns' key.
-# To avoid
 #
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
