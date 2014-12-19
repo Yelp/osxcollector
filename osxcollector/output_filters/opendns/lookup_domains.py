@@ -7,6 +7,7 @@
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.find_blacklisted import create_blacklist
 from osxcollector.output_filters.opendns.api import InvestigateApi
 
 
@@ -18,14 +19,18 @@ class LookupDomainsFilter(ThreatFeedFilter):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns',
                                                   only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
                                                   api_key='opendns')
+        self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
     def _lookup_iocs(self):
-        """Caches the OpenDNS info for a set of domains"""
+        """Caches the OpenDNS info for a set of domains.
+
+        Domains on a whitelist will be ignored.
+        """
         investigate = InvestigateApi(self._api_key)
 
         categorized_responses = investigate.categorization(list(self._all_iocs))
         for domain in categorized_responses.keys():
-            if not self._should_get_security_info(domain, categorized_responses[domain]):
+            if self._whitelist.match_values(domain) or not self._should_get_security_info(domain, categorized_responses[domain]):
                 del categorized_responses[domain]
 
         security_responses = investigate.security(categorized_responses.keys())
@@ -39,7 +44,18 @@ class LookupDomainsFilter(ThreatFeedFilter):
                 }
 
     def _should_get_security_info(self, domain, categorized_info):
-        """Figure out whether the info on the domain is interesting enough to gather more data."""
+        """Figure out whether the info on the domain is interesting enough to gather more data.
+
+        If the domain is already suspicious, get security info.
+        If the domain isn't categorized, get security info.
+        If the domain is related to suspicious_iocs, get security info.
+
+        Args:
+            domain - A string domain
+            categorized_info - A dict of info returned by the OpenDNS categorization call
+        Returns:
+            boolean
+        """
         if categorized_info['is_suspicious']:
             return True
         if (0 == categorized_info['status'] and
@@ -51,7 +67,14 @@ class LookupDomainsFilter(ThreatFeedFilter):
         return False
 
     def _should_store_ioc_info(self, categorized_info, security):
-        """Figure out whether the data gathered is interesting enough to store in the output."""
+        """Figure out whether the data gathered is interesting enough to store in the output.
+
+        Args:
+            categorized_info - A dict of info returned by the OpenDNS categorization call
+            security - A dict of info returned by the OpenDNS security call
+        Returns:
+            boolean
+        """
         return categorized_info['is_suspicious'] or security['is_suspicious']
 
 

@@ -12,6 +12,15 @@ class RelatedDomainsFilter(OutputFilter):
     """Uses OpenDNS to find domains related to input domains or ips."""
 
     def __init__(self, initial_domains=None, initial_ips=None, depth=2):
+        """Finds domains related to domains and IPs passed in.
+
+        Args:
+            initial_domains - a list of strings
+            initial_ips - a list of strings
+            depth - an int. How many generations of related domains to retreive. Passing 1
+              means just find the domains related to the initial input. Passing 2 means also find the
+              domains related to the domains related to the initial input.
+        """
         super(RelatedDomainsFilter, self).__init__()
         self._investigate = InvestigateApi(self.config.get_config('api_key.opendns'))
 

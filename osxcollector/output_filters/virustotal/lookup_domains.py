@@ -7,6 +7,7 @@
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.find_blacklisted import create_blacklist
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
@@ -18,12 +19,16 @@ class LookupDomainsFilter(ThreatFeedFilter):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_vtdomain',
                                                   only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
                                                   api_key='virustotal')
+        self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
         vt = VirusTotalApi(self._api_key)
         reports = vt.get_domain_reports(self._all_iocs)
         for domain in reports.keys():
+            if self._whitelist.match_values(domain):
+                continue
+
             trimmed_report = self._trim_domain_report(domain, reports[domain])
             if self._should_store_ioc_info(trimmed_report):
                 self._threat_info_by_iocs[domain] = trimmed_report

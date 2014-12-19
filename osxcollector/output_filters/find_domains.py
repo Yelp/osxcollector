@@ -5,6 +5,7 @@
 # FindDomainsFilter looks for domains in all input lines and adds those domains into the 'osxcollector_domains' key.
 #
 import re
+import sys
 from urllib import unquote_plus
 from urlparse import urlsplit
 
@@ -90,7 +91,9 @@ class FindDomainsFilter(OutputFilter):
             domain = clean_domain(domain)
             for extracted in expand_domain(domain):
                 self._domains.add(extracted)
-        except BadDomainError:
+        except BadDomainError as e:
+            sys.stderr.write(e.message)
+            sys.stderr.write('\n')
             pass
 
     SCHEMES = re.compile('((https?)|ftp)')
@@ -122,12 +125,12 @@ def clean_domain(unclean_domain):
         BadDomainError - when a clean domain can't be made
     """
 
-    extracted = tldextract.extract(unclean_domain)
+    extracted = tldextract.extract(unclean_domain.encode('utf-8'))
     if bool(extracted.domain and extracted.suffix):
         start_index = 1 if not extracted.subdomain else 0
         domain = '.'.join(extracted[start_index:]).lstrip('.')
         return domain
-    raise BadDomainError('Can not clean {0} {1}'.format(unclean_domain, repr(extracted)))
+    raise BadDomainError('Can not clean {0} {1}'.format(unclean_domain.encode('utf-8'), repr(extracted)))
 
 
 class BadDomainError(Exception):
