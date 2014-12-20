@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sys
 from optparse import OptionParser
 
 import simplejson
@@ -26,7 +27,8 @@ DEFAULT_RELATED_DOMAINS_DEPTH = 2
 class AnalyzeFilter(ChainFilter):
 
     def __init__(self, initial_file_terms=None, initial_domains=None, initial_ips=None,
-                 related_domains_depth=DEFAULT_RELATED_DOMAINS_DEPTH):
+                 related_domains_depth=DEFAULT_RELATED_DOMAINS_DEPTH,
+                 monochrome=False):
         filter_chain = [
             # Find suspicious stuff
             FindDomainsFilter(),
@@ -46,7 +48,8 @@ class AnalyzeFilter(ChainFilter):
             ChromeHistoryFilter(),
 
             # Summarize what has happened
-            _SummaryOutputFilter(),
+            _OutputToFileFilter(),
+            _VeryReadableOutputFilter(monochrome=monochrome),
         ]
         super(AnalyzeFilter, self).__init__(filter_chain)
 
@@ -64,7 +67,7 @@ def lookup_domains_in_vt_when(blob):
     """VT lookup is slow. Only do it when it seems useful."""
     if any([key in blob for key in ['osxcollector_opendns', 'osxcollector_blacklist']]):
         return True
-    if 'osxcollector_related' in blob and 'files' in blob.get['osxcollector_related']:
+    if 'osxcollector_related' in blob and 'files' in blob.get('osxcollector_related'):
         return True
 
 
@@ -94,10 +97,10 @@ def include_in_summary(blob):
     return any([key in blob for key in _SUSPICIOUS_KEYS])
 
 
-class _SummaryOutputFilter(OutputFilter):
+class _OutputToFileFilter(OutputFilter):
 
     def __init__(self):
-        super(_SummaryOutputFilter, self).__init__()
+        super(_OutputToFileFilter, self).__init__()
         self._all_blobs = list()
 
     def filter_line(self, blob):
@@ -123,13 +126,189 @@ class _SummaryOutputFilter(OutputFilter):
         Returns:
             An array of dicts (empty array if no lines remain)
         """
-        with open('./analyze.json', 'w') as fp:
-            for blob in self._all_blobs:
-                if include_in_summary(blob):
+        if len(self._all_blobs):
+            incident_id = self._all_blobs[0]['osxcollector_incident_id']
+
+            with open('./analyze_{0}.json'.format(incident_id), 'w') as fp:
+                for blob in self._all_blobs:
+                    # if include_in_summary(blob):
                     fp.write(simplejson.dumps(blob))
                     fp.write('\n')
 
         return self._all_blobs
+
+
+class _VeryReadableOutputFilter(OutputFilter):
+
+    def __init__(self, monochrome=False):
+        super(_VeryReadableOutputFilter, self).__init__()
+        self._vthash = []
+        self._vtdomain = []
+        self._opendns = []
+        self._blacklist = []
+        self._related = []
+        self._monochrome = monochrome
+        self._to_blacklist = []
+
+    def filter_line(self, blob):
+        """Each Line of osxcollector output will be passed to filter_line.
+
+        The OutputFilter should return the line, either modified or unmodified.
+        The OutputFilter can also choose to return nothing, effectively swalling the line.
+
+        Args:
+            output_line: A dict
+
+        Returns:
+            A dict or None
+        """
+        if 'osxcollector_vthash' in blob:
+            self._vthash.append(blob)
+        if 'osxcollector_vtdomain' in blob:
+            self._vtdomain.append(blob)
+        if 'osxcollector_opendns' in blob:
+            self._opendns.append(blob)
+        if 'osxcollector_blacklist' in blob:
+            self._blacklist.append(blob)
+        if 'osxcollector_related' in blob:
+            self._related.append(blob)
+
+        return None
+
+    END_COLOR = '\033[0m'
+    SECTION_COLOR = '\033[1m'
+    BOT_COLOR = '\033[93m\033[1m'
+    KEY_COLOR = '\033[94m'  # END_COLOR
+    VAL_COLOR = '\033[32m'
+
+    def _write(self, msg, color=END_COLOR):
+        if not self._monochrome:
+            sys.stdout.write(color)
+        sys.stdout.write(msg)
+        if not self._monochrome:
+            sys.stdout.write(self.END_COLOR)
+
+    def end_of_lines(self):
+        """Called after all lines have been fed to filter_output_line.
+
+        The OutputFilter can do any batch processing on that requires the complete input.
+
+        Returns:
+            An array of dicts (empty array if no lines remain)
+        """
+        self._write('== Very Readable Output Bot ==\n', self.BOT_COLOR)
+        self._write('Let\'s see what\'s up with this machine.\n\n', self.BOT_COLOR)
+
+        # Known Bad Hashes
+        if len(self._vthash):
+            self._write('Dang! You\'ve got known malware on this machine. Hope it\'s commodity stuff\n', self.BOT_COLOR)
+            self._summarize_blobs(self._vthash)
+            self._write('Sheesh! This is why we can\'t have nice things!\n\n', self.BOT_COLOR)
+
+        # Known Bad Domains
+        if len(self._vtdomain):
+            self._write('I see you\'ve been visiting some \'questionable\' sites. If you trust VirusTotal that is.\n', self.BOT_COLOR)
+            self._summarize_blobs(self._vtdomain)
+            self._write('I hope it was worth it!\n\n', self.BOT_COLOR)
+
+        # Known Bad Domains
+        if len(self._opendns):
+            self._write('Well, here\'s somes domains OpenDNS wouldn\'t recommend.\n', self.BOT_COLOR)
+            self._summarize_blobs(self._opendns)
+            self._write('You know you shouldn\'t just click every link you see? #truth\n\n', self.BOT_COLOR)
+
+        # Blacklisted Stuff
+        if len(self._blacklist):
+            self._write('We put stuff on a blacklist for a reason. Mostly so you don\'t do this.\n', self.BOT_COLOR)
+            self._summarize_blobs(self._blacklist)
+            self._write('SMH\n\n', self.BOT_COLOR)
+
+        # Related Stuff
+        if len(self._related):
+            self._write('This whole things started with just a few clues. Now look what I found.\n', self.BOT_COLOR)
+            self._summarize_blobs(self._related)
+            self._write('Nothing hides from Very Readable Output Bot\n\n', self.BOT_COLOR)
+
+        if len(self._to_blacklist):
+            self._to_blacklist = list(set(self._to_blacklist))
+            self._write('If I were you, I\'d probably update my blacklists to include:\n', self.BOT_COLOR)
+            for key, val in self._to_blacklist:
+                self._summarize_val(key, val)
+            self._write('That might just help things, Skippy!\n\n', self.BOT_COLOR)
+
+        self._write('== Very Readable Output Bot ==\n', self.BOT_COLOR)
+        self._write('#kaythanksbye', self.BOT_COLOR)
+
+        return []
+
+    def _summarize_blobs(self, blobs):
+        for blob in blobs:
+            self._summarize_line(blob)
+
+            if 'osxcollector_vthash' in blob:
+                self._summarize_vthash(blob)
+
+                blacklists = blob.get('osxcollector_blacklist', [])
+                if 'hashes' not in blacklists:
+                    for key in ['md5', 'sha1', 'sha2']:
+                        if key in blob:
+                            self._to_blacklist.append((key, blob[key]))
+                if 'domains' not in blacklists:
+                    if 'osxcollector_domains' in blob:
+                        self._to_blacklist.extend([('domain', domain) for domain in blob['osxcollector_domains']])
+            if 'osxcollector_vtdomain' in blob:
+                self._summarize_vtdomain(blob)
+            if 'osxcollector_opendns' in blob:
+                self._summarize_opendns(blob)
+            if 'osxcollector_blacklist' in blob:
+                self._summarize_val('blacklist', blob.get('osxcollector_blacklist'))
+            if 'osxcollector_related' in blob:
+                self._summarize_val('related', blob.get('osxcollector_related'))
+
+    def _summarize_line(self, blob):
+        section = blob.get('osxcollector_section')
+        subsection = blob.get('osxcollector_subsection', '')
+
+        self._write('- {0} {1}\n'.format(section, subsection), self.SECTION_COLOR)
+        for key in sorted(blob.keys()):
+            if not key.startswith('osxcollector') and blob.get(key):
+                val = blob.get(key)
+                self._summarize_val(key, val)
+
+    def _summarize_vthash(self, blob):
+        for blob in blob['osxcollector_vthash']:
+            for key in ['positives', 'total', 'scan_date', 'permalink']:
+                val = blob.get(key)
+                self._summarize_val(key, val, 'vthash')
+
+    def _summarize_vtdomain(self, blob):
+        for blob in blob['osxcollector_vtdomain']:
+            for key in ['domain', 'detections']:
+                val = blob.get(key)
+                self._summarize_val(key, val, 'vtdomain')
+
+    def _summarize_opendns(self, blob):
+        for blob in blob['osxcollector_opendns']:
+            for key in sorted(blob.keys()):
+                val = blob.get(key)
+                self._summarize_val(key, val, 'opendns')
+
+    def _summarize_val(self, key, val, prefix=None):
+        if not prefix:
+            prefix = ''
+        else:
+            prefix += '-'
+
+        if isinstance(val, basestring):
+            val = val.encode(encoding='utf-8', errors='ignore')
+        else:
+            val = repr(val)
+        val = val[:480]
+
+        self._write('  {0}{1}'.format(prefix, key), self.KEY_COLOR)
+        self._write(': "')
+        self._write('{0}'.format(val), self.VAL_COLOR)
+        self._write('"\n')
 
 
 def main():
@@ -142,11 +321,18 @@ def main():
                       help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
     parser.add_option('--related-domains-depth', dest='related_domains_depth', default=DEFAULT_RELATED_DOMAINS_DEPTH,
                       help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
+    parser.add_option('--readout', dest='readout', action='store_true', default=False,
+                      help='[OPTIONAL] Skip the analysis and just output really readable analysis')
+    parser.add_option('-M', '--monochrome', dest='monochrome', action='store_true', default=False,
+                      help='[OPTIONAL] Output monochrome analysis')
     options, _ = parser.parse_args()
 
-    run_filter(AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms,
-                             initial_ips=options.ip_terms, related_domains_depth=options.related_domains_depth))
-
+    if not options.readout:
+        run_filter(AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms,
+                                 initial_ips=options.ip_terms, related_domains_depth=options.related_domains_depth,
+                                 monochrome=options.monochrome))
+    else:
+        run_filter(_VeryReadableOutputFilter(monochrome=options.monochrome))
 
 if __name__ == "__main__":
     main()
