@@ -26,9 +26,8 @@ class LookupHashesFilter(ThreatFeedFilter):
 
         for hash_val in reports.keys():
             report = reports[hash_val]
-
             if self._should_store_ioc_info(report):
-                self._threat_info_by_iocs[hash_val] = self._trim_hash_report(reports[hash_val])
+                self._threat_info_by_iocs[hash_val] = self._trim_hash_report(report)
 
     def _should_store_ioc_info(self, report, min_hits=1):
         """Only store if the hash has > min_hits positive detections.

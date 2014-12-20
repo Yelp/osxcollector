@@ -33,7 +33,7 @@ class AnalyzeFilter(ChainFilter):
             FindBlacklistedFilter(),
 
             # Find stuff related to suspicious stuff
-            RelatedFilesFilter(initial_terms=initial_file_terms, when=is_on_blacklist),
+            RelatedFilesFilter(initial_terms=initial_file_terms, when=find_related_files_when),
             OpenDnsRelatedDomainsFilter(initial_domains=initial_domains, initial_ips=initial_ips),
 
             # Lookup threat info on suspicious and related stuff
@@ -86,8 +86,22 @@ def is_suspicious_when_opendns(blob):
     return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob
 
 
-def is_on_blacklist(blob):
-    return 'osxcollector_blacklist' in blob
+def find_related_files_when(blob):
+    """When to break a file path into terms to search for.
+
+    Blacklisted file paths are worth investigating.
+    Files where the md5 could not be calculated are also interesting. Root should be able to read files.
+
+    Args:
+        blob - a line of output from OSXCollector
+    Returns:
+        boolean
+    """
+    if 'osxcollector_blacklist' in blob:
+        return True
+    if '' == blob.get('md5', None):
+        return True
+    return False
 
 
 def include_in_summary(blob):
