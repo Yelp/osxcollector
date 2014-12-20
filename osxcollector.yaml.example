@@ -13,14 +13,14 @@ api_key:
 #  - blacklist_is_regex, should values in the file be treated as Python regex
 #  - blacklist_is_domains, should values in the file be treated as domains and analyzed with some smart regex to retrieve subdomain etc.
 blacklists:
- -  blacklist_name: "Bad Hashes"
+ -  blacklist_name: "hashes"
     blacklist_keys:
      - "md5"
      - "sha1"
      - "sha2"
     blacklist_file_path: "/tmp/hash_blacklist.txt"
     blacklist_is_regex: False
- -  blacklist_name: "Bad Domains"
+ -  blacklist_name: "domains"
     blacklist_keys: 
      - "osxcollector_domains"
     blacklist_file_path: "/tmp/domain_blacklist.txt"
