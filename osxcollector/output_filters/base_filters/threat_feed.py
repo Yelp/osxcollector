@@ -67,6 +67,9 @@ class ThreatFeedFilter(OutputFilter):
 
             is_suspicious = self._is_suspicious_when and self._is_suspicious_when(blob)
             for ioc in ioc_list:
+                if not len(ioc):
+                    continue
+
                 self._all_iocs.add(ioc)
                 if is_suspicious:
                     self._suspicious_iocs.add(ioc)
