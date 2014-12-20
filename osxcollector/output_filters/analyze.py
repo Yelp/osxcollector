@@ -1,5 +1,27 @@
 #!/usr/bin/env python
+
 # -*- coding: utf-8 -*-
+#
+# The AnalyzeFilter is a handy little tool that ties together many filters to attempt to
+# enahnce the output of OSXCollector with data from threat APIs, compare against blacklists,
+# search for lines related to suspicious domains, ips, or files, and generally figure shit out.
+#
+# The more detailed description of what goes on:
+#  1. Find all the domains in every line. Add them to the output lines.
+#  2. Find any file hashes or domains that are on blacklists. Mark those lines.
+#  3. Take any filepaths from the command line and mark all lines related to those.
+#  4. Take any domain or IP from the command line and use OpenDNS Investigate API to find all the domains
+#     related to those domains and all the domains related to those related domains - basically the 1st and 2nd
+#     generation related domains. Mark any lines where these domains appear.
+#  5. Lookup all the domains in the file with OpenDNS Investigate. Categorize and score the domains.
+#     Mark all the lines that contain domains that were scored as "suspicious".
+#  6. Lookup suspicious domains, those domains on a blacklist, or those related to the initial input in VirusTotal.
+#  7. Lookup file hashes in VirusTotal and mark any lines with suspicious files hashes.
+#  8. Cleanup the browser history and sort it in descending time order.
+#  9. Save all the enhanced output to a new file.
+# 10. Look at all the interesting lines in the file and try to summarize them in some very human readable output.
+# 11. Party!
+#
 import sys
 from optparse import OptionParser
 
@@ -26,7 +48,10 @@ DEFAULT_RELATED_DOMAINS_DEPTH = 2
 
 class AnalyzeFilter(ChainFilter):
 
-    def __init__(self, initial_file_terms=None, initial_domains=None, initial_ips=None,
+    def __init__(self,
+                 initial_file_terms=None,
+                 initial_domains=None,
+                 initial_ips=None,
                  related_domains_depth=DEFAULT_RELATED_DOMAINS_DEPTH,
                  monochrome=False):
         filter_chain = [
@@ -67,6 +92,7 @@ def lookup_domains_in_vt_when(blob):
     """VT lookup is slow. Only do it when it seems useful."""
     if any([key in blob for key in ['osxcollector_opendns', 'osxcollector_blacklist']]):
         return True
+    # TODO(ivanlei): Should this be anything in 'osxcollector_related'
     if 'osxcollector_related' in blob and 'files' in blob.get('osxcollector_related'):
         return True
 
@@ -74,7 +100,7 @@ def lookup_domains_in_vt_when(blob):
 def lookup_hashes_in_vt_when(blob):
     """VT lookup is slow. Only do it when it seems useful.
 
-    TODO(ivanlei): Add an option to lookup all hashes
+    TODO(ivanlei): Maybe just lookup all hashes.
     """
     if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup', 'kext', 'applications']:
         return True
@@ -148,7 +174,7 @@ class _VeryReadableOutputFilter(OutputFilter):
         self._blacklist = []
         self._related = []
         self._monochrome = monochrome
-        self._to_blacklist = []
+        self._add_to_blacklist = []
 
     def filter_line(self, blob):
         """Each Line of osxcollector output will be passed to filter_line.
@@ -178,7 +204,7 @@ class _VeryReadableOutputFilter(OutputFilter):
     END_COLOR = '\033[0m'
     SECTION_COLOR = '\033[1m'
     BOT_COLOR = '\033[93m\033[1m'
-    KEY_COLOR = '\033[94m'  # END_COLOR
+    KEY_COLOR = '\033[94m'
     VAL_COLOR = '\033[32m'
 
     def _write(self, msg, color=END_COLOR):
@@ -199,40 +225,35 @@ class _VeryReadableOutputFilter(OutputFilter):
         self._write('== Very Readable Output Bot ==\n', self.BOT_COLOR)
         self._write('Let\'s see what\'s up with this machine.\n\n', self.BOT_COLOR)
 
-        # Known Bad Hashes
         if len(self._vthash):
             self._write('Dang! You\'ve got known malware on this machine. Hope it\'s commodity stuff\n', self.BOT_COLOR)
             self._summarize_blobs(self._vthash)
             self._write('Sheesh! This is why we can\'t have nice things!\n\n', self.BOT_COLOR)
 
-        # Known Bad Domains
         if len(self._vtdomain):
             self._write('I see you\'ve been visiting some \'questionable\' sites. If you trust VirusTotal that is.\n', self.BOT_COLOR)
             self._summarize_blobs(self._vtdomain)
             self._write('I hope it was worth it!\n\n', self.BOT_COLOR)
 
-        # Known Bad Domains
         if len(self._opendns):
             self._write('Well, here\'s somes domains OpenDNS wouldn\'t recommend.\n', self.BOT_COLOR)
             self._summarize_blobs(self._opendns)
             self._write('You know you shouldn\'t just click every link you see? #truth\n\n', self.BOT_COLOR)
 
-        # Blacklisted Stuff
         if len(self._blacklist):
             self._write('We put stuff on a blacklist for a reason. Mostly so you don\'t do this.\n', self.BOT_COLOR)
             self._summarize_blobs(self._blacklist)
             self._write('SMH\n\n', self.BOT_COLOR)
 
-        # Related Stuff
         if len(self._related):
             self._write('This whole things started with just a few clues. Now look what I found.\n', self.BOT_COLOR)
             self._summarize_blobs(self._related)
             self._write('Nothing hides from Very Readable Output Bot\n\n', self.BOT_COLOR)
 
-        if len(self._to_blacklist):
-            self._to_blacklist = list(set(self._to_blacklist))
+        if len(self._add_to_blacklist):
+            self._add_to_blacklist = list(set(self._add_to_blacklist))
             self._write('If I were you, I\'d probably update my blacklists to include:\n', self.BOT_COLOR)
-            for key, val in self._to_blacklist:
+            for key, val in self._add_to_blacklist:
                 self._summarize_val(key, val)
             self._write('That might just help things, Skippy!\n\n', self.BOT_COLOR)
 
@@ -252,10 +273,10 @@ class _VeryReadableOutputFilter(OutputFilter):
                 if 'hashes' not in blacklists:
                     for key in ['md5', 'sha1', 'sha2']:
                         if key in blob:
-                            self._to_blacklist.append((key, blob[key]))
+                            self._add_to_blacklist.append((key, blob[key]))
                 if 'domains' not in blacklists:
                     if 'osxcollector_domains' in blob:
-                        self._to_blacklist.extend([('domain', domain) for domain in blob['osxcollector_domains']])
+                        self._add_to_blacklist.extend([('domain', domain) for domain in blob['osxcollector_domains']])
             if 'osxcollector_vtdomain' in blob:
                 self._summarize_vtdomain(blob)
             if 'osxcollector_opendns' in blob:
