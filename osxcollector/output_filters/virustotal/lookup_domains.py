@@ -13,12 +13,11 @@ from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 class LookupDomainsFilter(ThreatFeedFilter):
 
-    """A class to find suspicious hashes using VirusTotal API."""
+    """A class to lookup hashes using VirusTotal API."""
 
-    def __init__(self, only_lookup_when=None, is_suspicious_when=None):
+    def __init__(self, lookup_when=None, suspicious_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_vtdomain',
-                                                  only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
-                                                  api_key='virustotal')
+                                                  lookup_when=lookup_when, suspicious_when=suspicious_when, api_key='virustotal')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
     def _lookup_iocs(self):
