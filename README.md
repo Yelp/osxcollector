@@ -72,11 +72,13 @@ The collector outputs a `.tar.gz` containing all the collected artifacts. The ar
 
 #### Common Keys
 
+##### Every Record
 Each line of the JSON file records 1 _piece of information_.  There are some common keys that appear in every JSON record:
 * `osxcollector_incident_id`: A unique ID shared by every record.
 * `osxcollector_section`: The _section_ or type of data this record holds.
 * `osxcollector_subsection`: The _subsection_ or more detailed descriptor of the type of data this record holds.
 
+##### File Records
 For records representing files there are a bunch of useful keys:
 * `ctime`: The file creation time.
 * `mtime`: The file modified time.
@@ -89,6 +91,7 @@ For records representing downloaded files:
 * `xattr-wherefrom`: A list containing the source and referrer URLs for the downloaded file.
 * `xattr-quarantines`: A string describing which application downloaded the file.
 
+##### Sqllite Records
 For records representing a row of a sqllite database:
 * `osxcollector_table_name`: The table name the row comes from.
 * `osxcollector_db_path`: The absolute path to the sqllite file.
@@ -97,18 +100,18 @@ For records that represent data associated with a specific user:
 * `osxcollector_username`: The name of the user
 
 #### Timestamps
-
 OSXCollector attempts to convert timestamps to human readable date/time strings in the format `YYYY-mm-dd hh:MM:ss`. It uses heuristics to automatically identify various timestamps:
 * seconds since epoch
 * milliseconds since epoch
 * seconds since 2001-01-01
 * seconds since 1601-01-01
 
-#### `version` section
+#### Sections
+##### `version` section
 
 The current version of OSXCollector.
 
-#### `system_info` section
+##### `system_info` section
 
 Collects basic information about the system:
 
@@ -118,13 +121,13 @@ Collects basic information about the system:
  - version
  - machine
 
-#### `kext` section
+##### `kext` section
 
 Collects the Kernel extensions from:
 - `/System/Library/Extensions`
 - '/Library/Extensions'
 
-#### `startup` section
+##### `startup` section
 
 Collects information about the
 [LaunchAgents](https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man5/launchd.plist.5.html),
@@ -146,7 +149,7 @@ and other login items from:
 More information about the Max OS X startup can be found here:
 http://www.malicious-streams.com/article/Mac_OSX_Startup.pdf
 
-#### `applications` section
+##### `applications` section
 
 Hashes installed applications and gathers install history from:
 
@@ -154,7 +157,7 @@ Hashes installed applications and gathers install history from:
  - `~/Applications`
  - `/Library/Receipts/InstallHistory.plist`
 
-#### `quarantines`
+##### `quarantines` section
 
 Quarantines are basically the info necessary to show the 'Are you sure you wanna
 run this?' when a user is trying to open a file downloaded from the internet.
@@ -168,7 +171,7 @@ for quarantines files. The plist is at:
 XProtect also add minimum versions for Internet Plugins. That plist is at:
 `/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/XProtect.meta.plist`
 
-#### `downloads` section
+##### `downloads` section
 
 Hashes all users' downloaded files from:
 
@@ -176,7 +179,7 @@ Hashes all users' downloaded files from:
  - `~/Library/Mail Downloads`
  - `~/Library/Containers/com.apple.mail/Data/Library/Mail Downloads`
 
-#### `chrome` section
+##### `chrome` section
 
 Collects following information from Google Chrome web browser:
 
@@ -189,7 +192,7 @@ Collects following information from Google Chrome web browser:
 
 This data is extracted from `~/Library/Application Support/Google/Chrome/Default`
 
-#### `firefox` section
+##### `firefox` section
 
 Collects information from the different SQLite databases in a Firefox profile:
 
@@ -210,7 +213,7 @@ This information is extracted from `~/Library/Application Support/Firefox/Profil
 For more details about Firefox profile folder see
 http://kb.mozillazine.org/Profile_folder_-_Firefox
 
-#### `safari` section
+##### `safari` section
 
 Collects information from the different plist and SQLite databases in a Safari
 profile:
@@ -220,7 +223,7 @@ profile:
  - Databases
  - Local Storage
 
-#### `accounts` section
+##### `accounts` section
 Collects information about users' accounts:
 
  - system admins: `/private/var/db/dslocal/nodes/Default/groups/admin.plist`
@@ -228,7 +231,7 @@ Collects information about users' accounts:
  - social accounts: `~/Library/Accounts/Accounts3.sqlite`
  - users' recent items: `~/Library/Preferences/com.apple.recentitems.plist`
 
-#### `mail` section
+##### `mail` section
 Hashes files in the mail app directories:
 
  - `~/Library/Mail`
