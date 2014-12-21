@@ -26,7 +26,7 @@ Output in osxcollect-2014_12_21-08_49_39.tar.gz
 The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for handoff to an analyst.
 
 `osxcollector.py` also has a lot of useful options to change how collection works:
-* <code color="red">-i INCIDENT_PREFIX</code>/<code color="red">--id=INCIDENT_PREFIX</code>:
+* <p color="red">-i INCIDENT_PREFIX</p>/<p color="red">--id=INCIDENT_PREFIX</p>:
   Sets an identifier which is used as the prefix of the output file. The default value is `osxcollect`.
   ```shell
   $ sudo osxcollector.py -i IncontinentSealord
