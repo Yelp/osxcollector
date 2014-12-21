@@ -1,28 +1,35 @@
-# OSXCollector
-## [Visit our wiki for more info!](https://github.com/Yelp/osxcollector/wiki)
+# OSXCollector Manual
+OSXCollector is a forensice evidence collection & analysis toolkit for OSX.
 
-## How'd that malware get there?
+### Forensic Collection
+The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local filesystem.
 
-That's the question you've got to answer for every OSX malware infection. We built OSXCollector to make that easy. With automated analysis of collected
+### Forensic Analysis
+Armed with the forensic collection, an analyst can answer the question like:
+* _Is this machine infected?_
+* _How'd that malware get there?_
+* _How can I prevent and detect further infection?_
 
-A typical infection might follow a path like:
+Yelp automates the analysis of most OSXCollector runs converting OSXCollector output into an easily readable and actionable summary of _just the suspicious stuff_.
 
- 1. a phishing email leads to a malicious download
- 2. once installed, the initial payload establishes persistence
- 3. then it reaches out on the network and pulls down additional payloads
+# Performing Collection
+`osxcollector.py` is a single Python file that runs without any dependencies on a standard OSX machine. This makes it really easy to run collection on any machine - no fussing with brew, pip, config files, or environment variables. Just copy the single file onto the machine and run it.
 
-With the output of OSXCollector we quickly correlate between browser history, startup items, downloads, and installed applications. It makes root causing an infection, collect IOCs, and get to the bottom of an infection.
+`sudo osxcollector.py` is all it takes.
+```shell
+$ sudo osxcollector.py
+Wrote 35394 lines.
+Output in osxcollect-2014_12_21-08_49_39.tar.gz
+```
 
-## So what does it do?
+# Details of Collection
 
-### Evidence Collection
-OSXCollector gathers information from plists, sqlite databases and the local filesystem. The output is JSON which makes it easy to process further with other tools.
+# Performing Analysis
 
-### Automated Analysis
-Yelp automates the forensic analysis of most OSXCollector runs. Check out the [output filters](https://github.com/Yelp/osxcollector/wiki/Automated-Analysis-With-Output-Filters) we use at Yelp to automate analysis.
+# Automated Analysis
 
-[Visit our wiki for more info!](https://github.com/Yelp/osxcollector/wiki)
+# Contributing to OSXCollector
 
-## License
+# License
 
 This work is licensed under the GNU General Public License and a derivation of [https://github.com/jipegit/OSXAuditor](https://github.com/jipegit/OSXAuditor)
