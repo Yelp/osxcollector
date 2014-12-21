@@ -38,7 +38,7 @@ The JSON output of the collector, along with some helpful files like system logs
 * `-p ROOTPATH`/`--path=ROOTPATH`:
   Sets the path to the root of the filesystem to run collection on. The default value is `/`. This is great for running collection on the image of a disk.
   ```shell
-  $ sudo osxcollector.py -p /mnt/powned
+  $ sudo osxcollector.py -p '/mnt/powned'
   ```
 
 * `-s SECTION`/`--section=SECTION`:
@@ -57,7 +57,7 @@ The JSON output of the collector, along with some helpful files like system logs
   * `mail`
 
   ```shell
-  $ sudo osxcollector.py -s startup -s downloads
+  $ sudo osxcollector.py -s 'startup' -s 'downloads'
   ```
 
 * `-d`/`--debug`:
@@ -125,7 +125,7 @@ Collects basic information about the system:
 
 Collects the Kernel extensions from:
 - `/System/Library/Extensions`
-- '/Library/Extensions'
+- `/Library/Extensions`
 
 ##### `startup` section
 
@@ -237,11 +237,121 @@ Hashes files in the mail app directories:
  - `~/Library/Mail`
  - `~/Library/Mail Downloads`
 
-## Performing Analysis
+## Basic Manual Analysis
+Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.
+
+Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
+
+#### Timestamps
+
+Simply grepping a few minutes before and after a timestamp works great:
+
+```shell
+$ cat INCIDENT32.json | grep '2014-01-01 11:3[2-8]'
+```
+
+#### Browser History
+
+It's in there. A tool like [jq](http://stedolan.github.io/jq/) can be very helpful to do some fancy output:
+
+```shell
+$ cat INCIDENT32.json | grep '2014-01-01 11:3[2-8]' | jq 'select(has("url"))|.url'
+```
+
+#### A Single User
+
+```shell
+$ cat INCIDENT32.json | jq 'select(.osxcollector_username=="ivanlei")|.'
+```
 
 ## Automated Analysis
+The `osxcollector.output_filters` package contains filters that process and transform the output of OSXCollector. The goal of filters is to make it easier to understand output.
+
+Each filter has a single purpose. They do one thing and they do it right.
+
+#### Running Filters
+Unlike `osxcollector.py` filters have dependencies that aren't already installed on a new Mac. The best solution for ensure dependencies can be found is to use virtualenv.
+
+To setup a virtualenv for the first time use:
+```
+$ sudo pip install virtualenv
+$ virtualenv --system-site-packages venv_osxcollector
+$ source ./venv_osxcollector/bin/activate
+$ sudo pip install -r ./requirements-dev.txt
+```
+
+#### Filter Configuration
+Many filters require configuration, like API keys or details on a blacklist. The configuration for filters is done in a YAML file. The file is named `osxcollector.yaml`. The filter will look for the config file in:
+- The current directory.
+- The user's home directory
+- The path pointed to by the environment variable OSXCOLLECTOR_CONF
+
+#### DomainsFilter
+`osxcollector.output_filters.domains` attempts to find domain names in a line. Any domains that are found are added to the line with the key `osxcollector_domains`. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | jq 'select(has("osxcollector_domains"))'
+```
+
+#### ChromeHistoryFilter
+`osxcollector.output_filters.chome_history` builds a really nice Chrome browser history sorted in descending time order. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
+```
+
+#### FirefoxHistoryFilter
+`osxcollector.output_filters.firefox_history` builds a really nice Firefox browser history sorted in descending time order. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.firefox_history | jq 'select(.osxcollector_section=="firefox" and .osxcollector_subsection=="history" and .osxcollector_table_name =="moz_places")'
+```
+
+#### OpenDNSFilter
+`osxcollector.output_filters.opendns` lookups domains with OpenDNS. Domains associated with suspicious categories are futher enhanced with additional OpenDNS data. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | python -m osxcollector.output_filters.opendns | jq 'select(has("osxcollector_opendns"))'
+```
+
+#### VTHashesFilter
+`osxcollector.output_filters.virustotal_hashes` lookups md5 hashes with VirusTotal. Run it as:
+```
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.virustotal_hashes | jq 'select(has("osxcollector_vt_hashes"))'
+```
+
+#### BlacklistFilter
+`osxcollector.output_filters.blacklist` reads a set of blacklists from the `osxcollector.yaml` and marks any lines with values on the blacklist. The BlacklistFilter allows for multiple blacklists to be compared against at once. Each blacklists requires:
+ - blacklist_name, A name
+ - blacklist_keys, JSON paths. These can be of the form "a.b" to look at "b" in {"a": {"b": "foo"}}
+ - value_file, the path to a file containing values considered blacklisted. Any line starting with # is skipped
+ - blacklist_is_regex, should values in the file be treated as Python regex
+
+Run it as:
+```shell
+$ cat INCIDENT32.json | python -m osxcollector.output_filters.blacklist | jq 'select(has("osxcollector_blacklist"))'
+```
 
 ## Contributing to OSXCollector
+We encourage you to extend the functionality of OSXCollector to suit your needs.
+
+#### Testing OSXCollector
+A collection of tests for osxcollector is provided under the `tests` directory. In order to run these tests you must install [tox](https://pypi.python.org/pypi/tox):
+```shell
+$ sudo pip install tox
+```
+
+To run this suit of tests, `cd` into `osxcollector` and enter:
+```shell
+$ make test
+```
+
+Please note that tox will fail to run if osxcollector is stored under a path containing white spaces.
+  Bad Path  -> "/path/to/my files/osxcollector"
+  Good Path -> "/path/to/my_files/osxcollector"
+
+#### Development Tips
+The functionality of OSXCollector is stored in a single file: `osxcollector.py`.
+
+Ensure that all of the osxcollector tests pass before editing the source code. You can run the tests using: `make test`
+
+After making changes to the source code, run `make test` again to verify that your changes did not break any of the tests.
 
 ## License
 This work is licensed under the GNU General Public License and a derivation of [https://github.com/jipegit/OSXAuditor](https://github.com/jipegit/OSXAuditor)
