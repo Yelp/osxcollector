@@ -1,5 +1,5 @@
 # OSXCollector Manual
-OSXCollector is a forensice evidence collection & analysis toolkit for OSX.
+OSXCollector is a forensic evidence collection & analysis toolkit for OSX.
 
 #### Forensic Collection
 The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local filesystem.
