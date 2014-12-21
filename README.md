@@ -26,7 +26,7 @@ Output in osxcollect-2014_12_21-08_49_39.tar.gz
 The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for handoff to an analyst.
 
 `osxcollector.py` also has a lot of useful options to change how collection works:
-* `-i INCIDENT_PREFIX`/`--id=INCIDENT_PREFIX`:
+* <div color="red">`-i INCIDENT_PREFIX`</div>/`--id=INCIDENT_PREFIX`:
   Sets an identifier which is used as the prefix of the output file. The default value is `osxcollect`.
   ```shell
   $ sudo osxcollector.py -i IncontinentSealord
@@ -35,13 +35,13 @@ The JSON output of the collector, along with some helpful files like system logs
   ```
   Get creative with incident names, it makes it easier to laugh through the pain.
 
-* `-p ROOTPATH`/`--path=ROOTPATH`
+* `-p ROOTPATH`/`--path=ROOTPATH`:
   Sets the path to the root of the filesystem to run collection on. The default value is `/`. This is great for running collection on the image of a disk.
   ```shell
   $ sudo osxcollector.py -p /mnt/powned
   ```
 
-* `-s SECTION`/`--section=SECTION`
+* `-s SECTION`/`--section=SECTION`:
   Runs only a portion of the full collection. Can be specified more than once. The full list of sections is:
   * `version`
   * `system_info`
@@ -56,12 +56,16 @@ The JSON output of the collector, along with some helpful files like system logs
   * `accounts`
   * `mail`
 
-  ```
+  ```shell
   $ sudo osxcollector.py -s startup -s downloads
   ```
 
-* `-d`/`--debug`
+* `-d`/`--debug`:
   Enables verbose output and python breakpoints. If something is wrong with OSXCollector, try this.
+
+  ```shell
+  $ sudo osxcollector.py -d
+  ```
 
 ## Details of Collection
 
