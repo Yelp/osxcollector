@@ -1189,8 +1189,6 @@ def main():
     parser = OptionParser(usage='usage: %prog [options]', version='%prog ' + __version__)
     parser.add_option('-i', '--id', dest='incident_prefix', default='osxcollect',
                       help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
-    parser.add_option('-o', '--outputfile', dest='output_file_name', default=None,
-                      help='[OPTIONAL] Name of the output file. Default name uses the timestamp. Try \'/dev/stdout\' for fun!')
     parser.add_option('-p', '--path', dest='rootpath', default='/',
                       help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited by default.')
     parser.add_option('-s', '--section', dest='section_list', default=[], action='append',
@@ -1215,7 +1213,7 @@ def main():
     os.makedirs(output_directory)
 
     # Create an output file name
-    output_file_name = options.output_file_name or pathjoin(output_directory, '{0}.json'.format(incident_id))
+    output_file_name = pathjoin(output_directory, '{0}.json'.format(incident_id))
 
     # Collect information from plists and sqlite dbs and such
     with open(output_file_name, 'w') as output_file:
