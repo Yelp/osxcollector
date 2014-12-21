@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Osxcollector : A forensic evidence collection &amp; analysis toolkit for OSX">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Osxcollector</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/Yelp/osxcollector">View on GitHub</a>
+
+          <h1 id="project_title">Osxcollector</h1>
+          <h2 id="project_tagline">A forensic evidence collection &amp; analysis toolkit for OSX</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/Yelp/osxcollector/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/Yelp/osxcollector/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="osxcollector-manual" class="anchor" href="#osxcollector-manual" aria-hidden="true"><span class="octicon octicon-link"></span></a>OSXCollector Manual</h1>
+
+<p>OSXCollector is a forensic evidence collection &amp; analysis toolkit for OSX.</p>
+
+<h4>
+<a id="forensic-collection" class="anchor" href="#forensic-collection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Forensic Collection</h4>
+
+<p>The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local filesystem.</p>
+
+<h4>
+<a id="forensic-analysis" class="anchor" href="#forensic-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Forensic Analysis</h4>
+
+<p>Armed with the forensic collection, an analyst can answer the question like:</p>
+
+<ul>
+<li><em>Is this machine infected?</em></li>
+<li><em>How'd that malware get there?</em></li>
+<li><em>How can I prevent and detect further infection?</em></li>
+</ul>
+
+<p>Yelp automates the analysis of most OSXCollector runs converting OSXCollector output into an easily readable and actionable summary of <em>just the suspicious stuff</em>.</p>
+
+<h2>
+<a id="performing-collection" class="anchor" href="#performing-collection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Performing Collection</h2>
+
+<p><code>osxcollector.py</code> is a single Python file that runs without any dependencies on a standard OSX machine. This makes it really easy to run collection on any machine - no fussing with brew, pip, config files, or environment variables. Just copy the single file onto the machine and run it.</p>
+
+<p><code>sudo osxcollector.py</code> is all it takes.</p>
+
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py
+Wrote 35394 lines.
+Output <span class="pl-k">in</span> osxcollect-2014_12_21-08_49_39.tar.gz</pre></div>
+
+<p>The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for handoff to an analyst.</p>
+
+<p><code>osxcollector.py</code> also has a lot of useful options to change how collection works:</p>
+
+<ul>
+<li>
+<p><code>-i INCIDENT_PREFIX</code>/<code>--id=INCIDENT_PREFIX</code>:
+Sets an identifier which is used as the prefix of the output file. The default value is <code>osxcollect</code>.</p>
+
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -i IncontinentSealord
+Wrote 35394 lines.
+Output <span class="pl-k">in</span> IncontinentSealord-2014_12_21-08_49_39.tar.gz</pre></div>
+
+<p>Get creative with incident names, it makes it easier to laugh through the pain.</p>
+</li>
+<li>
+<p><code>-p ROOTPATH</code>/<code>--path=ROOTPATH</code>:
+Sets the path to the root of the filesystem to run collection on. The default value is <code>/</code>. This is great for running collection on the image of a disk.</p>
+
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -p <span class="pl-s1"><span class="pl-pds">'</span>/mnt/powned<span class="pl-pds">'</span></span></pre></div>
+</li>
+<li>
+<p><code>-s SECTION</code>/<code>--section=SECTION</code>:
+Runs only a portion of the full collection. Can be specified more than once. The full list of sections is:</p>
+
+<ul>
+<li><code>version</code></li>
+<li><code>system_info</code></li>
+<li><code>kext</code></li>
+<li><code>startup</code></li>
+<li><code>applications</code></li>
+<li><code>quarantines</code></li>
+<li><code>downloads</code></li>
+<li><code>chrome</code></li>
+<li><code>firefox</code></li>
+<li><code>safari</code></li>
+<li><code>accounts</code></li>
+<li><code>mail</code></li>
+</ul>
+
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -s <span class="pl-s1"><span class="pl-pds">'</span>startup<span class="pl-pds">'</span></span> -s <span class="pl-s1"><span class="pl-pds">'</span>downloads<span class="pl-pds">'</span></span></pre></div>
+</li>
+<li>
+<p><code>-d</code>/<code>--debug</code>:
+Enables verbose output and python breakpoints. If something is wrong with OSXCollector, try this.</p>
+
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -d</pre></div>
+</li>
+</ul>
+
+<h2>
+<a id="details-of-collection" class="anchor" href="#details-of-collection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Details of Collection</h2>
+
+<p>The collector outputs a <code>.tar.gz</code> containing all the collected artifacts. The archive contains a JSON file with the majority of information.  Additionally, a set of useful logs from the target system logs are included.</p>
+
+<h4>
+<a id="common-keys" class="anchor" href="#common-keys" aria-hidden="true"><span class="octicon octicon-link"></span></a>Common Keys</h4>
+
+<h5>
+<a id="every-record" class="anchor" href="#every-record" aria-hidden="true"><span class="octicon octicon-link"></span></a>Every Record</h5>
+
+<p>Each line of the JSON file records 1 <em>piece of information</em>.  There are some common keys that appear in every JSON record:</p>
+
+<ul>
+<li>
+<code>osxcollector_incident_id</code>: A unique ID shared by every record.</li>
+<li>
+<code>osxcollector_section</code>: The <em>section</em> or type of data this record holds.</li>
+<li>
+<code>osxcollector_subsection</code>: The <em>subsection</em> or more detailed descriptor of the type of data this record holds.</li>
+</ul>
+
+<h5>
+<a id="file-records" class="anchor" href="#file-records" aria-hidden="true"><span class="octicon octicon-link"></span></a>File Records</h5>
+
+<p>For records representing files there are a bunch of useful keys:</p>
+
+<ul>
+<li>
+<code>ctime</code>: The file creation time.</li>
+<li>
+<code>mtime</code>: The file modified time.</li>
+<li>
+<code>file_path</code>: The absolute path to the file.</li>
+<li>
+<code>md5</code>: MD5 hash of the file contents.</li>
+<li>
+<code>sha1</code>: SHA1 hash of the file contents.</li>
+<li>
+<code>sha2</code>: SHA2 hash of the file contents.</li>
+</ul>
+
+<p>For records representing downloaded files:</p>
+
+<ul>
+<li>
+<code>xattr-wherefrom</code>: A list containing the source and referrer URLs for the downloaded file.</li>
+<li>
+<code>xattr-quarantines</code>: A string describing which application downloaded the file.</li>
+</ul>
+
+<h5>
+<a id="sqllite-records" class="anchor" href="#sqllite-records" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sqllite Records</h5>
+
+<p>For records representing a row of a sqllite database:</p>
+
+<ul>
+<li>
+<code>osxcollector_table_name</code>: The table name the row comes from.</li>
+<li>
+<code>osxcollector_db_path</code>: The absolute path to the sqllite file.</li>
+</ul>
+
+<p>For records that represent data associated with a specific user:</p>
+
+<ul>
+<li>
+<code>osxcollector_username</code>: The name of the user</li>
+</ul>
+
+<h4>
+<a id="timestamps" class="anchor" href="#timestamps" aria-hidden="true"><span class="octicon octicon-link"></span></a>Timestamps</h4>
+
+<p>OSXCollector attempts to convert timestamps to human readable date/time strings in the format <code>YYYY-mm-dd hh:MM:ss</code>. It uses heuristics to automatically identify various timestamps:</p>
+
+<ul>
+<li>seconds since epoch</li>
+<li>milliseconds since epoch</li>
+<li>seconds since 2001-01-01</li>
+<li>seconds since 1601-01-01</li>
+</ul>
+
+<h4>
+<a id="sections" class="anchor" href="#sections" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sections</h4>
+
+<h5>
+<a id="version-section" class="anchor" href="#version-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>version</code> section</h5>
+
+<p>The current version of OSXCollector.</p>
+
+<h5>
+<a id="system_info-section" class="anchor" href="#system_info-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>system_info</code> section</h5>
+
+<p>Collects basic information about the system:</p>
+
+<ul>
+<li>system name</li>
+<li>node name</li>
+<li>release</li>
+<li>version</li>
+<li>machine</li>
+</ul>
+
+<h5>
+<a id="kext-section" class="anchor" href="#kext-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>kext</code> section</h5>
+
+<p>Collects the Kernel extensions from:</p>
+
+<ul>
+<li><code>/System/Library/Extensions</code></li>
+<li><code>/Library/Extensions</code></li>
+</ul>
+
+<h5>
+<a id="startup-section" class="anchor" href="#startup-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>startup</code> section</h5>
+
+<p>Collects information about the
+<a href="https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man5/launchd.plist.5.html">LaunchAgents</a>,
+LaunchDaemons, ScriptingAdditions,
+<a href="https://developer.apple.com/library/mac/documentation/macosx/conceptual/bpsystemstartup/chapters/StartupItems.html">StartupItems</a>
+and other login items from:</p>
+
+<ul>
+<li><code>/System/Library/LaunchAgents</code></li>
+<li><code>/System/Library/LaunchDaemons</code></li>
+<li><code>/Library/LaunchAgents</code></li>
+<li><code>~/Library/LaunchAgents</code></li>
+<li><code>/Library/LaunchDaemons</code></li>
+<li><code>/System/Library/ScriptingAdditions</code></li>
+<li><code>/Library/ScriptingAdditions</code></li>
+<li><code>/System/Library/StartupItems</code></li>
+<li><code>/Library/StartupItems</code></li>
+<li><code>~/Library/Preferences/com.apple.loginitems.plist</code></li>
+</ul>
+
+<p>More information about the Max OS X startup can be found here:
+<a href="http://www.malicious-streams.com/article/Mac_OSX_Startup.pdf">http://www.malicious-streams.com/article/Mac_OSX_Startup.pdf</a></p>
+
+<h5>
+<a id="applications-section" class="anchor" href="#applications-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>applications</code> section</h5>
+
+<p>Hashes installed applications and gathers install history from:</p>
+
+<ul>
+<li><code>/Applications</code></li>
+<li><code>~/Applications</code></li>
+<li><code>/Library/Receipts/InstallHistory.plist</code></li>
+</ul>
+
+<h5>
+<a id="quarantines-section" class="anchor" href="#quarantines-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>quarantines</code> section</h5>
+
+<p>Quarantines are basically the info necessary to show the 'Are you sure you wanna
+run this?' when a user is trying to open a file downloaded from the internet.
+For some more details, checkout the Apple Support explanation of Quarantines:
+<a href="http://support.apple.com/kb/HT3662">http://support.apple.com/kb/HT3662</a></p>
+
+<p>This section collects also information from XProtect hash-based malware check
+for quarantines files. The plist is at:
+<code>/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/XProtect.plist</code></p>
+
+<p>XProtect also add minimum versions for Internet Plugins. That plist is at:
+<code>/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/XProtect.meta.plist</code></p>
+
+<h5>
+<a id="downloads-section" class="anchor" href="#downloads-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>downloads</code> section</h5>
+
+<p>Hashes all users' downloaded files from:</p>
+
+<ul>
+<li><code>~/Downloads</code></li>
+<li><code>~/Library/Mail Downloads</code></li>
+<li><code>~/Library/Containers/com.apple.mail/Data/Library/Mail Downloads</code></li>
+</ul>
+
+<h5>
+<a id="chrome-section" class="anchor" href="#chrome-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>chrome</code> section</h5>
+
+<p>Collects following information from Google Chrome web browser:</p>
+
+<ul>
+<li>History</li>
+<li>Archived History</li>
+<li>Cookies</li>
+<li>Login Data</li>
+<li>Top Sites</li>
+<li>Web Data</li>
+</ul>
+
+<p>This data is extracted from <code>~/Library/Application Support/Google/Chrome/Default</code></p>
+
+<h5>
+<a id="firefox-section" class="anchor" href="#firefox-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>firefox</code> section</h5>
+
+<p>Collects information from the different SQLite databases in a Firefox profile:</p>
+
+<ul>
+<li>Cookies</li>
+<li>Downloads</li>
+<li>Form History</li>
+<li>History</li>
+<li>Signons</li>
+<li>Permissions</li>
+<li>Addons</li>
+<li>Extension</li>
+<li>Content Preferences</li>
+<li>Health Report</li>
+<li>Webapps Store</li>
+</ul>
+
+<p>This information is extracted from <code>~/Library/Application Support/Firefox/Profiles</code></p>
+
+<p>For more details about Firefox profile folder see
+<a href="http://kb.mozillazine.org/Profile_folder_-_Firefox">http://kb.mozillazine.org/Profile_folder_-_Firefox</a></p>
+
+<h5>
+<a id="safari-section" class="anchor" href="#safari-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>safari</code> section</h5>
+
+<p>Collects information from the different plist and SQLite databases in a Safari
+profile:</p>
+
+<ul>
+<li>Downloads</li>
+<li>History</li>
+<li>Databases</li>
+<li>Local Storage</li>
+</ul>
+
+<h5>
+<a id="accounts-section" class="anchor" href="#accounts-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>accounts</code> section</h5>
+
+<p>Collects information about users' accounts:</p>
+
+<ul>
+<li>system admins: <code>/private/var/db/dslocal/nodes/Default/groups/admin.plist</code>
+</li>
+<li>system users: <code>/private/var/db/dslocal/nodes/Default/users</code>
+</li>
+<li>social accounts: <code>~/Library/Accounts/Accounts3.sqlite</code>
+</li>
+<li>users' recent items: <code>~/Library/Preferences/com.apple.recentitems.plist</code>
+</li>
+</ul>
+
+<h5>
+<a id="mail-section" class="anchor" href="#mail-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>mail</code> section</h5>
+
+<p>Hashes files in the mail app directories:</p>
+
+<ul>
+<li><code>~/Library/Mail</code></li>
+<li><code>~/Library/Mail Downloads</code></li>
+</ul>
+
+<h2>
+<a id="basic-manual-analysis" class="anchor" href="#basic-manual-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic Manual Analysis</h2>
+
+<p>Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.</p>
+
+<p>Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.</p>
+
+<h4>
+<a id="timestamps-1" class="anchor" href="#timestamps-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Timestamps</h4>
+
+<p>Simply grepping a few minutes before and after a timestamp works great:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> grep <span class="pl-s1"><span class="pl-pds">'</span>2014-01-01 11:3[2-8]<span class="pl-pds">'</span></span></pre></div>
+
+<h4>
+<a id="browser-history" class="anchor" href="#browser-history" aria-hidden="true"><span class="octicon octicon-link"></span></a>Browser History</h4>
+
+<p>It's in there. A tool like <a href="http://stedolan.github.io/jq/">jq</a> can be very helpful to do some fancy output:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> grep <span class="pl-s1"><span class="pl-pds">'</span>2014-01-01 11:3[2-8]<span class="pl-pds">'</span></span> <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("url"))|.url<span class="pl-pds">'</span></span></pre></div>
+
+<h4>
+<a id="a-single-user" class="anchor" href="#a-single-user" aria-hidden="true"><span class="octicon octicon-link"></span></a>A Single User</h4>
+
+<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_username=="ivanlei")|.<span class="pl-pds">'</span></span></pre></div>
+
+<h2>
+<a id="automated-analysis" class="anchor" href="#automated-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Automated Analysis</h2>
+
+<p>The <code>osxcollector.output_filters</code> package contains filters that process and transform the output of OSXCollector. The goal of filters is to make it easier to understand output.</p>
+
+<p>Each filter has a single purpose. They do one thing and they do it right.</p>
+
+<h4>
+<a id="running-filters" class="anchor" href="#running-filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running Filters</h4>
+
+<p>Unlike <code>osxcollector.py</code> filters have dependencies that aren't already installed on a new Mac. The best solution for ensure dependencies can be found is to use virtualenv.</p>
+
+<p>To setup a virtualenv for the first time use:</p>
+
+<pre><code>$ sudo pip install virtualenv
+$ virtualenv --system-site-packages venv_osxcollector
+$ source ./venv_osxcollector/bin/activate
+$ sudo pip install -r ./requirements-dev.txt
+</code></pre>
+
+<h4>
+<a id="filter-configuration" class="anchor" href="#filter-configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Filter Configuration</h4>
+
+<p>Many filters require configuration, like API keys or details on a blacklist. The configuration for filters is done in a YAML file. The file is named <code>osxcollector.yaml</code>. The filter will look for the config file in:</p>
+
+<ul>
+<li>The current directory.</li>
+<li>The user's home directory</li>
+<li>The path pointed to by the environment variable OSXCOLLECTOR_CONF</li>
+</ul>
+
+<h4>
+<a id="domainsfilter" class="anchor" href="#domainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>DomainsFilter</h4>
+
+<p><code>osxcollector.output_filters.domains</code> attempts to find domain names in a line. Any domains that are found are added to the line with the key <code>osxcollector_domains</code>. Run it as:</p>
+
+<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | jq 'select(has("osxcollector_domains"))'
+</code></pre>
+
+<h4>
+<a id="chromehistoryfilter" class="anchor" href="#chromehistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChromeHistoryFilter</h4>
+
+<p><code>osxcollector.output_filters.chome_history</code> builds a really nice Chrome browser history sorted in descending time order. Run it as:</p>
+
+<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
+</code></pre>
+
+<h4>
+<a id="firefoxhistoryfilter" class="anchor" href="#firefoxhistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FirefoxHistoryFilter</h4>
+
+<p><code>osxcollector.output_filters.firefox_history</code> builds a really nice Firefox browser history sorted in descending time order. Run it as:</p>
+
+<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.firefox_history | jq 'select(.osxcollector_section=="firefox" and .osxcollector_subsection=="history" and .osxcollector_table_name =="moz_places")'
+</code></pre>
+
+<h4>
+<a id="opendnsfilter" class="anchor" href="#opendnsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenDNSFilter</h4>
+
+<p><code>osxcollector.output_filters.opendns</code> lookups domains with OpenDNS. Domains associated with suspicious categories are futher enhanced with additional OpenDNS data. Run it as:</p>
+
+<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | python -m osxcollector.output_filters.opendns | jq 'select(has("osxcollector_opendns"))'
+</code></pre>
+
+<h4>
+<a id="vthashesfilter" class="anchor" href="#vthashesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>VTHashesFilter</h4>
+
+<p><code>osxcollector.output_filters.virustotal_hashes</code> lookups md5 hashes with VirusTotal. Run it as:</p>
+
+<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.virustotal_hashes | jq 'select(has("osxcollector_vt_hashes"))'
+</code></pre>
+
+<h4>
+<a id="blacklistfilter" class="anchor" href="#blacklistfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>BlacklistFilter</h4>
+
+<p><code>osxcollector.output_filters.blacklist</code> reads a set of blacklists from the <code>osxcollector.yaml</code> and marks any lines with values on the blacklist. The BlacklistFilter allows for multiple blacklists to be compared against at once. Each blacklists requires:</p>
+
+<ul>
+<li>blacklist_name, A name</li>
+<li>blacklist_keys, JSON paths. These can be of the form "a.b" to look at "b" in {"a": {"b": "foo"}}</li>
+<li>value_file, the path to a file containing values considered blacklisted. Any line starting with # is skipped</li>
+<li>blacklist_is_regex, should values in the file be treated as Python regex</li>
+</ul>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> python -m osxcollector.output_filters.blacklist <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist"))<span class="pl-pds">'</span></span></pre></div>
+
+<h2>
+<a id="contributing-to-osxcollector" class="anchor" href="#contributing-to-osxcollector" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing to OSXCollector</h2>
+
+<p>We encourage you to extend the functionality of OSXCollector to suit your needs.</p>
+
+<h4>
+<a id="testing-osxcollector" class="anchor" href="#testing-osxcollector" aria-hidden="true"><span class="octicon octicon-link"></span></a>Testing OSXCollector</h4>
+
+<p>A collection of tests for osxcollector is provided under the <code>tests</code> directory. In order to run these tests you must install <a href="https://pypi.python.org/pypi/tox">tox</a>:</p>
+
+<div class="highlight highlight-shell"><pre>$ sudo pip install tox</pre></div>
+
+<p>To run this suit of tests, <code>cd</code> into <code>osxcollector</code> and enter:</p>
+
+<div class="highlight highlight-shell"><pre>$ make <span class="pl-s3">test</span></pre></div>
+
+<p>Please note that tox will fail to run if osxcollector is stored under a path containing white spaces.
+  Bad Path  -&gt; "/path/to/my files/osxcollector"
+  Good Path -&gt; "/path/to/my_files/osxcollector"</p>
+
+<h4>
+<a id="development-tips" class="anchor" href="#development-tips" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development Tips</h4>
+
+<p>The functionality of OSXCollector is stored in a single file: <code>osxcollector.py</code>.</p>
+
+<p>Ensure that all of the osxcollector tests pass before editing the source code. You can run the tests using: <code>make test</code></p>
+
+<p>After making changes to the source code, run <code>make test</code> again to verify that your changes did not break any of the tests.</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>This work is licensed under the GNU General Public License and a derivation of <a href="https://github.com/jipegit/OSXAuditor">https://github.com/jipegit/OSXAuditor</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Osxcollector maintained by <a href="https://github.com/Yelp">Yelp</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
