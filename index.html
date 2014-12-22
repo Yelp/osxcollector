@@ -410,22 +410,21 @@ profile:</p>
 <h2>
 <a id="automated-analysis" class="anchor" href="#automated-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Automated Analysis</h2>
 
-<p>The <code>osxcollector.output_filters</code> package contains filters that process and transform the output of OSXCollector. The goal of filters is to make it easier to understand output.</p>
+<p>The <code>osxcollector.output_filters</code> package contains filters that process and transform the output of OSXCollector. The goal of filters is to make it easy to analyze OSXCollector output.</p>
 
 <p>Each filter has a single purpose. They do one thing and they do it right.</p>
 
 <h4>
-<a id="running-filters" class="anchor" href="#running-filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running Filters</h4>
+<a id="running-filters-in-a-virtualenv" class="anchor" href="#running-filters-in-a-virtualenv" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running Filters in a VirtualEnv</h4>
 
 <p>Unlike <code>osxcollector.py</code> filters have dependencies that aren't already installed on a new Mac. The best solution for ensure dependencies can be found is to use virtualenv.</p>
 
 <p>To setup a virtualenv for the first time use:</p>
 
-<pre><code>$ sudo pip install virtualenv
+<div class="highlight highlight-shell"><pre>$ sudo pip install virtualenv
 $ virtualenv --system-site-packages venv_osxcollector
-$ source ./venv_osxcollector/bin/activate
-$ sudo pip install -r ./requirements-dev.txt
-</code></pre>
+$ <span class="pl-s3">source</span> ./venv_osxcollector/bin/activate
+$ sudo pip install -r ./requirements-dev.txt</pre></div>
 
 <h4>
 <a id="filter-configuration" class="anchor" href="#filter-configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Filter Configuration</h4>
@@ -438,61 +437,210 @@ $ sudo pip install -r ./requirements-dev.txt
 <li>The path pointed to by the environment variable OSXCOLLECTOR_CONF</li>
 </ul>
 
-<h4>
-<a id="domainsfilter" class="anchor" href="#domainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>DomainsFilter</h4>
+<p>A sample config is included. Make a copy and then modify if for yourself:</p>
 
-<p><code>osxcollector.output_filters.domains</code> attempts to find domain names in a line. Any domains that are found are added to the line with the key <code>osxcollector_domains</code>. Run it as:</p>
-
-<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | jq 'select(has("osxcollector_domains"))'
-</code></pre>
+<div class="highlight highlight-shell"><pre>$ cp osxcollector.yaml.example osxcollector.yaml
+$ emacs osxcollector.yaml</pre></div>
 
 <h4>
-<a id="chromehistoryfilter" class="anchor" href="#chromehistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChromeHistoryFilter</h4>
+<a id="basic-filters" class="anchor" href="#basic-filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic Filters</h4>
 
-<p><code>osxcollector.output_filters.chome_history</code> builds a really nice Chrome browser history sorted in descending time order. Run it as:</p>
+<p>Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds and fancy APIs.</p>
 
-<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
-</code></pre>
+<h5>
+<a id="finddomainsfilter" class="anchor" href="#finddomainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FindDomainsFilter</h5>
 
-<h4>
-<a id="firefoxhistoryfilter" class="anchor" href="#firefoxhistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FirefoxHistoryFilter</h4>
+<p><code>osxcollector.output_filters.find_domains.FindDomainsFilter</code> attempts to find domain names in OSXCollector output. The domains are added to the line with the key <code>osxcollector_domains</code>.</p>
 
-<p><code>osxcollector.output_filters.firefox_history</code> builds a really nice Firefox browser history sorted in descending time order. Run it as:</p>
+<p>FindDomainsFilter isn't too useful on it's own but it's super powerful when chained with filters like <code>FindBlacklistedFilter</code> and or <code>osxcollector.output_filters.virustotal.lookup_domains.LookupDomainsFilter</code>.</p>
 
-<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.firefox_history | jq 'select(.osxcollector_section=="firefox" and .osxcollector_subsection=="history" and .osxcollector_table_name =="moz_places")'
-</code></pre>
+<p>Run it as:</p>
 
-<h4>
-<a id="opendnsfilter" class="anchor" href="#opendnsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenDNSFilter</h4>
+<div class="highlight highlight-shell"><pre>$ cat RomeoCredible.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_domains</pre></div>
 
-<p><code>osxcollector.output_filters.opendns</code> lookups domains with OpenDNS. Domains associated with suspicious categories are futher enhanced with additional OpenDNS data. Run it as:</p>
+<p>To see lines where domains have been added try:</p>
 
-<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | python -m osxcollector.output_filters.opendns | jq 'select(has("osxcollector_opendns"))'
-</code></pre>
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_domains"))<span class="pl-pds">'</span></span></pre></div>
 
-<h4>
-<a id="vthashesfilter" class="anchor" href="#vthashesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>VTHashesFilter</h4>
+<h5>
+<a id="findblacklistedfilter" class="anchor" href="#findblacklistedfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FindBlacklistedFilter</h5>
 
-<p><code>osxcollector.output_filters.virustotal_hashes</code> lookups md5 hashes with VirusTotal. Run it as:</p>
+<p><code>osxcollector.output_filters.find_blacklisted.FindBlacklistedFilter</code> reads a set of blacklists from the <code>osxcollector.yaml</code> and marks any lines with values on the blacklist. The BlacklistFilter is flexible and allows you to compare the OSXCollector output against multiple blacklists.</p>
 
-<pre><code>$ cat INCIDENT32.json | python -m osxcollector.output_filters.virustotal_hashes | jq 'select(has("osxcollector_vt_hashes"))'
-</code></pre>
+<p>You <em>really should</em> create blacklists for domains, file hashes, file names, and any known hinky stuff.</p>
 
-<h4>
-<a id="blacklistfilter" class="anchor" href="#blacklistfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>BlacklistFilter</h4>
-
-<p><code>osxcollector.output_filters.blacklist</code> reads a set of blacklists from the <code>osxcollector.yaml</code> and marks any lines with values on the blacklist. The BlacklistFilter allows for multiple blacklists to be compared against at once. Each blacklists requires:</p>
+<p>Configuration Keys:</p>
 
 <ul>
-<li>blacklist_name, A name</li>
-<li>blacklist_keys, JSON paths. These can be of the form "a.b" to look at "b" in {"a": {"b": "foo"}}</li>
-<li>value_file, the path to a file containing values considered blacklisted. Any line starting with # is skipped</li>
-<li>blacklist_is_regex, should values in the file be treated as Python regex</li>
+<li>
+<code>blacklist_name</code>: [REQUIRED] the name of the blacklist.</li>
+<li>
+<code>blacklist_keys</code>: [REQUIRED] get the value of these keys and compare against the blacklist. These can be of the form <code>a.b</code> to look at <code>b</code> in <code>{"a": {"b": "foo"}}</code>
+</li>
+<li>
+<code>blacklist_file_path</code>: [REQUIRED] path to a file with the actual values to blacklist</li>
+<li>
+<code>blacklist_is_regex</code>: [REQUIRED] should the values in the blacklist file be treated as regex</li>
+<li>
+<code>blacklist_is_domains</code>: [OPTIONAL] interpret values as domains and do some smart regex and subdomain stuff with them.</li>
 </ul>
 
 <p>Run it as:</p>
 
-<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> python -m osxcollector.output_filters.blacklist <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist"))<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat RiddlerBelize.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_blacklisted</pre></div>
+
+<p>To see lines matching a blacklist try:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist"))<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="relatedfilesfilter" class="anchor" href="#relatedfilesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>RelatedFilesFilter</h5>
+
+<p><code>osxcollector.output_filters.related_files.RelatedFilesFilter</code> takes an initial set of file paths, names, or terms. It breaks this input into individual file and directory names and then searches for these terms across the entire OSXCollector output. The filter is smart and ignores common terms like <code>bin</code> or <code>Library</code> as well as ignoring usernames.</p>
+
+<p>This filter is great for figuring out how <code>evil_invoice.pdf</code> landed up on a machine. It'll find browser history, quarantines, email messages, etc. related to a file.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat CanisAsp.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.related_files</pre></div>
+
+<p>To see related lines try:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_related=="files")<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="chromehistoryfilter" class="anchor" href="#chromehistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChromeHistoryFilter</h5>
+
+<p><code>osxcollector.output_filters.chome_history.ChromeHistoryFilter</code> builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains <em>more</em> info. The <code>core_transition</code> and <code>page_transition</code> keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat PrinceCrazy.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.chrome_history</pre></div>
+
+<p>To see Chrome browser history:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="chrome")<span class="pl-pds">'</span></span></pre></div>
+
+<p>This is great mixed with a grep in a certain time window, like maybe the 5 minutes before that hinky download happened.</p>
+
+<h5>
+<a id="firefoxhistoryfilter" class="anchor" href="#firefoxhistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FirefoxHistoryFilter</h5>
+
+<p><code>osxcollector.output_filters.firefox_history.FirefoxHistoryFilter</code> builds a really nice Firefox browser history sorted in descending time order. It's a lot like the <code>ChromeHistoryFilter</code>.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat CousingLobe.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.firefox_history</pre></div>
+
+<p>To see Firefox browser history:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="firefox")<span class="pl-pds">'</span></span></pre></div>
+
+<h4>
+<a id="threat-api-filters" class="anchor" href="#threat-api-filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Threat API Filters</h4>
+
+<p>By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. These APIs aren't free but they are useful.</p>
+
+<p>Using these filters as examples, it would be possible to integrate with additional free or premium threat APIs. <code>osxcollector.output_filters.base_filters.threat_feed.ThreatFeedFilter</code> has most of the plumbing for hooking up to arbitrary APIs.</p>
+
+<h5>
+<a id="opendns-relateddomainsfilter" class="anchor" href="#opendns-relateddomainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenDNS RelatedDomainsFilter</h5>
+
+<p><code>osxcollector.output_filters.opendns.related_domains.RelatedDomainsFilter</code> takes an initial set of domains and IPs and then looks up domains related to them with the OpenDNS Umbrella API.</p>
+
+<p>Often an initial alert contains a domain or IP your analysts don't know anything about. However, by gathering the 2nd generation related domains, familiar <em>friends</em> might appear. When you're lucky, those related domains land up being the download source for some downloads you might have overlooked.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat NotchCherry.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.opendns.related_domains</pre></div>
+
+<p>To see what it found:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_related=="domains")<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="opendns-lookupdomainsfilter" class="anchor" href="#opendns-lookupdomainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenDNS LookupDomainsFilter</h5>
+
+<p><code>osxcollector.output_filters.opendns.lookup_domains.LookupDomainsFilter</code> lookups domain reputation and threat information with the OpenDNS Umbrella API. It adds information about <em>suspicious</em> domains to the output lines.</p>
+
+<p>The filter uses a heuristic to determine what is <em>suspicious</em>. It can create false positives but usually a download from a domain marked as <em>suspicious</em> is a good lead.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat GladElegant.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.opendns.lookup_domains</pre></div>
+
+<p>To see what it found:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_opendns"))<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="virustotal-lookupdomainsfilter" class="anchor" href="#virustotal-lookupdomainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>VirusTotal LookupDomainsFilter</h5>
+
+<p><code>osxcollector.output_filters.virustotal.lookup_domains.LookupDomainsFilter</code> lookups domain reputation and threat information with the VirusTotal API. It adds information about <em>suspicious</em> domains to the output lines. It's a lot like the OpenDNS filter of the same name.</p>
+
+<p>The filter uses a heuristic to determine what is <em>suspicious</em>. It can create a lot of false positives but also provides good leads.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat PippinNightstar.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.virustotal.lookup_domains</pre></div>
+
+<p>To see what it found:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vtdomain"))<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="virustotal-lookuphashesfilter" class="anchor" href="#virustotal-lookuphashesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>VirusTotal LookupHashesFilter</h5>
+
+<p><code>osxcollector.output_filters.virustotal.lookup_hashes.LookupHashesFilter</code> lookups hashes with the VirusTotal API. This basically finds anything VirusTotal knows about which is a huge timesaver. There's pretty much no false positives here, but there's also no chance of detecting unknown stuff.</p>
+
+<p>Run it as:</p>
+
+<pre><code>$ cat PippinNightstar.json | \
+    python -m osxcollector.output_filters.virustotal.lookup_hashes
+</code></pre>
+
+<p>To see what it found:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vthash"))<span class="pl-pds">'</span></span></pre></div>
+
+<h4>
+<a id="analyzefilter---the-one-filter-to-rule-them-all" class="anchor" href="#analyzefilter---the-one-filter-to-rule-them-all" aria-hidden="true"><span class="octicon octicon-link"></span></a>AnalyzeFilter - The One Filter to Rule Them All</h4>
+
+<p><code>osxcollector.output_filters.analyze.AnalyzeFilter</code> is Yelp's <em>one filter to rule them all</em>. It chains all the previous filters into one monster analysis. The results, enhanced with blacklist info, threat APIs, related files and domains, and even pretty browser history is written to a new output file.</p>
+
+<p>Then <em>Very Readable Output Bot</em> takes over and prints out an easy-to-digest, human-readable, nearly-English summary of what it found. It's basically equivalent to running:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat SlickApocalypse.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.related_files <span class="pl-k">|</span> \
+    python -m python -m osxcollector.output_filters.opendns.related_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.opendns.lookup_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.virustotal.lookup_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.virustotal.lookup_hashes <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.chrome_history <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.firefox_history <span class="pl-k">|</span> \
+    tee analyze_SlickApocalypse.json <span class="pl-k">|</span> \
+    jq <span class="pl-s1"><span class="pl-pds">'</span>select(<span class="pl-pds">'</span></span>
+      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_vthash" or<span class="pl-pds">'</span></span>
+      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_vtdomain") or<span class="pl-pds">'</span></span>
+      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_opendns") or<span class="pl-pds">'</span></span>
+      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_blacklist") or<span class="pl-pds">'</span></span>
+      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_related"))<span class="pl-pds">'</span></span></pre></div>
+
+<p>and then letting a wise-cracking analyst explain the results to you. The <em>Very Readable Output Bot</em> even suggests hashes and domains to add to blacklists.</p>
+
+<p>This thing is the real deal and our analysts don't even look at OSXCollector output until after they've run the <code>AnalyzeFilter</code>.</p>
 
 <h2>
 <a id="contributing-to-osxcollector" class="anchor" href="#contributing-to-osxcollector" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing to OSXCollector</h2>
@@ -509,10 +657,6 @@ $ sudo pip install -r ./requirements-dev.txt
 <p>To run this suit of tests, <code>cd</code> into <code>osxcollector</code> and enter:</p>
 
 <div class="highlight highlight-shell"><pre>$ make <span class="pl-s3">test</span></pre></div>
-
-<p>Please note that tox will fail to run if osxcollector is stored under a path containing white spaces.
-  Bad Path  -&gt; "/path/to/my files/osxcollector"
-  Good Path -&gt; "/path/to/my_files/osxcollector"</p>
 
 <h4>
 <a id="development-tips" class="anchor" href="#development-tips" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development Tips</h4>
