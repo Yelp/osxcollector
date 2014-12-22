@@ -15,10 +15,9 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
     """Uses OpenDNS to lookup the values in 'osxcollector_domains' and add 'osxcollector_opendns' key."""
 
-    def __init__(self, only_lookup_when=None, is_suspicious_when=None):
+    def __init__(self, lookup_when=None, suspicious_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns',
-                                                  only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
-                                                  api_key='opendns')
+                                                  lookup_when=lookup_when, suspicious_when=suspicious_when, api_key='opendns')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
     def _lookup_iocs(self):

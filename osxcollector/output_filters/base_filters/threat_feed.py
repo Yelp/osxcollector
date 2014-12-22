@@ -7,20 +7,20 @@ from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 class ThreatFeedFilter(OutputFilter):
 
-    """A base class to find suspicious IOC using some random API.
+    """A base class to find info on IOCs using some random API.
 
     Derrived classes need only to implement _lookup_iocs()
 
     It is assumed that the API uses an api_key stored in the config.
     """
 
-    def __init__(self, ioc_key, output_key, only_lookup_when=None, is_suspicious_when=None, api_key=None):
+    def __init__(self, ioc_key, output_key, lookup_when=None, is_suspicious_when=None, api_key=None):
         """Read API config
 
         Args:
             ioc_key: key for finding IOCs in the input
             output_key: key to use to add threat info to the output
-            only_lookup_when: a boolean function to call to decide whether to try a lookup for a blob
+            lookup_when: a boolean function to call to decide whether to try a lookup for a blob
             is_suspicious_when: a boolean function to call to decide whether a blob is already known to be suspicious
             api_key: name of the key in the 'api_key' section of config
         """
@@ -29,7 +29,7 @@ class ThreatFeedFilter(OutputFilter):
         if api_key:
             self._api_key = self.config.get_config('api_key.{0}'.format(api_key))
 
-        self._only_lookup_when = only_lookup_when
+        self._lookup_when = lookup_when
         self._is_suspicious_when = is_suspicious_when
         self._blobs_with_iocs = list()
         self._all_iocs = set()
@@ -57,7 +57,7 @@ class ThreatFeedFilter(OutputFilter):
         Returns:
             A Line or None
         """
-        if self._ioc_key in blob and (not self._only_lookup_when or self._only_lookup_when(blob)):
+        if self._ioc_key in blob and (not self._lookup_when or self._lookup_when(blob)):
             ioc_list = blob[self._ioc_key]
             if isinstance(ioc_list, basestring):
                 ioc_list = [ioc_list]

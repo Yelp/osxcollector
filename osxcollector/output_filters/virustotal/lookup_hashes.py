@@ -12,12 +12,12 @@ from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 class LookupHashesFilter(ThreatFeedFilter):
 
-    """A class to find suspicious hashes using VirusTotal API."""
+    """A class to lookup hashes using VirusTotal API."""
 
-    def __init__(self, only_lookup_when=None, is_suspicious_when=None):
-        super(LookupHashesFilter, self).__init__('sha2', 'osxcollector_vthash',
-                                                 only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
-                                                 api_key='virustotal')
+    def __init__(self, lookup_when=None, suspicious_when=None):
+        super(LookupHashesFilter, self).__init__('sha2',
+                                                 'osxcollector_vthash', lookup_when=lookup_when,
+                                                 suspicious_when=suspicious_when, api_key='virustotal')
 
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""

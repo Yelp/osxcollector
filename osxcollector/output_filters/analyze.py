@@ -64,9 +64,9 @@ class AnalyzeFilter(ChainFilter):
             OpenDnsRelatedDomainsFilter(initial_domains=initial_domains, initial_ips=initial_ips),
 
             # Lookup threat info on suspicious and related stuff
-            OpenDnsLookupDomainsFilter(is_suspicious_when=is_suspicious_when_opendns),
-            VtLookupDomainsFilter(only_lookup_when=lookup_domains_in_vt_when),
-            VtLookupHashesFilter(only_lookup_when=lookup_hashes_in_vt_when),
+            OpenDnsLookupDomainsFilter(suspicious_when=include_in_summary),
+            VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when),
+            VtLookupHashesFilter(lookup_when=lookup_hashes_in_vt_when),
 
             # Sort browser history for maximum pretty
             FirefoxHistoryFilter(),
@@ -79,13 +79,16 @@ class AnalyzeFilter(ChainFilter):
         super(AnalyzeFilter, self).__init__(filter_chain)
 
 
-_SUSPICIOUS_KEYS = [
-    'osxcollector_vthash',
-    'osxcollector_vtdomain',
-    'osxcollector_opendns',
-    'osxcollector_blacklist',
-    'osxcollector_related'
-]
+def include_in_summary(blob):
+    _KEYS_FOR_SUMMARY = [
+        'osxcollector_vthash',
+        'osxcollector_vtdomain',
+        'osxcollector_opendns',
+        'osxcollector_blacklist',
+        'osxcollector_related'
+    ]
+
+    return any([key in blob for key in _KEYS_FOR_SUMMARY])
 
 
 def lookup_domains_in_vt_when(blob):
@@ -106,13 +109,13 @@ def lookup_hashes_in_vt_when(blob):
         return True
     elif blob.get('osxcollector_subsection') in ['extension']:
         return True
-    elif any([key in blob for key in _SUSPICIOUS_KEYS]):
+    elif include_in_summary(blob):
         return True
     return False
 
 
-def is_suspicious_when_opendns(blob):
-    return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob
+# def is_suspicious_when_opendns(blob):
+#     return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob
 
 
 def find_related_files_when(blob):
@@ -131,10 +134,6 @@ def find_related_files_when(blob):
     if '' == blob.get('md5', None):
         return True
     return False
-
-
-def include_in_summary(blob):
-    return any([key in blob for key in _SUSPICIOUS_KEYS])
 
 
 class _OutputToFileFilter(OutputFilter):
