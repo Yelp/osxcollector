@@ -243,7 +243,6 @@ Forensic analysis is a bit of art and a bit of science. Every analyst will see a
 Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
 
 #### Timestamps
-
 Simply grepping a few minutes before and after a timestamp works great:
 
 ```shell
@@ -251,7 +250,6 @@ $ cat INCIDENT32.json | grep '2014-01-01 11:3[2-8]'
 ```
 
 #### Browser History
-
 It's in there. A tool like [jq](http://stedolan.github.io/jq/) can be very helpful to do some fancy output:
 
 ```shell
@@ -259,21 +257,20 @@ $ cat INCIDENT32.json | grep '2014-01-01 11:3[2-8]' | jq 'select(has("url"))|.ur
 ```
 
 #### A Single User
-
 ```shell
 $ cat INCIDENT32.json | jq 'select(.osxcollector_username=="ivanlei")|.'
 ```
 
 ## Automated Analysis
-The `osxcollector.output_filters` package contains filters that process and transform the output of OSXCollector. The goal of filters is to make it easier to understand output.
+The `osxcollector.output_filters` package contains filters that process and transform the output of OSXCollector. The goal of filters is to make it easy to analyze OSXCollector output.
 
 Each filter has a single purpose. They do one thing and they do it right.
 
-#### Running Filters
+#### Running Filters in a VirtualEnv
 Unlike `osxcollector.py` filters have dependencies that aren't already installed on a new Mac. The best solution for ensure dependencies can be found is to use virtualenv.
 
 To setup a virtualenv for the first time use:
-```
+```shell
 $ sudo pip install virtualenv
 $ virtualenv --system-site-packages venv_osxcollector
 $ source ./venv_osxcollector/bin/activate
@@ -286,47 +283,195 @@ Many filters require configuration, like API keys or details on a blacklist. The
 - The user's home directory
 - The path pointed to by the environment variable OSXCOLLECTOR_CONF
 
-#### DomainsFilter
-`osxcollector.output_filters.domains` attempts to find domain names in a line. Any domains that are found are added to the line with the key `osxcollector_domains`. Run it as:
-```
-$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | jq 'select(has("osxcollector_domains"))'
-```
-
-#### ChromeHistoryFilter
-`osxcollector.output_filters.chome_history` builds a really nice Chrome browser history sorted in descending time order. Run it as:
-```
-$ cat INCIDENT32.json | python -m osxcollector.output_filters.chrome_history | jq 'select(.osxcollector_section=="chrome" and .osxcollector_subsection=="history" and .osxcollector_table_name =="visits")'
+A sample config is included. Make a copy and then modify if for yourself:
+```shell
+$ cp osxcollector.yaml.example osxcollector.yaml
+$ emacs osxcollector.yaml
 ```
 
-#### FirefoxHistoryFilter
-`osxcollector.output_filters.firefox_history` builds a really nice Firefox browser history sorted in descending time order. Run it as:
-```
-$ cat INCIDENT32.json | python -m osxcollector.output_filters.firefox_history | jq 'select(.osxcollector_section=="firefox" and .osxcollector_subsection=="history" and .osxcollector_table_name =="moz_places")'
-```
+#### Basic Filters
+Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds and fancy APIs.
 
-#### OpenDNSFilter
-`osxcollector.output_filters.opendns` lookups domains with OpenDNS. Domains associated with suspicious categories are futher enhanced with additional OpenDNS data. Run it as:
-```
-$ cat INCIDENT32.json | python -m osxcollector.output_filters.domains | python -m osxcollector.output_filters.opendns | jq 'select(has("osxcollector_opendns"))'
-```
+##### FindDomainsFilter
+`osxcollector.output_filters.find_domains.FindDomainsFilter` attempts to find domain names in OSXCollector output. The domains are added to the line with the key `osxcollector_domains`.
 
-#### VTHashesFilter
-`osxcollector.output_filters.virustotal_hashes` lookups md5 hashes with VirusTotal. Run it as:
-```
-$ cat INCIDENT32.json | python -m osxcollector.output_filters.virustotal_hashes | jq 'select(has("osxcollector_vt_hashes"))'
-```
-
-#### BlacklistFilter
-`osxcollector.output_filters.blacklist` reads a set of blacklists from the `osxcollector.yaml` and marks any lines with values on the blacklist. The BlacklistFilter allows for multiple blacklists to be compared against at once. Each blacklists requires:
- - blacklist_name, A name
- - blacklist_keys, JSON paths. These can be of the form "a.b" to look at "b" in {"a": {"b": "foo"}}
- - value_file, the path to a file containing values considered blacklisted. Any line starting with # is skipped
- - blacklist_is_regex, should values in the file be treated as Python regex
+FindDomainsFilter isn't too useful on it's own but it's super powerful when chained with filters like `FindBlacklistedFilter` and or `osxcollector.output_filters.virustotal.lookup_domains.LookupDomainsFilter`.
 
 Run it as:
 ```shell
-$ cat INCIDENT32.json | python -m osxcollector.output_filters.blacklist | jq 'select(has("osxcollector_blacklist"))'
+$ cat RomeoCredible.json | \
+    python -m osxcollector.output_filters.find_domains
 ```
+
+To see lines where domains have been added try:
+```shell
+$ jq 'select(has("osxcollector_domains"))'
+```
+
+##### FindBlacklistedFilter
+`osxcollector.output_filters.find_blacklisted.FindBlacklistedFilter` reads a set of blacklists from the `osxcollector.yaml` and marks any lines with values on the blacklist. The BlacklistFilter is flexible and allows you to compare the OSXCollector output against multiple blacklists.
+
+You _really should_ create blacklists for domains, file hashes, file names, and any known hinky stuff.
+
+Configuration Keys:
+* `blacklist_name`: [REQUIRED] the name of the blacklist.
+* `blacklist_keys`: [REQUIRED] get the value of these keys and compare against the blacklist. These can be of the form `a.b` to look at `b` in `{"a": {"b": "foo"}}`
+* `blacklist_file_path`: [REQUIRED] path to a file with the actual values to blacklist
+* `blacklist_is_regex`: [REQUIRED] should the values in the blacklist file be treated as regex
+* `blacklist_is_domains`: [OPTIONAL] interpret values as domains and do some smart regex and subdomain stuff with them.
+
+Run it as:
+```shell
+$ cat RiddlerBelize.json | \
+    python -m osxcollector.output_filters.find_blacklisted
+```
+
+To see lines matching a blacklist try:
+```shell
+$ jq 'select(has("osxcollector_blacklist"))'
+```
+
+##### RelatedFilesFilter
+`osxcollector.output_filters.related_files.RelatedFilesFilter` takes an initial set of file paths, names, or terms. It breaks this input into individual file and directory names and then searches for these terms across the entire OSXCollector output. The filter is smart and ignores common terms like `bin` or `Library` as well as ignoring usernames.
+
+This filter is great for figuring out how `evil_invoice.pdf` landed up on a machine. It'll find browser history, quarantines, email messages, etc. related to a file.
+
+Run it as:
+```shell
+$ cat CanisAsp.json | \
+    python -m osxcollector.output_filters.related_files
+```
+
+To see related lines try:
+```shell
+$ jq 'select(.osxcollector_related=="files")'
+```
+
+##### ChromeHistoryFilter
+`osxcollector.output_filters.chome_history.ChromeHistoryFilter` builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains _more_ info. The `core_transition` and `page_transition` keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.
+
+Run it as:
+```shell
+$ cat PrinceCrazy.json | \
+    python -m osxcollector.output_filters.chrome_history
+```
+
+To see Chrome browser history:
+```shell
+$ jq 'select(.osxcollector_browser_history=="chrome")'
+```
+
+This is great mixed with a grep in a certain time window, like maybe the 5 minutes before that hinky download happened.
+
+##### FirefoxHistoryFilter
+`osxcollector.output_filters.firefox_history.FirefoxHistoryFilter` builds a really nice Firefox browser history sorted in descending time order. It's a lot like the `ChromeHistoryFilter`.
+
+Run it as:
+```shell
+$ cat CousingLobe.json | \
+    python -m osxcollector.output_filters.firefox_history
+```
+
+To see Firefox browser history:
+```shell
+$ jq 'select(.osxcollector_browser_history=="firefox")'
+```
+
+#### Threat API Filters
+By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. These APIs aren't free but they are useful.
+
+Using these filters as examples, it would be possible to integrate with additional free or premium threat APIs. `osxcollector.output_filters.base_filters.threat_feed.ThreatFeedFilter` has most of the plumbing for hooking up to arbitrary APIs.
+
+##### OpenDNS RelatedDomainsFilter
+`osxcollector.output_filters.opendns.related_domains.RelatedDomainsFilter` takes an initial set of domains and IPs and then looks up domains related to them with the OpenDNS Umbrella API.
+
+Often an initial alert contains a domain or IP your analysts don't know anything about. However, by gathering the 2nd generation related domains, familiar _friends_ might appear. When you're lucky, those related domains land up being the download source for some downloads you might have overlooked.
+
+Run it as:
+```shell
+$ cat NotchCherry.json | \
+    python -m osxcollector.output_filters.find_domains | \
+    python -m osxcollector.output_filters.opendns.related_domains
+```
+
+To see what it found:
+```shell
+$ jq 'select(.osxcollector_related=="domains")'
+```
+
+##### OpenDNS LookupDomainsFilter
+`osxcollector.output_filters.opendns.lookup_domains.LookupDomainsFilter` lookups domain reputation and threat information with the OpenDNS Umbrella API. It adds information about _suspicious_ domains to the output lines.
+
+The filter uses a heuristic to determine what is _suspicious_. It can create false positives but usually a download from a domain marked as _suspicious_ is a good lead.
+
+Run it as:
+```shell
+$ cat GladElegant.json | \
+    python -m osxcollector.output_filters.find_domains | \
+    python -m osxcollector.output_filters.opendns.lookup_domains
+```
+
+To see what it found:
+```shell
+$ jq 'select(has("osxcollector_opendns"))'
+```
+
+##### VirusTotal LookupDomainsFilter
+`osxcollector.output_filters.virustotal.lookup_domains.LookupDomainsFilter` lookups domain reputation and threat information with the VirusTotal API. It adds information about _suspicious_ domains to the output lines. It's a lot like the OpenDNS filter of the same name.
+
+The filter uses a heuristic to determine what is _suspicious_. It can create a lot of false positives but also provides good leads.
+
+Run it as:
+```shell
+$ cat PippinNightstar.json | \
+    python -m osxcollector.output_filters.find_domains | \
+    python -m osxcollector.output_filters.virustotal.lookup_domains
+```
+
+To see what it found:
+```shell
+$ jq 'select(has("osxcollector_vtdomain"))'
+```
+
+##### VirusTotal LookupHashesFilter
+`osxcollector.output_filters.virustotal.lookup_hashes.LookupHashesFilter` lookups hashes with the VirusTotal API. This basically finds anything VirusTotal knows about which is a huge timesaver. There's pretty much no false positives here, but there's also no chance of detecting unknown stuff.
+
+Run it as:
+```
+$ cat PippinNightstar.json | \
+    python -m osxcollector.output_filters.virustotal.lookup_hashes
+```
+
+To see what it found:
+```shell
+$ jq 'select(has("osxcollector_vthash"))'
+```
+
+#### AnalyzeFilter - The One Filter to Rule Them All
+`osxcollector.output_filters.analyze.AnalyzeFilter` is Yelp's _one filter to rule them all_. It chains all the previous filters into one monster analysis. The results, enhanced with blacklist info, threat APIs, related files and domains, and even pretty browser history is written to a new output file.
+
+Then _Very Readable Output Bot_ takes over and prints out an easy-to-digest, human-readable, nearly-English summary of what it found. It's basically equivalent to running:
+```shell
+$ cat SlickApocalypse.json | \
+    python -m osxcollector.output_filters.find_domains | \
+    python -m osxcollector.output_filters.related_files | \
+    python -m python -m osxcollector.output_filters.opendns.related_domains | \
+    python -m osxcollector.output_filters.opendns.lookup_domains | \
+    python -m osxcollector.output_filters.virustotal.lookup_domains | \
+    python -m osxcollector.output_filters.virustotal.lookup_hashes | \
+    python -m osxcollector.output_filters.chrome_history | \
+    python -m osxcollector.output_filters.firefox_history | \
+    tee analyze_SlickApocalypse.json | \
+    jq 'select('
+      'has("osxcollector_vthash" or'
+      'has("osxcollector_vtdomain") or'
+      'has("osxcollector_opendns") or'
+      'has("osxcollector_blacklist") or'
+      'has("osxcollector_related"))'
+```
+and then letting a wise-cracking analyst explain the results to you. The _Very Readable Output Bot_ even suggests hashes and domains to add to blacklists.
+
+This thing is the real deal and our analysts don't even look at OSXCollector output until after they've run the `AnalyzeFilter`.
 
 ## Contributing to OSXCollector
 We encourage you to extend the functionality of OSXCollector to suit your needs.
@@ -341,10 +486,6 @@ To run this suit of tests, `cd` into `osxcollector` and enter:
 ```shell
 $ make test
 ```
-
-Please note that tox will fail to run if osxcollector is stored under a path containing white spaces.
-  Bad Path  -> "/path/to/my files/osxcollector"
-  Good Path -> "/path/to/my_files/osxcollector"
 
 #### Development Tips
 The functionality of OSXCollector is stored in a single file: `osxcollector.py`.
