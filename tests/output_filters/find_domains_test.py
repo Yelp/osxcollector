@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import testify as T
 from osxcollector.output_filters.find_domains import BadDomainError
-from osxcollector.output_filters.find_domains import clean_domain
 from osxcollector.output_filters.find_domains import FindDomainsFilter
+from osxcollector.output_filters.find_domains import clean_domain
 
 
-class DomainsFilterTest(T.TestCase):
+class FindDomainsFilterTest(T.TestCase):
 
     @T.setup
     def setup_inputs(self):
