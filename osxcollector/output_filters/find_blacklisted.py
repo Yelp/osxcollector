@@ -26,7 +26,7 @@ def create_blacklist(config_chunk):
     Raises:
         MissingConfigError - when required key does not exist.
     """
-    required_keys = ['blacklist_name', 'blacklist_keys', 'blacklist_is_regex', 'blacklist_file_path']
+    required_keys = ['blacklist_name', 'blacklist_keys', 'blacklist_file_path']
     if not all([key in config_chunk.keys() for key in required_keys]):
         raise MissingConfigError('Blacklist config is missing a required key.\nRequired keys are: {0}'.format(repr(required_keys)))
 
@@ -58,15 +58,18 @@ class Blacklist(object):
         self._is_regex = is_regex or self._is_domains
         self._blacklisted_values = []
 
+        for line in self._read_blacklist_file_contents():
+            if not line.startswith('#'):
+                line = line.strip()
+                if line:
+                    self._blacklisted_values.append(line)
+        if self._is_regex:
+            self._blacklisted_values = [self._convert_to_regex(val) for val in self._blacklisted_values]
+
+    def _read_blacklist_file_contents(self):
         try:
             with open(self._file_path, 'r') as value_file:
-                for line in value_file.readlines():
-                    if not line.startswith('#'):
-                        line = line.strip()
-                        if line:
-                            self._blacklisted_values.append(line)
-                if self._is_regex:
-                    self._blacklisted_values = [self._convert_to_regex(val) for val in self._blacklisted_values]
+                return value_file.readlines()
         except IOError as e:
             raise MissingConfigError(e.msg)
 
@@ -81,7 +84,7 @@ class Blacklist(object):
         """
         if self._is_domains:
             domain = clean_domain(blacklisted_value)
-            blacklisted_value = '(.+\.)?{0}'.format(domain.replace('.', '\.').replace('-', '\-'))
+            blacklisted_value = '^(.+\.)*{0}$'.format(domain.replace('.', '\.').replace('-', '\-'))
         return re.compile(blacklisted_value)
 
     def match_line(self, blob):
