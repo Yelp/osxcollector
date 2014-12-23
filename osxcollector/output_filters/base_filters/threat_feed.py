@@ -14,7 +14,7 @@ class ThreatFeedFilter(OutputFilter):
     It is assumed that the API uses an api_key stored in the config.
     """
 
-    def __init__(self, ioc_key, output_key, lookup_when=None, is_suspicious_when=None, api_key=None):
+    def __init__(self, ioc_key, output_key, lookup_when=None, suspicious_when=None, api_key=None):
         """Read API config
 
         Args:
@@ -30,7 +30,7 @@ class ThreatFeedFilter(OutputFilter):
             self._api_key = self.config.get_config('api_key.{0}'.format(api_key))
 
         self._lookup_when = lookup_when
-        self._is_suspicious_when = is_suspicious_when
+        self._is_suspicious_when = suspicious_when
         self._blobs_with_iocs = list()
         self._all_iocs = set()
         self._suspicious_iocs = set()
