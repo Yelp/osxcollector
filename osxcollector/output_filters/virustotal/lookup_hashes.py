@@ -26,6 +26,8 @@ class LookupHashesFilter(ThreatFeedFilter):
 
         for hash_val in reports.keys():
             report = reports[hash_val]
+            if not report:
+                continue
             if self._should_store_ioc_info(report):
                 self._threat_info_by_iocs[hash_val] = self._trim_hash_report(report)
 

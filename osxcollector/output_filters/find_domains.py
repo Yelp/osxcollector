@@ -5,7 +5,6 @@
 # FindDomainsFilter looks for domains in all input lines and adds those domains into the 'osxcollector_domains' key.
 #
 import re
-import sys
 from urllib import unquote_plus
 from urlparse import urlsplit
 
@@ -91,9 +90,7 @@ class FindDomainsFilter(OutputFilter):
             domain = clean_domain(domain)
             for extracted in expand_domain(domain):
                 self._domains.add(extracted)
-        except BadDomainError as e:
-            sys.stderr.write(e.message)
-            sys.stderr.write('\n')
+        except BadDomainError:
             pass
 
     SCHEMES = re.compile('((https?)|ftp)')

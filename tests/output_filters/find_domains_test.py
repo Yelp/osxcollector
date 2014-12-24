@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import testify as T
 from osxcollector.output_filters.find_domains import BadDomainError
-from osxcollector.output_filters.find_domains import FindDomainsFilter
 from osxcollector.output_filters.find_domains import clean_domain
+from osxcollector.output_filters.find_domains import FindDomainsFilter
 
 
 class FindDomainsFilterTest(T.TestCase):

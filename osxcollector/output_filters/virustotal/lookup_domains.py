@@ -28,6 +28,9 @@ class LookupDomainsFilter(ThreatFeedFilter):
             if self._whitelist.match_values(domain):
                 continue
 
+            if not reports[domain]:
+                continue
+
             trimmed_report = self._trim_domain_report(domain, reports[domain])
             if self._should_store_ioc_info(trimmed_report):
                 self._threat_info_by_iocs[domain] = trimmed_report

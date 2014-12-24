@@ -34,8 +34,8 @@ from hashlib import sha256
 from json import dumps
 from numbers import Number
 from optparse import OptionParser
-from sqlite3 import OperationalError
 from sqlite3 import connect
+from sqlite3 import OperationalError
 from traceback import extract_tb
 
 import Foundation

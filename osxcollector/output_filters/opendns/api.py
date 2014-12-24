@@ -2,80 +2,12 @@
 #
 # InvestigateApi makes calls to the OpenDNS Investigate API.
 #
-# TODO: Replace investigate module with custom calls to OpenDNS and parrallelize with grequests.
-#
-import sys
-import time
+
 from collections import namedtuple
-from traceback import extract_tb
 
-import grequests
 import simplejson
+from osxcollector.output_filters.base_filters.threat_feed import MultiRequest
 from osxcollector.output_filters.find_domains import expand_domain
-
-
-def investigate_error_handling(fn):
-    """Handle errors that might arrise while calling out to OpenDNS."""
-    def wrapper(*args, **kwargs):
-        try:
-            result = fn(*args, **kwargs)
-            return result
-        except Exception as e:
-            de_args = repr([a for a in args]) or ''
-            de_kwargs = repr([(a, kwargs[a]) for a in kwargs]) or ''
-            sys.stderr.write('[ERROR] calling {0} {1} {2}\n'.format(fn.__name__, de_args, de_kwargs))
-
-            exc_type, _, exc_traceback = sys.exc_info()
-            sys.stderr.write('[ERROR] {0} {1}\n'.format(exc_type, extract_tb(exc_traceback)))
-
-            if hasattr(e, 'response'):
-                sys.stderr.write('[ERROR] request {0}\n'.format(repr(e.response)))
-            if hasattr(e, 'request'):
-                sys.stderr.write('[ERROR] request {0}\n'.format(repr(e.request)))
-
-            raise e
-    return wrapper
-
-CallRecord = namedtuple('CallRecord', ['time', 'num_calls'])
-
-
-class RateLimiter(object):
-
-    """Limits how many calls can be made per second"""
-
-    def __init__(self, calls_per_sec):
-        self._max_calls_per_second = calls_per_sec
-        self._call_times = []
-        self._outstanding_calls = 0
-
-    def make_calls(self, num_calls=1):
-        """Adds appropriate sleep to avoid making too many calls.
-
-        Args:
-            num_calls: int the number of calls which will be made
-        """
-        self._cull()
-        while self._outstanding_calls + num_calls > self._max_calls_per_second:
-            time.sleep(0.5)
-            self._cull()
-
-        self._call_times.append(CallRecord(time=time.time(), num_calls=num_calls))
-        self._outstanding_calls += num_calls
-
-    def _cull(self):
-        """Remove calls more than 1 minutes old from the queue."""
-        right_now = time.time()
-
-        cull_from = -1
-        for index in xrange(len(self._call_times)):
-            if right_now - self._call_times[index].time >= 1.0:
-                cull_from = index
-                self._outstanding_calls -= self._call_times[index].num_calls
-            else:
-                break
-
-        if cull_from > -1:
-            self._call_times = self._call_times[cull_from + 1:]
 
 
 class InvestigateApi(object):
@@ -83,36 +15,19 @@ class InvestigateApi(object):
     """Calls the OpenDNS investigate API"""
 
     BASE_URL = 'https://investigate.api.opendns.com/'
-    MAX_SIMULTANEOUS_REQUESTS = 10
 
     def __init__(self, api_key):
-        self._auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
-        self._rate_limiter = RateLimiter(calls_per_sec=10)
+        auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
+        self._requests = MultiRequest(default_headers=auth_header, rate_limit=30)
 
-    def _make_post_requests(self, path, data=None):
-        post_request = grequests.post(self.BASE_URL + path, data=data, headers=self._auth_header)
-        response = grequests.map([post_request])
-        return response[0].json()
+    def _to_url(cls, url_path):
+        return '{0}{1}'.format(cls.BASE_URL, url_path)
 
-    def _make_get_requests(self, path_fmt_string, params):
-        all_responses = []
-        all_urls = [self.BASE_URL + path_fmt_string.format(param.encode('utf-8', errors='ignore')) for param in params]
+    def _to_urls(cls, fmt_url_path, url_path_args):
+        url_paths = [fmt_url_path.format(path_arg) for path_arg in url_path_args]
+        return [cls._to_url(url_path) for url_path in url_paths]
 
-        chunk_size = self.MAX_SIMULTANEOUS_REQUESTS  # self._rate_limiter.calls_per_sec
-        url_chunks = [all_urls[pos:pos + chunk_size] for pos in xrange(0, len(all_urls), chunk_size)]
-        for chunk in url_chunks:
-            self._rate_limiter.make_calls(num_calls=len(chunk))
-            get_requests = [grequests.get(req_url, headers=self._auth_header) for req_url in chunk]
-            for response in grequests.map(get_requests):
-                if 200 == response.status_code:
-                    all_responses.append(response.json())
-                else:
-                    sys.stderr.write('REQUESTS FAILED {0}\n'.format(response.status_code))
-                    all_responses.append({})
-
-        return all_responses
-
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def categorization(self, domains):
         """Calls categorization end point and adds an 'is_suspicious' key to each response.
 
@@ -121,13 +36,20 @@ class InvestigateApi(object):
         Returns:
             A dict of {domain: categorization_result}
         """
-        path = 'domains/categorization/?showLabels'
-        response = self._make_post_requests(path, data=simplejson.dumps(domains))
+        url_path = 'domains/categorization/?showLabels'
+        response = self._requests.post(self._to_url(url_path), data=simplejson.dumps(domains))
+        if not response:
+            # TODO: Problem, raise exception
+            raise Exception('dang')
+
+        import sys
+        sys.stderr.write(simplejson.dumps(response, indent=2))
+
         for domain in response.keys():
             response[domain]['is_suspicious'] = self._is_categorization_suspicious(response[domain])
         return response
 
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def security(self, domains):
         """Calls security end point and adds an 'is_suspicious' key to each response.
 
@@ -136,8 +58,10 @@ class InvestigateApi(object):
         Returns:
             A dict of results from the security_info call
         """
-        fmt_string = 'security/name/{0}.json'
-        responses = self._make_get_requests(fmt_string, domains)
+        fmt_url_path = 'security/name/{0}.json'
+
+        urls = self._to_urls(fmt_url_path, domains)
+        responses = self._requests.multi_get_urls(urls)
         responses = dict(zip(domains, responses))
         for domain in responses.keys():
             response = self._trim_security_result(responses[domain])
@@ -146,7 +70,7 @@ class InvestigateApi(object):
 
         return responses
 
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def cooccurrences(self, domains):
         """Get the domains related to input domains.
 
@@ -155,10 +79,11 @@ class InvestigateApi(object):
         Returns:
             A set of domains
         """
-        cooccur_domains = set()
+        fmt_url_path = 'recommendations/name/{0}.json'
+        urls = self._to_urls(fmt_url_path, domains)
 
-        fmt_string = 'recommendations/name/{0}.json'
-        responses = self._make_get_requests(fmt_string, domains)
+        cooccur_domains = set()
+        responses = self._requests.multi_get_urls(urls)
         for response in responses:
             for occur_domain in response.get('pfs2', []):
                 for elem in expand_domain(occur_domain[0]):
@@ -166,7 +91,7 @@ class InvestigateApi(object):
 
         return cooccur_domains
 
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def rr_history(self, ips):
         """Get the domains related to input ips.
 
@@ -175,10 +100,11 @@ class InvestigateApi(object):
         Returns:
             A set of domains
         """
-        rr_domains = set()
+        fmt_url_path = 'dnsdb/ip/a/{0}.json'
+        urls = self._to_urls(fmt_url_path, ips)
 
-        fmt_string = 'dnsdb/ip/a/{0}.json'
-        responses = self._make_get_requests(fmt_string, ips)
+        rr_domains = set()
+        responses = self._requests.multi_get_urls(urls)
         for response in responses:
             for rr_domain in response.get('rrs', []):
                 for elem in expand_domain(rr_domain['rr']):
