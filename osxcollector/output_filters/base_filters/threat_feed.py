@@ -7,6 +7,7 @@ import sys
 import time
 from collections import namedtuple
 from traceback import extract_tb
+from traceback import format_list
 
 import grequests
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
@@ -80,13 +81,23 @@ class MultiRequest(object):
         Args:
             url - A string URL
             data - A dict or string of data to send as the POST body
-            to_json - A boolea, should the responses be returned as JSON blobs
+            to_json - A boolean, should the responses be returned as JSON blobs
+        Returns:
+            a list of dicts if to_json is set of grequest.response otherwise
         """
-        request = grequests.post(url, headers=self._default_headers, data=data, timeout=self._req_timeout)
+        verb = 'POST'
+        request = self._create_request(verb, url, data=data)
         response = grequests.map([request])
-        if to_json:
-            return response[0].json()
-        return response[0]
+        if response:
+            response = response[0]
+
+        if response and 200 == response.status_code:
+            if to_json:
+                return response.json()
+            return response
+        else:
+            sys.stderr.write('REQUESTS FAILED {0}\n'.format(response.status_code if response else ''))
+            return {}
 
     def multi_get_urls(self, urls, to_json=True):
         params = [None] * len(urls)
@@ -95,6 +106,14 @@ class MultiRequest(object):
     def multi_get_params(self, url, params, to_json=True):
         urls = [url] * len(params)
         return self.multi_get(urls, params, to_json)
+
+    def _create_request(self, verb, url, params=None, data=None):
+        if 'POST' == verb:
+            return grequests.post(url, headers=self._default_headers, params=params, data=data, timeout=self._req_timeout)
+        elif 'GET' == verb:
+            return grequests.get(url, headers=self._default_headers, params=params, data=data, timeout=self._req_timeout)
+        else:
+            raise Exception('You broke it.')
 
     def multi_get(self, urls, params, to_json=True):
         assert isinstance(urls, list)
@@ -110,18 +129,17 @@ class MultiRequest(object):
             if self._rate_limiter:
                 self._rate_limiter.make_calls(num_calls=len(chunk))
 
-            requests = [grequests.get(url, headers=self._default_headers, params=param, timeout=self._req_timeout) for url, param in chunk]
+            verb = 'GET'
+            requests = [self._create_request(verb, url, params=param) for url, param in chunk]
             for response in grequests.map(requests):
                 if response and 200 == response.status_code:
                     if to_json:
-                        sys.stderr.write(response.url)
-                        sys.stderr.write('\n')
                         all_responses.append(response.json())
                     else:
                         all_responses.append(response)
                 else:
-                    sys.stderr.write('REQUESTS FAILED {0}\n'.format(response.status_code))
-                    all_responses.append(None)
+                    sys.stderr.write('REQUESTS FAILED {0}\n'.format(response.status_code if response else ''))
+                    all_responses.append({})
 
         return all_responses
 
@@ -138,7 +156,9 @@ class MultiRequest(object):
                 # sys.stderr.write('[ERROR] calling {0} {1} {2}\n'.format(fn.__name__, de_args, de_kwargs))
 
                 exc_type, _, exc_traceback = sys.exc_info()
-                sys.stderr.write('[ERROR] {0} {1}\n'.format(exc_type, extract_tb(exc_traceback)))
+                sys.stderr.write('[ERROR] {0}\n'.format(exc_type))
+                for line in format_list(extract_tb(exc_traceback)):
+                    sys.stderr.write(line)
 
                 if hasattr(e, 'response'):
                     sys.stderr.write('[ERROR] request {0}\n'.format(repr(e.response)))
