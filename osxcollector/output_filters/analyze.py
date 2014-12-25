@@ -23,6 +23,7 @@
 # 11. Party!
 #
 import sys
+from numbers import Number
 from optparse import OptionParser
 
 import simplejson
@@ -66,7 +67,7 @@ class AnalyzeFilter(ChainFilter):
             # Lookup threat info on suspicious and related stuff
             OpenDnsLookupDomainsFilter(suspicious_when=include_in_summary),
             VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when),
-            VtLookupHashesFilter(lookup_when=lookup_hashes_in_vt_when),
+            VtLookupHashesFilter(),  # lookup_when=lookup_hashes_in_vt_when),
 
             # Sort browser history for maximum pretty
             FirefoxHistoryFilter(),
@@ -102,8 +103,6 @@ def lookup_domains_in_vt_when(blob):
 
 def lookup_hashes_in_vt_when(blob):
     """VT lookup is slow. Only do it when it seems useful.
-
-    TODO(ivanlei): Maybe just lookup all hashes.
     """
     if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup', 'kext', 'applications']:
         return True
@@ -328,21 +327,45 @@ class _VeryReadableOutputFilter(OutputFilter):
                 self._summarize_val(key, val, 'opendns')
 
     def _summarize_val(self, key, val, prefix=None):
+        self._print_key(key, prefix)
+        self._print_val(val)
+        self._write('\n')
+
+    def _print_key(self, key, prefix):
         if not prefix:
             prefix = ''
         else:
             prefix += '-'
 
-        if isinstance(val, basestring):
-            val = val.encode(encoding='utf-8', errors='ignore')
-        else:
-            val = repr(val)
-        val = val[:480]
-
         self._write('  {0}{1}'.format(prefix, key), self.KEY_COLOR)
-        self._write(': "')
-        self._write('{0}'.format(val), self.VAL_COLOR)
-        self._write('"\n')
+        self._write(': ')
+
+    def _print_val(self, val):
+        if isinstance(val, list):
+            self._write('[')
+            for index, elem in enumerate(val):
+                self._print_val(elem)
+                if index != len(val) - 1:
+                    self._write(', ')
+            self._write(']')
+        elif isinstance(val, dict):
+            self._write('{')
+            keys = val.keys()
+            for index, key in enumerate(keys):
+                self._write('"')
+                self._write(key, self.VAL_COLOR)
+                self._write('": ')
+                self._print_val(val[key])
+                if index != len(keys) - 1:
+                    self._write(', ')
+            self._write('}')
+        elif isinstance(val, basestring):
+            val = val[:480]
+            self._write('"')
+            self._write(val, self.VAL_COLOR)
+            self._write('"')
+        elif isinstance(val, Number):
+            self._write('{0}'.format(val), self.VAL_COLOR)
 
 
 def main():

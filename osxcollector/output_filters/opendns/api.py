@@ -18,7 +18,7 @@ class InvestigateApi(object):
 
     def __init__(self, api_key):
         auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
-        self._requests = MultiRequest(default_headers=auth_header, rate_limit=30)
+        self._requests = MultiRequest(default_headers=auth_header, max_requests=10, rate_limit=30)
 
     def _to_url(cls, url_path):
         return '{0}{1}'.format(cls.BASE_URL, url_path)
@@ -41,9 +41,6 @@ class InvestigateApi(object):
         if not response:
             # TODO: Problem, raise exception
             raise Exception('dang')
-
-        import sys
-        sys.stderr.write(simplejson.dumps(response, indent=2))
 
         for domain in response.keys():
             response[domain]['is_suspicious'] = self._is_categorization_suspicious(response[domain])

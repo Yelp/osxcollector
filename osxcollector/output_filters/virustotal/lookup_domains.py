@@ -23,11 +23,10 @@ class LookupDomainsFilter(ThreatFeedFilter):
     def _lookup_iocs(self):
         """Caches the OpenDNS info for a set of domains"""
         vt = VirusTotalApi(self._api_key)
-        reports = vt.get_domain_reports(self._all_iocs)
-        for domain in reports.keys():
-            if self._whitelist.match_values(domain):
-                continue
 
+        iocs = filter(lambda x: not self._whitelist.match_values(x), self._all_iocs)
+        reports = vt.get_domain_reports(iocs)
+        for domain in reports.keys():
             if not reports[domain]:
                 continue
 

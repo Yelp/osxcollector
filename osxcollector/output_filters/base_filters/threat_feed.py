@@ -55,21 +55,36 @@ class RateLimiter(object):
 
 class MultiRequest(object):
 
+    """Wraps grequests to make simultaneous HTTP requests.
+
+    Can use a RateLimiter to limit # of outstanding requests.
+    """
+
     def __init__(self, default_headers=None, max_requests=20, rate_limit=0, req_timeout=25.0):
+        """Create the MultiRequest.
+
+        Args:
+            default_headers - A dict of headers which will be added to every request
+            max_requests - Maximum number of requests to issue at once
+            rate_limit - Maximum number of requests to issue per second
+            req_timeout - Maximum number of seconds to wait without reading a response byte
+        """
         self._default_headers = default_headers
         self._max_requests = max_requests
         self._req_timeout = req_timeout
         self._rate_limiter = RateLimiter(rate_limit) if rate_limit else None
 
     def post(self, url, data=None, to_json=True):
-        sys.stderr.write(repr(self._default_headers))
+        """Make a single POST request.
 
+        Args:
+            url - A string URL
+            data - A dict or string of data to send as the POST body
+            to_json - A boolea, should the responses be returned as JSON blobs
+        """
         request = grequests.post(url, headers=self._default_headers, data=data, timeout=self._req_timeout)
         response = grequests.map([request])
         if to_json:
-            sys.stderr.write(response[0].url)
-            sys.stderr.write('\n')
-
             return response[0].json()
         return response[0]
 
@@ -97,7 +112,7 @@ class MultiRequest(object):
 
             requests = [grequests.get(url, headers=self._default_headers, params=param, timeout=self._req_timeout) for url, param in chunk]
             for response in grequests.map(requests):
-                if 200 == response.status_code:
+                if response and 200 == response.status_code:
                     if to_json:
                         sys.stderr.write(response.url)
                         sys.stderr.write('\n')
@@ -214,6 +229,9 @@ class ThreatFeedFilter(OutputFilter):
         Returns:
             An array of strings
         """
+        self._all_iocs = sorted(list(self._all_iocs))
+        self._suspicious_iocs = sorted(list(self._suspicious_iocs))
+
         self._lookup_iocs()
         self._add_threat_info_to_blobs()
         return self._blobs_with_iocs

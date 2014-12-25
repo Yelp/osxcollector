@@ -25,9 +25,21 @@ class VirusTotalApi(object):
         Returns:
             dict
         """
-        params = [{"resource": resource, 'apikey': self._api_key} for resource in resources]
+        RESOURCES_PER_REQ = 25
+        resource_chunks = [','.join(resources[pos:pos + RESOURCES_PER_REQ]) for pos in xrange(0, len(resources), RESOURCES_PER_REQ)]
+
+        all_responses = {}
+
+        params = [{"resource": resource_chunk, 'apikey': self._api_key} for resource_chunk in resource_chunks]
         responses = self._requests.multi_get_params(self.BASE_DOMAIN + 'file/report', params)
-        return dict(zip(resources, responses))
+        for response_chunk in responses:
+            if not isinstance(response_chunk, list):
+                response_chunk = [response_chunk]
+            for response in response_chunk:
+                if response:
+                    all_responses[response['resource']] = response
+
+        return all_responses
 
     @MultiRequest.error_handling
     def get_domain_reports(self, domains):

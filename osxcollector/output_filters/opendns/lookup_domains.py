@@ -27,9 +27,10 @@ class LookupDomainsFilter(ThreatFeedFilter):
         """
         investigate = InvestigateApi(self._api_key)
 
-        categorized_responses = investigate.categorization(list(self._all_iocs))
+        iocs = filter(lambda x: not self._whitelist.match_values(x), self._all_iocs)
+        categorized_responses = investigate.categorization(iocs)
         for domain in categorized_responses.keys():
-            if self._whitelist.match_values(domain) or not self._should_get_security_info(domain, categorized_responses[domain]):
+            if not self._should_get_security_info(domain, categorized_responses[domain]):
                 del categorized_responses[domain]
 
         security_responses = investigate.security(categorized_responses.keys())
