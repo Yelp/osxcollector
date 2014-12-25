@@ -18,7 +18,7 @@ class InvestigateApi(object):
 
     def __init__(self, api_key):
         auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
-        self._requests = MultiRequest(default_headers=auth_header, max_requests=10, rate_limit=30)
+        self._requests = MultiRequest(default_headers=auth_header, max_requests=12, rate_limit=30)
 
     def _to_url(cls, url_path):
         return '{0}{1}'.format(cls.BASE_URL, url_path)
@@ -37,9 +37,8 @@ class InvestigateApi(object):
             A dict of {domain: categorization_result}
         """
         url_path = 'domains/categorization/?showLabels'
-        response = self._requests.post(self._to_url(url_path), data=simplejson.dumps(domains))
+        response = self._requests.multi_post(self._to_url(url_path), data=simplejson.dumps(domains))
         if not response:
-            # TODO: Problem, raise exception
             raise Exception('dang')
 
         for domain in response.keys():
@@ -58,7 +57,7 @@ class InvestigateApi(object):
         fmt_url_path = 'security/name/{0}.json'
 
         urls = self._to_urls(fmt_url_path, domains)
-        responses = self._requests.multi_get_urls(urls)
+        responses = self._requests.multi_get(urls)
         responses = dict(zip(domains, responses))
         for domain in responses.keys():
             response = self._trim_security_result(responses[domain])
@@ -80,7 +79,7 @@ class InvestigateApi(object):
         urls = self._to_urls(fmt_url_path, domains)
 
         cooccur_domains = set()
-        responses = self._requests.multi_get_urls(urls)
+        responses = self._requests.multi_get(urls)
         for response in responses:
             for occur_domain in response.get('pfs2', []):
                 for elem in expand_domain(occur_domain[0]):
@@ -101,7 +100,7 @@ class InvestigateApi(object):
         urls = self._to_urls(fmt_url_path, ips)
 
         rr_domains = set()
-        responses = self._requests.multi_get_urls(urls)
+        responses = self._requests.multi_get(urls)
         for response in responses:
             for rr_domain in response.get('rrs', []):
                 for elem in expand_domain(rr_domain['rr']):

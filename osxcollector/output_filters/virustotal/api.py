@@ -31,7 +31,7 @@ class VirusTotalApi(object):
         all_responses = {}
 
         params = [{"resource": resource_chunk, 'apikey': self._api_key} for resource_chunk in resource_chunks]
-        responses = self._requests.multi_get_params(self.BASE_DOMAIN + 'file/report', params)
+        responses = self._requests.multi_get(self.BASE_DOMAIN + 'file/report', query_params=params)
         for response_chunk in responses:
             if not isinstance(response_chunk, list):
                 response_chunk = [response_chunk]
@@ -44,5 +44,5 @@ class VirusTotalApi(object):
     @MultiRequest.error_handling
     def get_domain_reports(self, domains):
         params = [{"domain": domain, 'apikey': self._api_key} for domain in domains]
-        responses = self._requests.multi_get_params(self.BASE_DOMAIN + 'domain/report', params)
+        responses = self._requests.multi_get(self.BASE_DOMAIN + 'domain/report', query_params=params)
         return dict(zip(domains, responses))

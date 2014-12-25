@@ -32,7 +32,7 @@ class RateLimiter(object):
         """
         self._cull()
         while self._outstanding_calls + num_calls > self._max_calls_per_second:
-            time.sleep(0.5)
+            time.sleep(0)  # yield
             self._cull()
 
         self._call_times.append(self.CallRecord(time=time.time(), num_calls=num_calls))
@@ -54,12 +54,26 @@ class RateLimiter(object):
             self._call_times = self._call_times[cull_from + 1:]
 
 
+class InvalidRequestError(Exception):
+
+    """Raised by MultiRequest when it can't figure out how to make a request."""
+    pass
+
+
 class MultiRequest(object):
 
     """Wraps grequests to make simultaneous HTTP requests.
 
     Can use a RateLimiter to limit # of outstanding requests.
+    `multi_get` and `multi_post` try to be smart about how many requests to issue:
+
+    * One url & one param - One request will be made.
+    * Multiple url & one query param - Multiple requests will be made, with differing urls and the same query param.
+    * Multiple url & mulitple query params - Multiple requests will be made, with the same url and differning query params.
     """
+
+    _VERB_GET = 'GET'
+    _VERB_POST = 'POST'
 
     def __init__(self, default_headers=None, max_requests=20, rate_limit=0, req_timeout=25.0):
         """Create the MultiRequest.
@@ -68,79 +82,196 @@ class MultiRequest(object):
             default_headers - A dict of headers which will be added to every request
             max_requests - Maximum number of requests to issue at once
             rate_limit - Maximum number of requests to issue per second
-            req_timeout - Maximum number of seconds to wait without reading a response byte
+            req_timeout - Maximum number of seconds to wait without reading a response byte before deciding an error has occurred
         """
         self._default_headers = default_headers
         self._max_requests = max_requests
         self._req_timeout = req_timeout
         self._rate_limiter = RateLimiter(rate_limit) if rate_limit else None
 
-    def post(self, url, data=None, to_json=True):
-        """Make a single POST request.
+    def multi_get(self, urls, query_params=None, to_json=True):
+        """Issue multiple GET requests.
 
         Args:
-            url - A string URL
-            data - A dict or string of data to send as the POST body
+            urls - A string URL or list of string URLs
+            query_params - None, a dict, or a list of dicts representing the query params
             to_json - A boolean, should the responses be returned as JSON blobs
         Returns:
-            a list of dicts if to_json is set of grequest.response otherwise
+            a list of dicts if to_json is set of grequest.response otherwise.
+        Raises:
+            InvalidRequestError - Can not decide how many requests to issue.
         """
-        verb = 'POST'
-        request = self._create_request(verb, url, data=data)
-        response = grequests.map([request])
-        if response:
-            response = response[0]
+        return self._multi_request(MultiRequest._VERB_GET, urls, query_params, None, to_json)
 
-        if response and 200 == response.status_code:
-            if to_json:
-                return response.json()
-            return response
+    def multi_post(self, urls, query_params=None, data=None, to_json=True):
+        """Issue multiple POST requests.
+
+        Args:
+            urls - A string URL or list of string URLs
+            query_params - None, a dict, or a list of dicts representing the query params
+            data - None, a dict or string, or a list of dicts and strings representing the data body.
+            to_json - A boolean, should the responses be returned as JSON blobs
+        Returns:
+            a list of dicts if to_json is set of grequest.response otherwise.
+        Raises:
+            InvalidRequestError - Can not decide how many requests to issue.
+        """
+        return self._multi_request(MultiRequest._VERB_POST, urls, query_params, data, to_json)
+
+    def _create_request(self, verb, url, query_params=None, data=None):
+        """Helper method to create a single `grequests.post` or `grequests.get`.
+
+        Args:
+            verb - MultiRequest._VERB_POST or MultiRequest._VERB_GET
+            url - A string URL
+            query_params - None or a dict
+            data - None or a string or a dict
+        Returns:
+            requests.PreparedRequest
+        Raises:
+            InvalidRequestError - if an invalid verb is passed in.
+        """
+        if MultiRequest._VERB_POST == verb:
+            return grequests.post(url, headers=self._default_headers, params=query_params, data=data, timeout=self._req_timeout)
+        elif MultiRequest._VERB_GET == verb:
+            return grequests.get(url, headers=self._default_headers, params=query_params, data=data, timeout=self._req_timeout)
         else:
-            sys.stderr.write('REQUESTS FAILED {0}\n'.format(response.status_code if response else ''))
+            raise InvalidRequestError('Invalid verb {0}'.format(verb))
+
+    def _zip_request_params(self, urls, query_params, data):
+        """Massages inputs and returns a list of 3-tuples zipping them up.
+
+        This is all the smarts behind deciding how many requests to issue.
+        It's fine for an input to have 0, 1, or a list of values.
+        If there are two inputs each with a list of values, the cardinality of those lists much match.
+
+        Args:
+            urls - 1 string URL or a list of URLs
+            query_params - None, 1 dict, or a list of dicts
+            data - None, 1 dict or string, or a list of dicts or strings
+        Returns:
+            A list of 3-tuples (url, query_param, data)
+        Raises:
+            InvalidRequestError - if cardinality of lists does not match
+        """
+
+        # Everybody gets to be a list
+        if not isinstance(urls, list):
+            urls = [urls]
+        if not isinstance(query_params, list):
+            query_params = [query_params]
+        if not isinstance(data, list):
+            data = [data]
+
+        # Counts must not mismatch
+        url_count = len(urls)
+        query_param_count = len(query_params)
+        data_count = len(data)
+
+        max_count = max(url_count, query_param_count, data_count)
+
+        if ((url_count < max_count and url_count > 1) or
+                (query_param_count < max_count and query_param_count > 1) or
+                (data_count < max_count and data_count > 1)):
+            raise InvalidRequestError('Mismatched parameter count url_count:{0} query_param_count:{1} data_count:{2} max_count:{3}',
+                                      url_count, query_param_count, data_count, max_count)
+
+        # Pad out lists
+        if url_count < max_count:
+            urls = urls * max_count
+        if query_param_count < max_count:
+            query_params = query_params * max_count
+        if data_count < max_count:
+            data = data * max_count
+
+        return zip(urls, query_params, data)
+
+    class _FakeResponse(object):
+
+        """_FakeResponse looks enough like a response from grequests to handle when grequests has no response.
+
+        Attributes:
+            request - The request object
+            status_code - The HTTP response status code
+        """
+
+        def __init__(self, request, status_code):
+            self._request = request
+            self._status_code = status_code
+
+        @property
+        def request(self):
+            return self._request
+
+        @property
+        def status_code(self):
+            return self._status_code
+
+        def json(self):
+            """Convert the response body to a dict."""
             return {}
 
-    def multi_get_urls(self, urls, to_json=True):
-        params = [None] * len(urls)
-        return self.multi_get(urls, params, to_json)
+    def _wait_for_response(self, requests, to_json):
+        """Issue a batch of requests and wait for the responses.
 
-    def multi_get_params(self, url, params, to_json=True):
-        urls = [url] * len(params)
-        return self.multi_get(urls, params, to_json)
-
-    def _create_request(self, verb, url, params=None, data=None):
-        if 'POST' == verb:
-            return grequests.post(url, headers=self._default_headers, params=params, data=data, timeout=self._req_timeout)
-        elif 'GET' == verb:
-            return grequests.get(url, headers=self._default_headers, params=params, data=data, timeout=self._req_timeout)
-        else:
-            raise Exception('You broke it.')
-
-    def multi_get(self, urls, params, to_json=True):
-        assert isinstance(urls, list)
-        assert isinstance(params, list)
-        assert len(urls) == len(params)
-
+        Args:
+            requests - A list of requests
+            to_json - A boolean, should the responses be returned as JSON blobs
+        Returns:
+            A list of dicts if to_json, a list of grequest.response otherwise
+        """
         all_responses = []
 
-        zipped = zip(urls, params)
-        chunks = [zipped[pos:pos + self._max_requests] for pos in xrange(0, len(zipped), self._max_requests)]
+        for request, response in zip(requests, grequests.map(requests)):
+            if not response:
+                response = MultiRequest._FakeResponse(request, '<UNKNOWN>')
 
-        for chunk in chunks:
+            if 200 != response.status_code:
+                sys.stderr.write('[ERROR] url[{0}] status_code[{1}]\n'.format(response.request.url, response.status_code))
+
+            if to_json:
+                # TODO - Add an option for printing this
+                sys.stderr.write(response.request.url)
+                sys.stderr.write('\n')
+                all_responses.append(response.json())
+            else:
+                all_responses.append(response)
+
+        return all_responses
+
+    def _multi_request(self, verb, urls, query_params, data, to_json=True):
+        """Issues multiple batches of simultaneous HTTP requests and waits for responses.
+
+        Args:
+            verb - MultiRequest._VERB_POST or MultiRequest._VERB_GET
+            urls - A string URL or list of string URLs
+            query_params - None, a dict, or a list of dicts representing the query params
+            data - None, a dict or string, or a list of dicts and strings representing the data body.
+            to_json - A boolean, should the responses be returned as JSON blobs
+        Returns:
+            If multiple requests are made - a list of dicts if to_json, a list of grequest.response otherwise
+            If a single request is made, the return is not a list
+        Raises:
+            InvalidRequestError - if no URL is supplied
+        """
+        if not urls:
+            raise InvalidRequestError('No URL supplied')
+
+        # Break the params into batches of request_params
+        request_params = self._zip_request_params(urls, query_params, data)
+        batch_of_params = [request_params[pos:pos + self._max_requests] for pos in xrange(0, len(request_params), self._max_requests)]
+
+        # Iteratively issue each batch, applying the rate limiter if necessary
+        all_responses = []
+        for param_batch in batch_of_params:
             if self._rate_limiter:
-                self._rate_limiter.make_calls(num_calls=len(chunk))
+                self._rate_limiter.make_calls(num_calls=len(param_batch))
 
-            verb = 'GET'
-            requests = [self._create_request(verb, url, params=param) for url, param in chunk]
-            for response in grequests.map(requests):
-                if response and 200 == response.status_code:
-                    if to_json:
-                        all_responses.append(response.json())
-                    else:
-                        all_responses.append(response)
-                else:
-                    sys.stderr.write('REQUESTS FAILED {0}\n'.format(response.status_code if response else ''))
-                    all_responses.append({})
+            requests = [self._create_request(verb, url, query_params=query_param, data=datum) for url, query_param, datum in param_batch]
+            all_responses.extend(self._wait_for_response(requests, to_json))
 
+        if len(all_responses) == 1:
+            return all_responses[0]
         return all_responses
 
     @classmethod
@@ -150,11 +281,7 @@ class MultiRequest(object):
             try:
                 result = fn(*args, **kwargs)
                 return result
-            except Exception as e:
-                # de_args = repr([a for a in args]) or ''
-                # de_kwargs = repr([(a, kwargs[a]) for a in kwargs]) or ''
-                # sys.stderr.write('[ERROR] calling {0} {1} {2}\n'.format(fn.__name__, de_args, de_kwargs))
-
+            except InvalidRequestError as e:
                 exc_type, _, exc_traceback = sys.exc_info()
                 sys.stderr.write('[ERROR] {0}\n'.format(exc_type))
                 for line in format_list(extract_tb(exc_traceback)):
