@@ -7,7 +7,7 @@
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
-from osxcollector.output_filters.find_blacklisted import create_blacklist
+from osxcollector.output_filters.util.blacklist import create_blacklist
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 

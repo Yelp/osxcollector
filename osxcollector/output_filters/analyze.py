@@ -169,7 +169,6 @@ class _OutputToFileFilter(OutputFilter):
 
             with open('./analyze_{0}.json'.format(incident_id), 'w') as fp:
                 for blob in self._all_blobs:
-                    # if include_in_summary(blob):
                     fp.write(simplejson.dumps(blob))
                     fp.write('\n')
 

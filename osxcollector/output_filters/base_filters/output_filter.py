@@ -10,6 +10,7 @@ import sys
 import simplejson
 import yaml
 from osxcollector.osxcollector import DictUtils
+from osxcollector.output_filters.exceptions import MissingConfigError
 
 
 class OutputFilter(object):
@@ -99,12 +100,6 @@ class Config(object):
         if not val:
             raise MissingConfigError('Missing value[{0}]'.format(key))
         return val
-
-
-class MissingConfigError(Exception):
-
-    """An error to throw when configuration is missing"""
-    pass
 
 
 def run_filter(output_filter):

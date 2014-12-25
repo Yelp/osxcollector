@@ -2,12 +2,11 @@
 #
 # InvestigateApi makes calls to the OpenDNS Investigate API.
 #
-
 from collections import namedtuple
 
 import simplejson
-from osxcollector.output_filters.base_filters.threat_feed import MultiRequest
-from osxcollector.output_filters.find_domains import expand_domain
+from osxcollector.output_filters.util.domains import expand_domain
+from osxcollector.output_filters.util.http import MultiRequest
 
 
 class InvestigateApi(object):

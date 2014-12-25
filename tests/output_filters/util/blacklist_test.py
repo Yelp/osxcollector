@@ -5,9 +5,9 @@ import testify as T
 from mock import patch
 from osxcollector.output_filters.base_filters. \
     output_filter import MissingConfigError
-from osxcollector.output_filters.find_blacklisted import Blacklist
-from osxcollector.output_filters.find_blacklisted import create_blacklist
-from osxcollector.output_filters.find_domains import BadDomainError
+from osxcollector.output_filters.util.blacklist import Blacklist
+from osxcollector.output_filters.util.blacklist import create_blacklist
+from osxcollector.output_filters.util.domains import BadDomainError
 
 
 class CreateBlacklistTest(T.TestCase):

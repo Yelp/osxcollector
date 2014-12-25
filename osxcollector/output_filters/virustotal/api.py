@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 #
 # VirusTotalApi makes calls to the VirusTotal API.
-# It uses the grequests library to make many calls in parrallel.
 #
-from osxcollector.output_filters.base_filters.threat_feed import MultiRequest
+from osxcollector.output_filters.util.http import MultiRequest
 
 
 class VirusTotalApi(object):
@@ -15,15 +14,12 @@ class VirusTotalApi(object):
 
     @MultiRequest.error_handling
     def get_file_reports(self, resources):
-        """Retrieves the most recent report on a given sample (md5/sha1/sha256 hash).
+        """Retrieves the most recent reports for a set of md5, sha1, and/or sha2 hashes.
 
         Args:
-            resources: list of md5/sha1/sha256 hashes.
-            Each list element can be also a CSV list made up of a combination of hashes
-            (up to 4 items with the standard request rate), this allows to perform
-            a batch request with one single call.
+            resources: list of string hashes.
         Returns:
-            dict
+            A dict with the hash as key and the VT report as value.
         """
         RESOURCES_PER_REQ = 25
         resource_chunks = [','.join(resources[pos:pos + RESOURCES_PER_REQ]) for pos in xrange(0, len(resources), RESOURCES_PER_REQ)]
@@ -43,6 +39,13 @@ class VirusTotalApi(object):
 
     @MultiRequest.error_handling
     def get_domain_reports(self, domains):
+        """Retrieves the most recent VT info for a set of domains.
+
+        Args:
+            resources: list of string domains.
+        Returns:
+            A dict with the domain as key and the VT report as value.
+        """
         params = [{"domain": domain, 'apikey': self._api_key} for domain in domains]
         responses = self._requests.multi_get(self.BASE_DOMAIN + 'domain/report', query_params=params)
         return dict(zip(domains, responses))
