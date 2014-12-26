@@ -97,9 +97,9 @@ class MultiRequest(object):
         Raises:
             InvalidRequestError - Can not decide how many requests to issue.
         """
-        return self._multi_request(MultiRequest._VERB_GET, urls, query_params, None, to_json)
+        return self._multi_request(MultiRequest._VERB_GET, urls, query_params, None, to_json=to_json)
 
-    def multi_post(self, urls, query_params=None, data=None, to_json=True):
+    def multi_post(self, urls, query_params=None, data=None, to_json=True, send_as_file=False):
         """Issue multiple POST requests.
 
         Args:
@@ -107,14 +107,15 @@ class MultiRequest(object):
             query_params - None, a dict, or a list of dicts representing the query params
             data - None, a dict or string, or a list of dicts and strings representing the data body.
             to_json - A boolean, should the responses be returned as JSON blobs
+            send_as_file - A boolean, should the data be sent as a file.
         Returns:
             a list of dicts if to_json is set of grequest.response otherwise.
         Raises:
             InvalidRequestError - Can not decide how many requests to issue.
         """
-        return self._multi_request(MultiRequest._VERB_POST, urls, query_params, data, to_json)
+        return self._multi_request(MultiRequest._VERB_POST, urls, query_params, data, to_json=to_json, send_as_file=send_as_file)
 
-    def _create_request(self, verb, url, query_params=None, data=None):
+    def _create_request(self, verb, url, query_params=None, data=None, send_as_file=False):
         """Helper method to create a single `grequests.post` or `grequests.get`.
 
         Args:
@@ -122,13 +123,18 @@ class MultiRequest(object):
             url - A string URL
             query_params - None or a dict
             data - None or a string or a dict
+            send_as_file - A boolean, should the data be sent as a file.
         Returns:
             requests.PreparedRequest
         Raises:
             InvalidRequestError - if an invalid verb is passed in.
         """
         if MultiRequest._VERB_POST == verb:
-            return grequests.post(url, headers=self._default_headers, params=query_params, data=data, timeout=self._req_timeout)
+            if not send_as_file:
+                return grequests.post(url, headers=self._default_headers, params=query_params, data=data, timeout=self._req_timeout)
+            else:
+                files = {'file': data}
+                return grequests.post(url, headers=self._default_headers, params=query_params, files=files, timeout=self._req_timeout)
         elif MultiRequest._VERB_GET == verb:
             return grequests.get(url, headers=self._default_headers, params=query_params, data=data, timeout=self._req_timeout)
         else:
@@ -227,15 +233,15 @@ class MultiRequest(object):
 
             if to_json:
                 # TODO - Add an option for printing this
-                sys.stderr.write(response.request.url)
-                sys.stderr.write('\n')
+                # sys.stderr.write(response.request.url)
+                # sys.stderr.write('\n')
                 all_responses.append(response.json())
             else:
                 all_responses.append(response)
 
         return all_responses
 
-    def _multi_request(self, verb, urls, query_params, data, to_json=True):
+    def _multi_request(self, verb, urls, query_params, data, to_json=True, send_as_file=False):
         """Issues multiple batches of simultaneous HTTP requests and waits for responses.
 
         Args:
@@ -263,12 +269,17 @@ class MultiRequest(object):
             if self._rate_limiter:
                 self._rate_limiter.make_calls(num_calls=len(param_batch))
 
-            requests = [self._create_request(verb, url, query_params=query_param, data=datum) for url, query_param, datum in param_batch]
+            requests = []
+            for url, query_param, datum in param_batch:
+                requests.append(self._create_request(verb, url, query_params=query_param, data=datum, send_as_file=send_as_file))
+
             all_responses.extend(self._wait_for_response(requests, to_json))
 
-        if len(all_responses) == 1:
-            return all_responses[0]
         return all_responses
+
+    def post_file(self, url, file, to_json=True):
+        request = self._create_request(MultiRequest._VERB_POST, url)
+        return request
 
     @classmethod
     def error_handling(cls, fn):

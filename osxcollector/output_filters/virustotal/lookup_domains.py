@@ -20,11 +20,22 @@ class LookupDomainsFilter(ThreatFeedFilter):
                                                   lookup_when=lookup_when, suspicious_when=suspicious_when, api_key='virustotal')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
-    def _lookup_iocs(self):
-        """Caches the OpenDNS info for a set of domains"""
+    def _lookup_iocs(self, all_iocs, suspicious_iocs):
+        """Caches the VirusTotal info for a set of domains.
+
+        Domains on a whitelist will be ignored.
+
+        Args:
+            all_iocs - a list of domains.
+            suspicious_iocs - a subset of domains that are considered 'extra suspicious'
+        Returns:
+            A dict with domain as key and threat info as value
+        """
+        threat_info = {}
+
         vt = VirusTotalApi(self._api_key)
 
-        iocs = filter(lambda x: not self._whitelist.match_values(x), self._all_iocs)
+        iocs = filter(lambda x: not self._whitelist.match_values(x), all_iocs)
         reports = vt.get_domain_reports(iocs)
         for domain in reports.keys():
             if not reports[domain]:
@@ -32,7 +43,9 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
             trimmed_report = self._trim_domain_report(domain, reports[domain])
             if self._should_store_ioc_info(trimmed_report):
-                self._threat_info_by_iocs[domain] = trimmed_report
+                threat_info[domain] = trimmed_report
+
+        return threat_info
 
     def _should_store_ioc_info(self, trimmed_report):
         """Decide whether a report from VT is interesting enough to store in the output.

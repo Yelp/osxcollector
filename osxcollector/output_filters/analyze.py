@@ -39,6 +39,8 @@ from osxcollector.output_filters.opendns. \
 from osxcollector.output_filters.opendns. \
     related_domains import RelatedDomainsFilter as OpenDnsRelatedDomainsFilter
 from osxcollector.output_filters.related_files import RelatedFilesFilter
+from osxcollector.output_filters.shadowserver. \
+    lookup_hashes import LookupHashesFilter as ShadowServerLookupHashesFilter
 from osxcollector.output_filters.virustotal. \
     lookup_domains import LookupDomainsFilter as VtLookupDomainsFilter
 from osxcollector.output_filters.virustotal. \
@@ -64,10 +66,13 @@ class AnalyzeFilter(ChainFilter):
             RelatedFilesFilter(initial_terms=initial_file_terms, when=find_related_files_when),
             OpenDnsRelatedDomainsFilter(initial_domains=initial_domains, initial_ips=initial_ips),
 
+            # Do hash related lookups
+            ShadowServerLookupHashesFilter(),
+            VtLookupHashesFilter(lookup_when=lookup_when_not_in_shadowserver),
+
             # Lookup threat info on suspicious and related stuff
-            OpenDnsLookupDomainsFilter(suspicious_when=include_in_summary),
+            OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver, suspicious_when=include_in_summary),
             VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when),
-            VtLookupHashesFilter(),  # lookup_when=lookup_hashes_in_vt_when),
 
             # Sort browser history for maximum pretty
             FirefoxHistoryFilter(),
@@ -94,6 +99,9 @@ def include_in_summary(blob):
 
 def lookup_domains_in_vt_when(blob):
     """VT lookup is slow. Only do it when it seems useful."""
+    if 'osxcollector_shadowserver' in blob:
+        return False
+
     if any([key in blob for key in ['osxcollector_opendns', 'osxcollector_blacklist']]):
         return True
     # TODO(ivanlei): Should this be anything in 'osxcollector_related'
@@ -101,16 +109,8 @@ def lookup_domains_in_vt_when(blob):
         return True
 
 
-def lookup_hashes_in_vt_when(blob):
-    """VT lookup is slow. Only do it when it seems useful.
-    """
-    if blob['osxcollector_section'] in ['downloads', 'quarantines', 'startup', 'kext', 'applications']:
-        return True
-    elif blob.get('osxcollector_subsection') in ['extension']:
-        return True
-    elif include_in_summary(blob):
-        return True
-    return False
+def lookup_when_not_in_shadowserver(blob):
+    return 'osxcollector_shadowserver' not in blob
 
 
 # def is_suspicious_when_opendns(blob):

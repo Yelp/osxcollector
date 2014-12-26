@@ -37,6 +37,8 @@ class InvestigateApi(object):
         """
         url_path = 'domains/categorization/?showLabels'
         response = self._requests.multi_post(self._to_url(url_path), data=simplejson.dumps(domains))
+        response = response[0]
+
         if not response:
             raise Exception('dang')
 

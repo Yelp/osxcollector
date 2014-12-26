@@ -20,14 +20,22 @@ class LookupDomainsFilter(ThreatFeedFilter):
                                                   lookup_when=lookup_when, suspicious_when=suspicious_when, api_key='opendns')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
-    def _lookup_iocs(self):
+    def _lookup_iocs(self, all_iocs, suspicious_iocs):
         """Caches the OpenDNS info for a set of domains.
 
         Domains on a whitelist will be ignored.
+
+        Args:
+            all_iocs - a list of domains.
+            suspicious_iocs - a subset of domains that are considered 'extra suspicious'
+        Returns:
+            A dict with domain as key and threat info as value
         """
+        threat_info = {}
+
         investigate = InvestigateApi(self._api_key)
 
-        iocs = filter(lambda x: not self._whitelist.match_values(x), self._all_iocs)
+        iocs = filter(lambda x: not self._whitelist.match_values(x), all_iocs)
         categorized_responses = investigate.categorization(iocs)
         for domain in categorized_responses.keys():
             if not self._should_get_security_info(domain, categorized_responses[domain]):
@@ -35,20 +43,23 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
         security_responses = investigate.security(categorized_responses.keys())
         for domain in security_responses.keys():
-            if self._should_store_ioc_info(categorized_responses[domain], security_responses[domain]):
-                self._threat_info_by_iocs[domain] = {
+            if (domain in suspicious_iocs or
+                    self._should_store_ioc_info(categorized_responses[domain], security_responses[domain])):
+
+                threat_info[domain] = {
                     'domain': domain,
                     'categorization': categorized_responses[domain],
                     'security': security_responses[domain],
                     'link': 'https://investigate.opendns.com/domain-view/name/{0}/view'.format(domain)
                 }
 
+        return threat_info
+
     def _should_get_security_info(self, domain, categorized_info):
         """Figure out whether the info on the domain is interesting enough to gather more data.
 
         If the domain is already suspicious, get security info.
         If the domain isn't categorized, get security info.
-        If the domain is related to suspicious_iocs, get security info.
 
         Args:
             domain - A string domain
@@ -61,8 +72,6 @@ class LookupDomainsFilter(ThreatFeedFilter):
         if (0 == categorized_info['status'] and
                 0 == len(categorized_info.get('content_categories', [])) and
                 0 == len(categorized_info.get('security_categories', []))):
-            return True
-        if domain in self._suspicious_iocs:
             return True
         return False
 

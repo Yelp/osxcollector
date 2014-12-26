@@ -378,7 +378,7 @@ $ jq 'select(.osxcollector_browser_history=="firefox")'
 ```
 
 #### Threat API Filters
-By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. These APIs aren't free but they are useful.
+By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. Some of these APIs aren't free but they are useful.
 
 Using these filters as examples, it would be possible to integrate with additional free or premium threat APIs. `osxcollector.output_filters.base_filters.threat_feed.ThreatFeedFilter` has most of the plumbing for hooking up to arbitrary APIs.
 
@@ -445,6 +445,21 @@ $ cat PippinNightstar.json | \
 To see what it found:
 ```shell
 $ jq 'select(has("osxcollector_vthash"))'
+```
+
+##### ShadowServer LookupHashesFilter
+`osxcollector.output_filters.shadowserver.lookup_hashes.LookupHashesFilter`
+lookups hashes with the ShadowServer bin-test API. This is sort of the oppostive of a VirusTotal lookup and returns results when it sees the hashes of known good files. This helps raise confidence that a file is not malicious.
+
+Run it as:
+```
+$ cat ArkashKobiashi.json | \
+    python -m osxcollector.output_filters.shadowserver.lookup_hashes
+```
+
+To see what it found:
+```shell
+$ jq 'select(has("osxcollector_shadowserver"))'
 ```
 
 #### AnalyzeFilter - The One Filter to Rule Them All
