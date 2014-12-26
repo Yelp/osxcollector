@@ -13,14 +13,15 @@
 #  4. Take any domain or IP from the command line and use OpenDNS Investigate API to find all the domains
 #     related to those domains and all the domains related to those related domains - basically the 1st and 2nd
 #     generation related domains. Mark any lines where these domains appear.
-#  5. Lookup all the domains in the file with OpenDNS Investigate. Categorize and score the domains.
+#  5. Lookup all sha1 hashes in ShadowServer's bin-test whitelist. Files that match both hash and filename are ignored by further filters.
+#  6. Lookup file hashes in VirusTotal and mark any lines with suspicious files hashes.
+#  7. Lookup all the domains in the file with OpenDNS Investigate. Categorize and score the domains.
 #     Mark all the lines that contain domains that were scored as "suspicious".
-#  6. Lookup suspicious domains, those domains on a blacklist, or those related to the initial input in VirusTotal.
-#  7. Lookup file hashes in VirusTotal and mark any lines with suspicious files hashes.
-#  8. Cleanup the browser history and sort it in descending time order.
-#  9. Save all the enhanced output to a new file.
-# 10. Look at all the interesting lines in the file and try to summarize them in some very human readable output.
-# 11. Party!
+#  8. Lookup suspicious domains, those domains on a blacklist, or those related to the initial input in VirusTotal.
+#  9. Cleanup the browser history and sort it in descending time order.
+# 10. Save all the enhanced output to a new file.
+# 11. Look at all the interesting lines in the file and try to summarize them in some very human readable output.
+# 12. Party!
 #
 import sys
 from numbers import Number
