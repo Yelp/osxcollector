@@ -5,14 +5,13 @@
 # RateLimiter helps to only make a certain number of calls per second.
 # MultiRequest wraps grequests and issues multiple requests at once with an easy to use interface.
 #
-import sys
 import time
 from collections import namedtuple
-from traceback import extract_tb
-from traceback import format_list
 
 import grequests
 from osxcollector.output_filters.exceptions import InvalidRequestError
+from osxcollector.output_filters.util.error_messages import write_error_message
+from osxcollector.output_filters.util.error_messages import write_exception
 
 
 class RateLimiter(object):
@@ -229,7 +228,7 @@ class MultiRequest(object):
                 response = MultiRequest._FakeResponse(request, '<UNKNOWN>')
 
             if 200 != response.status_code:
-                sys.stderr.write('[ERROR] url[{0}] status_code[{1}]\n'.format(response.request.url, response.status_code))
+                write_error_message('url[{0}] status_code[{1}]'.format(response.request.url, response.status_code))
 
             if to_json:
                 # TODO - Add an option for printing this
@@ -289,15 +288,12 @@ class MultiRequest(object):
                 result = fn(*args, **kwargs)
                 return result
             except InvalidRequestError as e:
-                exc_type, _, exc_traceback = sys.exc_info()
-                sys.stderr.write('[ERROR] {0}\n'.format(exc_type))
-                for line in format_list(extract_tb(exc_traceback)):
-                    sys.stderr.write(line)
+                write_exception(e)
 
-                if hasattr(e, 'response'):
-                    sys.stderr.write('[ERROR] request {0}\n'.format(repr(e.response)))
                 if hasattr(e, 'request'):
-                    sys.stderr.write('[ERROR] request {0}\n'.format(repr(e.request)))
+                    write_error_message('request {0}'.format(repr(e.request)))
+                if hasattr(e, 'response'):
+                    write_error_message('response {0}'.format(repr(e.response)))
 
                 raise e
         return wrapper

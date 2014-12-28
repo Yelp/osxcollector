@@ -52,37 +52,58 @@ DEFAULT_RELATED_DOMAINS_DEPTH = 2
 
 class AnalyzeFilter(ChainFilter):
 
+    """AnalyzeFilter chains all the other filters to produce maximum effect.
+
+    A lot of the smarts of AnalyzeFilter are around what filters to run in which order and how results of one filter should
+    effect the operations of the next filter.
+    """
+
     def __init__(self,
                  initial_file_terms=None,
                  initial_domains=None,
                  initial_ips=None,
                  related_domains_depth=DEFAULT_RELATED_DOMAINS_DEPTH,
-                 monochrome=False):
-        filter_chain = [
-            # Find suspicious stuff
-            FindDomainsFilter(),
-            FindBlacklistedFilter(),
+                 monochrome=False,
+                 no_shadowserver=False,
+                 no_opendns=False,
+                 no_virustotal=False
+                 ):
 
-            # Find stuff related to suspicious stuff
-            RelatedFilesFilter(initial_terms=initial_file_terms, when=find_related_files_when),
-            OpenDnsRelatedDomainsFilter(initial_domains=initial_domains, initial_ips=initial_ips),
+        filter_chain = []
 
-            # Do hash related lookups
-            ShadowServerLookupHashesFilter(),
-            VtLookupHashesFilter(lookup_when=lookup_when_not_in_shadowserver),
+        filter_chain.append(FindDomainsFilter())
 
-            # Lookup threat info on suspicious and related stuff
-            OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver, suspicious_when=include_in_summary),
-            VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when),
+        # Do hash related lookups first. This is done first since hash lookup is not inflouenced
+        # by anything but other hash lookups.
+        if not no_shadowserver:
+            filter_chain.append(ShadowServerLookupHashesFilter())
+        if not no_virustotal:
+            filter_chain.append(VtLookupHashesFilter(lookup_when=lookup_when_not_in_shadowserver))
 
-            # Sort browser history for maximum pretty
-            FirefoxHistoryFilter(),
-            ChromeHistoryFilter(),
+        # Find blacklisted stuff next. Finding blacklisted domains requires running FindDomainsFilter first.
+        filter_chain.append(FindBlacklistedFilter())
 
-            # Summarize what has happened
-            _OutputToFileFilter(),
-            _VeryReadableOutputFilter(monochrome=monochrome),
-        ]
+        # RelatedFilesFilter and OpenDnsRelatedDomainsFilter use command line args in addition to previous filter results to find
+        # lines of interest.
+        filter_chain.append(RelatedFilesFilter(initial_terms=initial_file_terms, when=find_related_when))
+        if not no_opendns:
+            filter_chain.append(OpenDnsRelatedDomainsFilter(initial_domains=initial_domains,
+                                                            initial_ips=initial_ips, when=find_related_when))
+
+        # Lookup threat info on suspicious and related stuff
+        if not no_virustotal:
+            filter_chain.append(OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver, suspicious_when=include_in_summary))
+        if not no_opendns:
+            filter_chain.append(VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when))
+
+        # Sort browser history for maximum pretty
+        filter_chain.append(FirefoxHistoryFilter())
+        filter_chain.append(ChromeHistoryFilter())
+
+        # Summarize what has happened
+        filter_chain.append(_OutputToFileFilter())
+        filter_chain.append(_VeryReadableOutputFilter(monochrome=monochrome))
+
         super(AnalyzeFilter, self).__init__(filter_chain)
 
 
@@ -98,42 +119,29 @@ def include_in_summary(blob):
     return any([key in blob for key in _KEYS_FOR_SUMMARY])
 
 
-def lookup_domains_in_vt_when(blob):
-    """VT lookup is slow. Only do it when it seems useful."""
-    if 'osxcollector_shadowserver' in blob:
-        return False
-
-    if any([key in blob for key in ['osxcollector_opendns', 'osxcollector_blacklist']]):
-        return True
-    # TODO(ivanlei): Should this be anything in 'osxcollector_related'
-    if 'osxcollector_related' in blob and 'files' in blob.get('osxcollector_related'):
-        return True
-
-
 def lookup_when_not_in_shadowserver(blob):
+    """ShadowServer whitelists blobs that can be ignored."""
     return 'osxcollector_shadowserver' not in blob
 
 
-# def is_suspicious_when_opendns(blob):
-#     return 'osxcollector_blacklist' in blob or 'osxcollector_related' in blob
+def lookup_domains_in_vt_when(blob):
+    """VT domain lookup is a final step and what to lookup is dependant upon what has been found so far."""
+    return lookup_when_not_in_shadowserver(blob) and include_in_summary(blob)
 
 
-def find_related_files_when(blob):
-    """When to break a file path into terms to search for.
+def find_related_when(blob):
+    """When to find related terms or domains.
 
     Blacklisted file paths are worth investigating.
     Files where the md5 could not be calculated are also interesting. Root should be able to read files.
+    Files with a bad hash in VT are obviously malware, go find related bad stuff.
 
     Args:
         blob - a line of output from OSXCollector
     Returns:
         boolean
     """
-    if 'osxcollector_blacklist' in blob:
-        return True
-    if '' == blob.get('md5', None):
-        return True
-    return False
+    return '' == blob.get('md5', None) or include_in_summary(blob)
 
 
 class _OutputToFileFilter(OutputFilter):
@@ -322,7 +330,7 @@ class _VeryReadableOutputFilter(OutputFilter):
 
     def _summarize_opendns(self, blob):
         for blob in blob['osxcollector_opendns']:
-            for key in sorted(blob.keys()):
+            for key in ['domain', 'categorization', 'security', 'link']:
                 val = blob.get(key)
                 self._summarize_val(key, val, 'opendns')
 
@@ -382,12 +390,20 @@ def main():
                       help='[OPTIONAL] Skip the analysis and just output really readable analysis')
     parser.add_option('-M', '--monochrome', dest='monochrome', action='store_true', default=False,
                       help='[OPTIONAL] Output monochrome analysis')
+    parser.add_option('--no-opendns', dest='no_opendns', action='store_true', default=False,
+                      help='[OPTIONAL] Don\'t run OpenDNS filters')
+    parser.add_option('--no-virustotal', dest='no_virustotal', action='store_true', default=False,
+                      help='[OPTIONAL] Don\'t run VirusTotal filters')
+    parser.add_option('--no-shadowserver', dest='no_shadowserver', action='store_true', default=False,
+                      help='[OPTIONAL] Don\'t run ShadowServer filters')
+
     options, _ = parser.parse_args()
 
     if not options.readout:
         run_filter(AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms,
                                  initial_ips=options.ip_terms, related_domains_depth=options.related_domains_depth,
-                                 monochrome=options.monochrome))
+                                 monochrome=options.monochrome, no_opendns=options.no_opendns, no_virustotal=options.no_virustotal,
+                                 no_shadowserver=options.no_shadowserver))
     else:
         run_filter(_VeryReadableOutputFilter(monochrome=options.monochrome))
 
