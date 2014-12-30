@@ -35,7 +35,7 @@ class FindDomainsFilter(OutputFilter):
 
         # self._domains accumulates domains during calls to _look_for_domains
         if len(self._domains):
-            blob['osxcollector_domains'] = list(self._domains)
+            blob['osxcollector_domains'] = sorted(list(self._domains))
 
         return blob
 
