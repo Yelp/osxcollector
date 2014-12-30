@@ -73,7 +73,7 @@ class AnalyzeFilter(ChainFilter):
 
         filter_chain.append(FindDomainsFilter())
 
-        # Do hash related lookups first. This is done first since hash lookup is not inflouenced
+        # Do hash related lookups first. This is done first since hash lookup is not influenced
         # by anything but other hash lookups.
         if not no_shadowserver:
             filter_chain.append(ShadowServerLookupHashesFilter())

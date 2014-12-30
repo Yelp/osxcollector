@@ -79,7 +79,12 @@ class Config(object):
             filter_name: String class name of the filter instantiating this instance of Config.
         """
         self._config = None
-        for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF'):
+        for loc in [os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF')]:
+
+            # loc is empty when the environment variable is not set
+            if not loc:
+                continue
+
             try:
                 with open(os.path.join(loc, 'osxcollector.yaml')) as source:
                     self._config = yaml.load(source.read())
