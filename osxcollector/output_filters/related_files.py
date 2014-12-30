@@ -55,11 +55,19 @@ class RelatedFilesFilter(OutputFilter):
             line = simplejson.dumps(blob).lower()
             for term in self._terms:
                 if term in line:
-                    blob.setdefault('osxcollector_related', [])
-                    blob['osxcollector_related'].append('files')
-                    break
+                    blob.setdefault('osxcollector_related', {})
+                    blob['osxcollector_related'].setdefault('files', [])
+                    blob['osxcollector_related']['files'].append(term)
 
         return self._all_blobs
+
+    @property
+    def terms(self):
+        return self._terms
+
+    @property
+    def usernames(self):
+        return self._usernames
 
     # Keys to look in to find file paths
     FILE_NAME_KEYS = [
