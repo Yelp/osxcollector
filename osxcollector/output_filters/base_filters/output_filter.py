@@ -61,7 +61,7 @@ class Config(object):
     def __init__(self, filter_name):
 
         self._config = None
-        for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF'):
+        for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF', ''):
             try:
                 with open(os.path.join(loc, 'osxcollector.yaml')) as source:
                     self._config = yaml.load(source.read())
