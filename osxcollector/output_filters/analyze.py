@@ -92,7 +92,7 @@ class AnalyzeFilter(ChainFilter):
 
         # Lookup threat info on suspicious and related stuff
         if not no_virustotal:
-            filter_chain.append(OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver, suspicious_when=include_in_summary))
+            filter_chain.append(OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver))
         if not no_opendns:
             filter_chain.append(VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when))
 
@@ -141,7 +141,11 @@ def find_related_when(blob):
     Returns:
         boolean
     """
-    return '' == blob.get('md5', None) or include_in_summary(blob)
+    if lookup_when_not_in_shadowserver(blob):
+        return False
+    if '' == blob.get('md5', None):
+        return True
+    return any([key in blob for key in ['osxcollector_vthash', 'osxcollector_related']])
 
 
 class _OutputToFileFilter(OutputFilter):

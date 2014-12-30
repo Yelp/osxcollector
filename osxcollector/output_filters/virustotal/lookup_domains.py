@@ -15,19 +15,18 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
     """A class to lookup hashes using VirusTotal API."""
 
-    def __init__(self, lookup_when=None, suspicious_when=None):
+    def __init__(self, lookup_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_vtdomain',
-                                                  lookup_when=lookup_when, suspicious_when=suspicious_when, api_key='virustotal')
+                                                  lookup_when=lookup_when, api_key='virustotal')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
-    def _lookup_iocs(self, all_iocs, suspicious_iocs):
+    def _lookup_iocs(self, all_iocs):
         """Caches the VirusTotal info for a set of domains.
 
         Domains on a whitelist will be ignored.
 
         Args:
             all_iocs - a list of domains.
-            suspicious_iocs - a subset of domains that are considered 'extra suspicious'
         Returns:
             A dict with domain as key and threat info as value
         """

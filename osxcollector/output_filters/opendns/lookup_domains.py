@@ -15,19 +15,18 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
     """Uses OpenDNS to lookup the values in 'osxcollector_domains' and add 'osxcollector_opendns' key."""
 
-    def __init__(self, lookup_when=None, suspicious_when=None):
+    def __init__(self, lookup_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns',
-                                                  lookup_when=lookup_when, suspicious_when=suspicious_when, api_key='opendns')
+                                                  lookup_when=lookup_when, api_key='opendns')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
-    def _lookup_iocs(self, all_iocs, suspicious_iocs):
+    def _lookup_iocs(self, all_iocs):
         """Caches the OpenDNS info for a set of domains.
 
         Domains on a whitelist will be ignored.
 
         Args:
             all_iocs - a list of domains.
-            suspicious_iocs - a subset of domains that are considered 'extra suspicious'
         Returns:
             A dict with domain as key and threat info as value
         """
@@ -43,8 +42,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
         security_responses = investigate.security(categorized_responses.keys())
         for domain in security_responses.keys():
-            if (domain in suspicious_iocs or
-                    self._should_store_ioc_info(categorized_responses[domain], security_responses[domain])):
+            if self._should_store_ioc_info(categorized_responses[domain], security_responses[domain]):
 
                 threat_info[domain] = {
                     'domain': domain,
@@ -58,7 +56,6 @@ class LookupDomainsFilter(ThreatFeedFilter):
     def _should_get_security_info(self, domain, categorized_info):
         """Figure out whether the info on the domain is interesting enough to gather more data.
 
-        If the domain is already suspicious, get security info.
         If the domain isn't categorized, get security info.
 
         Args:

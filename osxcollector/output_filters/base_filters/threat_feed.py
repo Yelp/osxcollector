@@ -15,14 +15,13 @@ class ThreatFeedFilter(OutputFilter):
     It is assumed that the API uses an api_key stored in the config.
     """
 
-    def __init__(self, ioc_key, output_key, lookup_when=None, suspicious_when=None, api_key=None):
+    def __init__(self, ioc_key, output_key, lookup_when=None, api_key=None):
         """Read API config
 
         Args:
             ioc_key: key for finding IOCs in the input
             output_key: key to use to add threat info to the output
             lookup_when: a boolean function to call to decide whether to try a lookup for a blob
-            is_suspicious_when: a boolean function to call to decide whether a blob is already known to be suspicious
             api_key: name of the key in the 'api_key' section of config
         """
         super(ThreatFeedFilter, self).__init__()
@@ -31,22 +30,19 @@ class ThreatFeedFilter(OutputFilter):
             self._api_key = self.config.get_config('api_key.{0}'.format(api_key))
 
         self._lookup_when = lookup_when
-        self._is_suspicious_when = suspicious_when
         self._blobs_with_iocs = list()
         self.ioc_set = set()
-        self._suspicious_ioc_set = set()
 
         self._ioc_key = ioc_key
         self._output_key = output_key
 
-    def _lookup_iocs(self, all_iocs, suspicious_iocs):
+    def _lookup_iocs(self, all_iocs):
         """Looks up threat info for IOCs in all_iocs.
 
         This is the only method a derived class needs to implement.
 
         Args:
             all_iocs - a list of IOCs
-            suspicious_iocs - a subset of all_iocs that are considered 'extra suspicious'
         Returns:
             A dict with IOC as key and threat info as value
         """
@@ -82,14 +78,11 @@ class ThreatFeedFilter(OutputFilter):
             if len(ioc_list) > 10:
                 return blob
 
-            is_suspicious = self._is_suspicious_when and self._is_suspicious_when(blob)
             for ioc in ioc_list:
                 if not len(ioc):
                     continue
 
                 self.ioc_set.add(ioc)
-                if is_suspicious:
-                    self._suspicious_ioc_set.add(ioc)
 
             self._blobs_with_iocs.append(blob)
             return None
@@ -103,9 +96,8 @@ class ThreatFeedFilter(OutputFilter):
             An array of strings
         """
         self.ioc_set = sorted(list(self.ioc_set))
-        self._suspicious_ioc_set = sorted(list(self._suspicious_ioc_set))
 
-        threat_info = self._lookup_iocs(self.ioc_set, self._suspicious_ioc_set)
+        threat_info = self._lookup_iocs(self.ioc_set)
         self._add_threat_info_to_blobs(threat_info)
         return self._blobs_with_iocs
 

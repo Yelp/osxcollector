@@ -10,7 +10,7 @@ class VirusTotalApi(object):
 
     def __init__(self, api_key):
         self._api_key = api_key
-        self._requests = MultiRequest()
+        self._requests = MultiRequest(req_timeout=60.0)
 
     @MultiRequest.error_handling
     def get_file_reports(self, resources):

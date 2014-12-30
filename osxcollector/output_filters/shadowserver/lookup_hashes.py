@@ -14,17 +14,14 @@ class LookupHashesFilter(ThreatFeedFilter):
 
     """A class to lookup hashes using ShadowServer API."""
 
-    def __init__(self, lookup_when=None, suspicious_when=None):
-        super(LookupHashesFilter, self).__init__('sha1',
-                                                 'osxcollector_shadowserver', lookup_when=lookup_when,
-                                                 suspicious_when=suspicious_when)
+    def __init__(self, lookup_when=None):
+        super(LookupHashesFilter, self).__init__('sha1', 'osxcollector_shadowserver', lookup_when=lookup_when)
 
-    def _lookup_iocs(self, all_iocs, suspicious_iocs):
+    def _lookup_iocs(self, all_iocs):
         """Looks up the ShadowServer info for a set of hashes.
 
         Args:
             all_iocs - a list of hashes.
-            suspicious_iocs - a subset of hashes that are considered 'extra suspicious'
         Returns:
             A dict with hash as key and threat info as value
         """

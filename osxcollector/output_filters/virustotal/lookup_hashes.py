@@ -14,17 +14,16 @@ class LookupHashesFilter(ThreatFeedFilter):
 
     """A class to lookup hashes using VirusTotal API."""
 
-    def __init__(self, lookup_when=None, suspicious_when=None):
+    def __init__(self, lookup_when=None):
         super(LookupHashesFilter, self).__init__('sha2',
                                                  'osxcollector_vthash', lookup_when=lookup_when,
-                                                 suspicious_when=suspicious_when, api_key='virustotal')
+                                                 api_key='virustotal')
 
-    def _lookup_iocs(self, all_iocs, suspicious_iocs):
+    def _lookup_iocs(self, all_iocs):
         """Caches the VirusTotal info for a set of hashes.
 
         Args:
             all_iocs - a list of hashes.
-            suspicious_iocs - a subset of hashes that are considered 'extra suspicious'
         Returns:
             A dict with hash as key and threat info as value
         """
