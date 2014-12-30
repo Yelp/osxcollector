@@ -154,6 +154,19 @@ class FindDomainsFilterTest(RunFilterTest):
         ]
         self._run_test(input_blob, expected_domains)
 
+    def test_no_dupes(self):
+        input_blob = {
+            'host': 'www.example.com',
+            'another_thing': 'http://www.example.com',
+            'https://www.example.com': True,
+            'dictation': {'threepete': ['ftp://example.com', 'http://example.com', 'https://www.example.com']}
+        }
+        expected_domains = [
+            'example.com',
+            'www.example.com'
+        ]
+        self._run_test(input_blob, expected_domains)
+
     def test_special_keys_url(self):
         input_blob = {'host': 'https://www.example.com'}
         expected_domains = [

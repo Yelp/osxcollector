@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# ThreatFeedFilter is a base class to find suspicious IOC using some random API.
+# ThreatFeedFilter a base class to find info on IOCs using some random API.
 #
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
@@ -15,19 +15,21 @@ class ThreatFeedFilter(OutputFilter):
     It is assumed that the API uses an api_key stored in the config.
     """
 
-    def __init__(self, ioc_key, output_key, lookup_when=None, api_key=None):
-        """Read API config
+    def __init__(self, ioc_key, output_key, lookup_when=None, name_of_api_key=None):
+        """Configure the ThreatFeedFilter.
 
         Args:
-            ioc_key: key for finding IOCs in the input
-            output_key: key to use to add threat info to the output
-            lookup_when: a boolean function to call to decide whether to try a lookup for a blob
-            api_key: name of the key in the 'api_key' section of config
+            ioc_key: A string key to look for in each line of OSXCollector output.
+                The value of this key is the potential IOC to lookup in a threat feed.
+            output_key: A string key which is added to output lines and contains the result of threat feed lookups.
+            lookup_when: A boolean function to call to decide whether to perform a lookup on a line.
+                Use lookup_when to limit which IOCs are looked up.
+            name_of_api_key: A string name of the key in the 'api_key' section of config.
         """
         super(ThreatFeedFilter, self).__init__()
 
-        if api_key:
-            self._api_key = self.config.get_config('api_key.{0}'.format(api_key))
+        if name_of_api_key:
+            self._api_key = self.config.get_config('api_key.{0}'.format(name_of_api_key))
 
         self._lookup_when = lookup_when
         self._blobs_with_iocs = list()
@@ -37,14 +39,14 @@ class ThreatFeedFilter(OutputFilter):
         self._output_key = output_key
 
     def _lookup_iocs(self, all_iocs):
-        """Looks up threat info for IOCs in all_iocs.
+        """Looks up threat info for IOCs.
 
         This is the only method a derived class needs to implement.
 
         Args:
-            all_iocs - a list of IOCs
+            all_iocs: An enumerable of strings representing all IOCs to lookup.
         Returns:
-            A dict with IOC as key and threat info as value
+            A dict of the form {ioc_value: threat_info}
         """
         raise NotImplementedError('Derived classes must implement _lookup_iocs')
 
@@ -52,11 +54,14 @@ class ThreatFeedFilter(OutputFilter):
         """Threat info is only added to a blob if this returns True.
 
         Override this method in derived classes to correlate threat_info and blob data.
-        For example, if hashes are being used as an IOC, the derived class could also compare file names before storing threat info.
+
+        For example, the ShadowServer filter looks up MD5 hashes. Since MD5 hashes for different files often collide, the ShadowServer
+        filter overrides _should_add_threat_info_to_blob and verifies that the filename in the blob matches the filename in the threat
+        info.
 
         Args:
-            blob - A dict of data representing a line of output from OSXCollector
-            threat_info - The threat info from ShadowServer
+            blob: A dict of data representing a line of output from OSXCollector
+            threat_info: A dict of threat info.
         Returns:
             boolean
         """
@@ -66,9 +71,9 @@ class ThreatFeedFilter(OutputFilter):
         """Accumulate IOCs to lookup with the ThreatFeed.
 
         Args:
-            blob: A dict
+            blob: A dict representing one line of output from osxcollector.
         Returns:
-            A Line or None
+            A dict or None
         """
         if self._ioc_key in blob and (not self._lookup_when or self._lookup_when(blob)):
             ioc_list = blob[self._ioc_key]
@@ -93,23 +98,27 @@ class ThreatFeedFilter(OutputFilter):
         """Performs threat feed lookup on the IOCs and adds output to the stored Lines.
 
         Returns:
-            An array of strings
+            An enumerable of dicts
         """
         self.ioc_set = sorted(list(self.ioc_set))
 
-        threat_info = self._lookup_iocs(self.ioc_set)
-        self._add_threat_info_to_blobs(threat_info)
+        all_threat_info = self._lookup_iocs(self.ioc_set)
+        self._add_threat_info_to_blobs(all_threat_info)
         return self._blobs_with_iocs
 
-    def _add_threat_info_to_blobs(self, threat_info):
-        """Adds threat info to blobs"""
+    def _add_threat_info_to_blobs(self, all_threat_info):
+        """Adds threat info to blobs.
+
+        Args:
+            all_threat_info: A dict of the form {ioc_value: threat_info}
+        """
         for blob in self._blobs_with_iocs:
             ioc_list = blob[self._ioc_key]
             if isinstance(ioc_list, basestring):
                 ioc_list = [ioc_list]
 
             for ioc in ioc_list:
-                info = threat_info.get(ioc)
+                info = all_threat_info.get(ioc)
                 if not info:
                     continue
 

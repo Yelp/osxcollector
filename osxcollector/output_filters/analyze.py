@@ -62,7 +62,7 @@ class AnalyzeFilter(ChainFilter):
                  initial_file_terms=None,
                  initial_domains=None,
                  initial_ips=None,
-                 related_domains_depth=DEFAULT_RELATED_DOMAINS_DEPTH,
+                 related_domains_generations=DEFAULT_RELATED_DOMAINS_DEPTH,
                  monochrome=False,
                  no_shadowserver=False,
                  no_opendns=False,
@@ -88,7 +88,8 @@ class AnalyzeFilter(ChainFilter):
         filter_chain.append(RelatedFilesFilter(initial_terms=initial_file_terms, when=find_related_when))
         if not no_opendns:
             filter_chain.append(OpenDnsRelatedDomainsFilter(initial_domains=initial_domains,
-                                                            initial_ips=initial_ips, when=find_related_when))
+                                                            initial_ips=initial_ips, when=find_related_when,
+                                                            generations=related_domains_generations))
 
         # Lookup threat info on suspicious and related stuff
         if not no_virustotal:
@@ -404,7 +405,7 @@ def main():
                       help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
     parser.add_option('-i', '--ip', dest='ip_terms', default=[], action='append',
                       help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
-    parser.add_option('--related-domains-depth', dest='related_domains_depth', default=DEFAULT_RELATED_DOMAINS_DEPTH,
+    parser.add_option('--related-domains-generations', dest='related_domains_generations', default=DEFAULT_RELATED_DOMAINS_DEPTH,
                       help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
     parser.add_option('--readout', dest='readout', action='store_true', default=False,
                       help='[OPTIONAL] Skip the analysis and just output really readable analysis')
@@ -416,16 +417,24 @@ def main():
                       help='[OPTIONAL] Don\'t run VirusTotal filters')
     parser.add_option('--no-shadowserver', dest='no_shadowserver', action='store_true', default=False,
                       help='[OPTIONAL] Don\'t run ShadowServer filters')
+    parser.add_option('--input-file', dest='input_file', default=None,
+                      help='[OPTIONAL] Path to OSXCollector output to read. Defaults to stdin otherwise.')
 
     options, _ = parser.parse_args()
 
     if not options.readout:
-        run_filter(AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms,
-                                 initial_ips=options.ip_terms, related_domains_depth=options.related_domains_depth,
-                                 monochrome=options.monochrome, no_opendns=options.no_opendns, no_virustotal=options.no_virustotal,
-                                 no_shadowserver=options.no_shadowserver))
+        output_filter = AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms,
+                                      initial_ips=options.ip_terms, related_domains_generations=options.related_domains_generations,
+                                      monochrome=options.monochrome, no_opendns=options.no_opendns, no_virustotal=options.no_virustotal,
+                                      no_shadowserver=options.no_shadowserver)
     else:
-        run_filter(_VeryReadableOutputFilter(monochrome=options.monochrome))
+        output_filter = _VeryReadableOutputFilter(monochrome=options.monochrome)
+
+    if options.input_file:
+        with(open(options.input_file, 'r')) as fp_in:
+            run_filter(output_filter, input_stream=fp_in)
+    else:
+        run_filter(output_filter)
 
 if __name__ == "__main__":
     main()

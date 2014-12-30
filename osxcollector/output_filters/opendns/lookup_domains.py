@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
-# LookupDomainsFilter uses OpenDNS to lookup the values in 'osxcollector_domains' and add 'osxcollector_opendns' key.
+# LookupDomainsFilter uses OpenDNS to lookup the values in 'osxcollector_domains' and adds the 'osxcollector_opendns' key.
 #
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
@@ -13,11 +11,11 @@ from osxcollector.output_filters.util.blacklist import create_blacklist
 
 class LookupDomainsFilter(ThreatFeedFilter):
 
-    """Uses OpenDNS to lookup the values in 'osxcollector_domains' and add 'osxcollector_opendns' key."""
+    """Uses OpenDNS to lookup the values in 'osxcollector_domains' and adds the 'osxcollector_opendns' key."""
 
     def __init__(self, lookup_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns',
-                                                  lookup_when=lookup_when, api_key='opendns')
+                                                  lookup_when=lookup_when, name_of_api_key='opendns')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
     def _lookup_iocs(self, all_iocs):
@@ -26,9 +24,9 @@ class LookupDomainsFilter(ThreatFeedFilter):
         Domains on a whitelist will be ignored.
 
         Args:
-            all_iocs - a list of domains.
+            all_iocs: an enumerable of string domain names.
         Returns:
-            A dict with domain as key and threat info as value
+            A dict {domain: opendns_info}
         """
         threat_info = {}
 
@@ -59,8 +57,8 @@ class LookupDomainsFilter(ThreatFeedFilter):
         If the domain isn't categorized, get security info.
 
         Args:
-            domain - A string domain
-            categorized_info - A dict of info returned by the OpenDNS categorization call
+            domain: A string domain
+            categorized_info: A dict of info returned by the OpenDNS categorization call
         Returns:
             boolean
         """
@@ -76,8 +74,8 @@ class LookupDomainsFilter(ThreatFeedFilter):
         """Figure out whether the data gathered is interesting enough to store in the output.
 
         Args:
-            categorized_info - A dict of info returned by the OpenDNS categorization call
-            security - A dict of info returned by the OpenDNS security call
+            categorized_info: A dict of info returned by the OpenDNS categorization call
+            security: A dict of info returned by the OpenDNS security call
         Returns:
             boolean
         """

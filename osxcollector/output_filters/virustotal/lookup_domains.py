@@ -17,7 +17,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
     def __init__(self, lookup_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_vtdomain',
-                                                  lookup_when=lookup_when, api_key='virustotal')
+                                                  lookup_when=lookup_when, name_of_api_key='virustotal')
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
 
     def _lookup_iocs(self, all_iocs):

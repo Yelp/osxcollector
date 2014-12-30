@@ -17,6 +17,18 @@ class CleanDomainTest(T.TestCase):
     def test_trailing_and_leading_slashes(self):
         self._test_clean_domain('//www.example.com//', 'www.example.com')
 
+    def test_unicode_prefix(self):
+        self._test_clean_domain('\xadwww.example.com', 'www.example.com')
+
+    def test_unicode_prefix2(self):
+        self._test_clean_domain(u'\xadwww.example.com', 'www.example.com')
+
+    def test_unicode_mid(self):
+        self._test_clean_domain('stinkum.\xadexample.com', 'stinkum.example.com')
+
+    def test_unicode_mid2(self):
+        self._test_clean_domain(u'stinkum.\xadexample.com', 'stinkum.example.com')
+
     def test_single_word(self):
         with T.assert_raises(BadDomainError):
             clean_domain('oneword')

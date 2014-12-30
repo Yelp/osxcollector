@@ -17,7 +17,7 @@ class LookupHashesFilter(ThreatFeedFilter):
     def __init__(self, lookup_when=None):
         super(LookupHashesFilter, self).__init__('sha2',
                                                  'osxcollector_vthash', lookup_when=lookup_when,
-                                                 api_key='virustotal')
+                                                 name_of_api_key='virustotal')
 
     def _lookup_iocs(self, all_iocs):
         """Caches the VirusTotal info for a set of hashes.

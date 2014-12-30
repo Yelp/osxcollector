@@ -5,6 +5,7 @@
 # RateLimiter helps to only make a certain number of calls per second.
 # MultiRequest wraps grequests and issues multiple requests at once with an easy to use interface.
 #
+import sys
 import time
 from collections import namedtuple
 
@@ -230,10 +231,11 @@ class MultiRequest(object):
             if 200 != response.status_code:
                 write_error_message('url[{0}] status_code[{1}]'.format(response.request.url, response.status_code))
 
+            # TODO - Add an option for printing this
+            sys.stderr.write(response.request.url)
+            sys.stderr.write('\n')
+
             if to_json:
-                # TODO - Add an option for printing this
-                # sys.stderr.write(response.request.url)
-                # sys.stderr.write('\n')
                 all_responses.append(response.json())
             else:
                 all_responses.append(response)

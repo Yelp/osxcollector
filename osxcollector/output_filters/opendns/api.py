@@ -6,12 +6,17 @@ from collections import namedtuple
 
 import simplejson
 from osxcollector.output_filters.util.domains import expand_domain
+from osxcollector.output_filters.util.error_messages import write_error_message
+from osxcollector.output_filters.util.error_messages import write_exception
 from osxcollector.output_filters.util.http import MultiRequest
 
 
 class InvestigateApi(object):
 
-    """Calls the OpenDNS investigate API"""
+    """Calls the OpenDNS investigate API.
+
+    Applies rate limits and issues parallel requests.
+    """
 
     BASE_URL = 'https://investigate.api.opendns.com/'
 
@@ -19,11 +24,26 @@ class InvestigateApi(object):
         auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
         self._requests = MultiRequest(default_headers=auth_header, max_requests=12, rate_limit=30)
 
+    @classmethod
     def _to_url(cls, url_path):
-        return '{0}{1}'.format(cls.BASE_URL, url_path)
+        try:
+            return u'{0}{1}'.format(cls.BASE_URL, url_path)
+        except Exception as e:
+            write_error_message(url_path)
+            write_exception(e)
+            raise e
 
+    @classmethod
     def _to_urls(cls, fmt_url_path, url_path_args):
-        url_paths = [fmt_url_path.format(path_arg) for path_arg in url_path_args]
+        url_paths = []
+        for path_arg in url_path_args:
+            try:
+                url_paths.append(fmt_url_path.format(path_arg))
+            except Exception as e:
+                write_error_message(path_arg)
+                write_exception(e)
+                raise e
+
         return [cls._to_url(url_path) for url_path in url_paths]
 
     @MultiRequest.error_handling
@@ -31,7 +51,7 @@ class InvestigateApi(object):
         """Calls categorization end point and adds an 'is_suspicious' key to each response.
 
         Args:
-            domains - A list of domains
+            domains: An enumerable of domains
         Returns:
             A dict of {domain: categorization_result}
         """
@@ -39,6 +59,7 @@ class InvestigateApi(object):
         response = self._requests.multi_post(self._to_url(url_path), data=simplejson.dumps(domains))
         response = response[0]
 
+        # TODO: Some better more expressive exception
         if not response:
             raise Exception('dang')
 
@@ -51,9 +72,9 @@ class InvestigateApi(object):
         """Calls security end point and adds an 'is_suspicious' key to each response.
 
         Args:
-            domains - A list of strings
+            domains: An enumerable of strings
         Returns:
-            A dict of results from the security_info call
+            A dict of {domain: security_result}
         """
         fmt_url_path = 'security/name/{0}.json'
 
@@ -72,9 +93,9 @@ class InvestigateApi(object):
         """Get the domains related to input domains.
 
         Args:
-            domains: a list of strings as domain names
+            domains: an enumerable of strings domain names
         Returns:
-            A set of domains
+            An eumerable of string domain names
         """
         fmt_url_path = 'recommendations/name/{0}.json'
         urls = self._to_urls(fmt_url_path, domains)
@@ -93,9 +114,9 @@ class InvestigateApi(object):
         """Get the domains related to input ips.
 
         Args:
-            ips: a list of strings as ips
+            ips: an enumerable of strings as ips
         Returns:
-            A set of domains
+            An enumerable of string domain names
         """
         fmt_url_path = 'dnsdb/ip/a/{0}.json'
         urls = self._to_urls(fmt_url_path, ips)
@@ -113,7 +134,7 @@ class InvestigateApi(object):
         """Analyzes info from opendns and makes a boolean determination of suspicious or not.
 
         Args:
-            category_info: The result of a call to opendns.categorization
+            category_info: The result of a call to the categorization endpoint.
         Returns:
             boolean
         """
@@ -127,10 +148,10 @@ class InvestigateApi(object):
         return False
 
     def _trim_security_result(self, security_info):
-        """Analyzes info from opendns and makes a boolean determination of suspicious or not.
+        """Converts the results of a security call into a smaller dict.
 
         Args:
-            security_info: The result of a call to opendns.categorization
+            security_info: The result of a call to the security endpoint.
         Returns:
             A dict
         """
@@ -159,7 +180,7 @@ class InvestigateApi(object):
         a threat campaign, or looks for unknown domains.
 
         Args:
-            security_info - The result of a call to the security endpoint
+            security_info: The result of a call to the security endpoint
         Returns:
             boolean
         """

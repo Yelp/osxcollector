@@ -85,7 +85,7 @@ class Blacklist(object):
 
         if self._is_domains:
             domain = clean_domain(blacklisted_value)
-            blacklisted_value = '^(.+\.)*{0}$'.format(domain.replace('.', '\.').replace('-', '\-'))
+            blacklisted_value = '^(.+\.)*{0}$'.format(re.escape(domain))
 
         if self._is_regex:
             blacklisted_value = re.compile(blacklisted_value)
