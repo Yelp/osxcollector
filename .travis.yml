@@ -1,3 +1,4 @@
+# This forces OS X builds on travis
 language: objective-c
 
 os: osx
