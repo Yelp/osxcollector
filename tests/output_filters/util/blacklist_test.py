@@ -90,9 +90,9 @@ class CreateBlacklistTest(T.TestCase):
 
         blacklist = create_blacklist(self._blacklist_data)
         for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
+            T.assert_equal(bool(blacklist.match_line(blob)), True)
         for blob in bad_blobs:
-            T.assert_equal(blacklist.match_line(blob), False)
+            T.assert_equal(bool(blacklist.match_line(blob)), False)
 
     def test_match_fruit_and_cars(self):
         good_blobs = [
@@ -105,7 +105,7 @@ class CreateBlacklistTest(T.TestCase):
         self._blacklist_data['blacklist_keys'] = ['fruit_name', 'car_name']
         blacklist = create_blacklist(self._blacklist_data)
         for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
+            T.assert_equal(bool(blacklist.match_line(blob)), True)
 
     def test_match_fruit_regex(self):
         good_blobs = [
@@ -122,9 +122,9 @@ class CreateBlacklistTest(T.TestCase):
         self._file_contents.return_value = ['app.*', 'ban.+org']
         blacklist = create_blacklist(self._blacklist_data)
         for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
+            T.assert_equal(bool(blacklist.match_line(blob)), True)
         for blob in bad_blobs:
-            T.assert_equal(blacklist.match_line(blob), False)
+            T.assert_equal(bool(blacklist.match_line(blob)), False)
 
     def test_match_domains(self):
         good_blobs = [
@@ -143,6 +143,6 @@ class CreateBlacklistTest(T.TestCase):
         self._file_contents.return_value = ['apple.com']
         blacklist = create_blacklist(self._blacklist_data)
         for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
+            T.assert_equal(bool(blacklist.match_line(blob)), True)
         for blob in bad_blobs:
-            T.assert_equal(blacklist.match_line(blob), False)
+            T.assert_equal(bool(blacklist.match_line(blob)), False)

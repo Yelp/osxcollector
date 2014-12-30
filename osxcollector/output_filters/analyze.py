@@ -290,25 +290,41 @@ class _VeryReadableOutputFilter(OutputFilter):
         for blob in blobs:
             self._summarize_line(blob)
 
+            add_to_blacklist = False
+
             if 'osxcollector_vthash' in blob:
                 self._summarize_vthash(blob)
+                add_to_blacklist = True
 
-                blacklists = blob.get('osxcollector_blacklist', [])
-                if 'hashes' not in blacklists:
-                    for key in ['md5', 'sha1', 'sha2']:
-                        if key in blob:
-                            self._add_to_blacklist.append((key, blob[key]))
-                if 'domains' not in blacklists:
-                    if 'osxcollector_domains' in blob:
-                        self._add_to_blacklist.extend([('domain', domain) for domain in blob['osxcollector_domains']])
             if 'osxcollector_vtdomain' in blob:
                 self._summarize_vtdomain(blob)
+
             if 'osxcollector_opendns' in blob:
                 self._summarize_opendns(blob)
+
             if 'osxcollector_blacklist' in blob:
-                self._summarize_val('blacklist', blob.get('osxcollector_blacklist'))
+                for key in blob['osxcollector_blacklist'].keys():
+                    self._summarize_val('blacklist-{0}'.format(key), blob['osxcollector_blacklist'][key])
+
             if 'osxcollector_related' in blob:
-                self._summarize_val('related', blob.get('osxcollector_related'))
+                for key in blob['osxcollector_related'].keys():
+                    self._summarize_val('related-{0}'.format(key), blob['osxcollector_related'][key])
+
+            if 'md5' in blob and '' == blob['md5']:
+                add_to_blacklist = True
+
+            if add_to_blacklist:
+                blacklists = blob.get('osxcollector_blacklist', {})
+                values_on_blacklist = blacklists.get('hashes', [])
+                for key in ['md5', 'sha1', 'sha2']:
+                    val = blob.get(key, '')
+                    if len(val) and val not in values_on_blacklist:
+                        self._add_to_blacklist.append((key, val))
+
+                values_on_blacklist = blacklists.get('domains', [])
+                for domain in blob.get('osxcollector_domains', []):
+                    if domain not in values_on_blacklist:
+                        self._add_to_blacklist.append(('domain', domain))
 
     def _summarize_line(self, blob):
         section = blob.get('osxcollector_section')

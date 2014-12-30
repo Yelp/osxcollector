@@ -3,6 +3,7 @@
 # Utilities for dealing with blacklists
 #
 import re
+from collections import namedtuple
 
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.exceptions import MissingConfigError
@@ -36,6 +37,9 @@ def create_blacklist(config_chunk):
     return Blacklist(blacklist_name, blacklist_keys, blacklist_file_path, blacklist_is_regex, blacklist_is_domains)
 
 
+MatchingTerm = namedtuple('MatchingTerm', ['display_name', 'term'])
+
+
 class Blacklist(object):
 
     def __init__(self, name, blacklisted_keys, file_path, is_regex=False, is_domains=False):
@@ -58,8 +62,8 @@ class Blacklist(object):
                 line = line.strip()
                 if line:
                     self._blacklisted_values.append(line)
-        if self._is_regex:
-            self._blacklisted_values = [self._convert_to_regex(val) for val in self._blacklisted_values]
+
+        self._blacklisted_values = [self._convert_to_matching_term(val) for val in self._blacklisted_values]
 
     def _read_blacklist_file_contents(self):
         try:
@@ -68,46 +72,62 @@ class Blacklist(object):
         except IOError as e:
             raise MissingConfigError(e.msg)
 
-    def _convert_to_regex(self, blacklisted_value):
+    def _convert_to_matching_term(self, blacklisted_value):
         """Convert a blacklisted_value to a regex.
 
         Args:
             blacklisted_value - string of value on a blacklist
             blacklist_is_domains - Boolean if true, the blacklisted_value is treated as a domain.
         Returns:
-            a compliled regex object
+            MatchingTerm
         """
+        display_name = blacklisted_value
+
         if self._is_domains:
             domain = clean_domain(blacklisted_value)
             blacklisted_value = '^(.+\.)*{0}$'.format(domain.replace('.', '\.').replace('-', '\-'))
-        return re.compile(blacklisted_value)
+
+        if self._is_regex:
+            blacklisted_value = re.compile(blacklisted_value)
+
+        return MatchingTerm(display_name, blacklisted_value)
 
     def match_line(self, blob):
-        """Determines whether a line matches the blacklist."""
+        """Determines whether a line matches the blacklist.
+
+        Returns:
+            String of matched term is the value matches, None otherwise
+        """
         for key in self._blacklisted_keys:
             values = DictUtils.get_deep(blob, key)
             if not values:
                 continue
 
-            if self.match_values(values):
-                return True
+            matching_term = self.match_values(values)
+            if matching_term:
+                return matching_term
 
-        return False
+        return None
 
     def match_values(self, values):
-        """Determines whether an array of values match the blacklist."""
+        """Determines whether an array of values match the blacklist.
+
+        Returns:
+            String of matched term is the value matches, None otherwise
+        """
         if not isinstance(values, list):
             values = [values]
 
         for val in values:
-            if self._is_regex:
-                if any([regex_to_match.search(val) for regex_to_match in self._blacklisted_values]):
-                    return True
-            else:
-                if any([val_to_match == val for val_to_match in self._blacklisted_values]):
-                    return True
+            for matching_term in self._blacklisted_values:
+                if self._is_regex:
+                    if matching_term.term.search(val):
+                        return matching_term.display_name
+                else:
+                    if matching_term.term == val:
+                        return matching_term.display_name
 
-        return False
+        return None
 
     @property
     def name(self):

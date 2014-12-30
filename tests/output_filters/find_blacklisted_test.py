@@ -43,9 +43,9 @@ class FindBlacklistedFilterTest(RunFilterTest):
             {'sha2': 'ffff51e77b442ee23188d87e4abcdef0'}
         ]
         expected_blacklists = [
-            ['hashes'],
-            ['hashes'],
-            ['hashes']
+            {'hashes': ['ffff5f60462c38b1d235cb3509876543']},
+            {'hashes': ['ffff234d2a50a42a87389f1234561a21']},
+            {'hashes': ['ffff51e77b442ee23188d87e4abcdef0']}
         ]
         self._test_blacklisted(input_blobs, expected_blacklists, self._hash_config, self._hash_file_contents)
 
@@ -69,9 +69,9 @@ class FindBlacklistedFilterTest(RunFilterTest):
             {'osxcollector_domains': ['example.com']}
         ]
         expected_blacklists = [
-            ['domains'],
-            ['domains'],
-            ['domains']
+            {'domains': ['yelp.com']},
+            {'domains': ['github.com']},
+            {'domains': ['example.com']},
         ]
         self._test_blacklisted(input_blobs, expected_blacklists, self._domain_config, self._domain_file_contents)
 
@@ -87,8 +87,8 @@ class FindBlacklistedFilterTest(RunFilterTest):
 
         actual_blacklists = list(blob.get('osxcollector_blacklist', None) for blob in output_blobs)
         for actual, expected in zip(actual_blacklists, expected_blacklists):
-            actual = sorted(actual) if actual else actual
-            expected = sorted(expected) if expected else expected
+            # actual = sorted(actual) if actual else actual
+            # expected = sorted(expected) if expected else expected
             T.assert_equal(actual, expected)
 
         # Minus 'osxcollector_blacklist' key, the input should be unchanged

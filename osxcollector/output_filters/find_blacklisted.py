@@ -38,9 +38,11 @@ class FindBlacklistedFilter(OutputFilter):
         Lines are never cached, every line in produces a line out.
         """
         for blacklist in self._blacklists:
-            if blacklist.match_line(blob):
-                blob.setdefault('osxcollector_blacklist', [])
-                blob['osxcollector_blacklist'].append(blacklist.name)
+            matching_term = blacklist.match_line(blob)
+            if matching_term:
+                blob.setdefault('osxcollector_blacklist', {})
+                blob['osxcollector_blacklist'].setdefault(blacklist.name, [])
+                blob['osxcollector_blacklist'][blacklist.name].append(matching_term)
                 break
 
         return blob
