@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Yelp/osxcollector.svg)](https://travis-ci.org/Yelp/osxcollector)
+
 # OSXCollector Manual
 OSXCollector is a forensic evidence collection & analysis toolkit for OSX.
 
