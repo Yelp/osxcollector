@@ -4,7 +4,7 @@
 OSXCollector is a forensic evidence collection & analysis toolkit for OSX.
 
 #### Forensic Collection
-The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local filesystem.
+The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local file system.
 
 #### Forensic Analysis
 Armed with the forensic collection, an analyst can answer the question like:
@@ -25,7 +25,7 @@ Wrote 35394 lines.
 Output in osxcollect-2014_12_21-08_49_39.tar.gz
 ```
 
-The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for handoff to an analyst.
+The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for hand-off to an analyst.
 
 `osxcollector.py` also has a lot of useful options to change how collection works:
 * `-i INCIDENT_PREFIX`/`--id=INCIDENT_PREFIX`:
@@ -161,8 +161,7 @@ Hashes installed applications and gathers install history from:
 
 ##### `quarantines` section
 
-Quarantines are basically the info necessary to show the 'Are you sure you wanna
-run this?' when a user is trying to open a file downloaded from the internet.
+Quarantines are basically the info necessary to show the 'Are you sure you wanna run this?' when a user is trying to open a file downloaded from the Internet.
 For some more details, checkout the Apple Support explanation of Quarantines:
 http://support.apple.com/kb/HT3662
 
@@ -245,7 +244,7 @@ Forensic analysis is a bit of art and a bit of science. Every analyst will see a
 Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
 
 #### Timestamps
-Simply grepping a few minutes before and after a timestamp works great:
+Simply greping a few minutes before and after a timestamp works great:
 
 ```shell
 $ cat INCIDENT32.json | grep '2014-01-01 11:3[2-8]'
@@ -334,7 +333,7 @@ $ jq 'select(has("osxcollector_blacklist"))'
 ```
 
 ##### RelatedFilesFilter
-`osxcollector.output_filters.related_files.RelatedFilesFilter` takes an initial set of file paths, names, or terms. It breaks this input into individual file and directory names and then searches for these terms across the entire OSXCollector output. The filter is smart and ignores common terms like `bin` or `Library` as well as ignoring usernames.
+`osxcollector.output_filters.related_files.RelatedFilesFilter` takes an initial set of file paths, names, or terms. It breaks this input into individual file and directory names and then searches for these terms across the entire OSXCollector output. The filter is smart and ignores common terms like `bin` or `Library` as well as ignoring user names.
 
 This filter is great for figuring out how `evil_invoice.pdf` landed up on a machine. It'll find browser history, quarantines, email messages, etc. related to a file.
 
@@ -380,7 +379,7 @@ $ jq 'select(.osxcollector_browser_history=="firefox")'
 ```
 
 #### Threat API Filters
-By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. These APIs aren't free but they are useful.
+By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. Some of these APIs aren't free but they are useful.
 
 Using these filters as examples, it would be possible to integrate with additional free or premium threat APIs. `osxcollector.output_filters.base_filters.threat_feed.ThreatFeedFilter` has most of the plumbing for hooking up to arbitrary APIs.
 
@@ -436,7 +435,7 @@ $ jq 'select(has("osxcollector_vtdomain"))'
 ```
 
 ##### VirusTotal LookupHashesFilter
-`osxcollector.output_filters.virustotal.lookup_hashes.LookupHashesFilter` lookups hashes with the VirusTotal API. This basically finds anything VirusTotal knows about which is a huge timesaver. There's pretty much no false positives here, but there's also no chance of detecting unknown stuff.
+`osxcollector.output_filters.virustotal.lookup_hashes.LookupHashesFilter` lookups hashes with the VirusTotal API. This basically finds anything VirusTotal knows about which is a huge time saver. There's pretty much no false positives here, but there's also no chance of detecting unknown stuff.
 
 Run it as:
 ```
@@ -447,6 +446,21 @@ $ cat PippinNightstar.json | \
 To see what it found:
 ```shell
 $ jq 'select(has("osxcollector_vthash"))'
+```
+
+##### ShadowServer LookupHashesFilter
+`osxcollector.output_filters.shadowserver.lookup_hashes.LookupHashesFilter`
+lookups hashes with the ShadowServer bin-test API. This is sort of the opposite of a VirusTotal lookup and returns results when it sees the hashes of known good files. This helps raise confidence that a file is not malicious.
+
+Run it as:
+```
+$ cat ArkashKobiashi.json | \
+    python -m osxcollector.output_filters.shadowserver.lookup_hashes
+```
+
+To see what it found:
+```shell
+$ jq 'select(has("osxcollector_shadowserver"))'
 ```
 
 #### AnalyzeFilter - The One Filter to Rule Them All

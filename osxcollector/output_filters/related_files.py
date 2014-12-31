@@ -3,7 +3,6 @@
 # RelatedFilesFilter finds files related to specific terms or file names.
 #
 import os.path
-import re
 
 import simplejson
 from osxcollector.osxcollector import DictUtils
@@ -55,12 +54,20 @@ class RelatedFilesFilter(OutputFilter):
         for blob in self._all_blobs:
             line = simplejson.dumps(blob).lower()
             for term in self._terms:
-                if re.search(term, line):
-                    blob.setdefault('osxcollector_related', [])
-                    blob['osxcollector_related'].append('files')
-                    break
+                if term in line:
+                    blob.setdefault('osxcollector_related', {})
+                    blob['osxcollector_related'].setdefault('files', [])
+                    blob['osxcollector_related']['files'].append(term)
 
         return self._all_blobs
+
+    @property
+    def terms(self):
+        return self._terms
+
+    @property
+    def usernames(self):
+        return self._usernames
 
     # Keys to look in to find file paths
     FILE_NAME_KEYS = [

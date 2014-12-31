@@ -2,142 +2,84 @@
 #
 # InvestigateApi makes calls to the OpenDNS Investigate API.
 #
-# TODO: Replace investigate module with custom calls to OpenDNS and parrallelize with grequests.
-#
-import sys
-import time
 from collections import namedtuple
-from traceback import extract_tb
 
-import grequests
 import simplejson
-from osxcollector.output_filters.find_domains import expand_domain
-
-
-def investigate_error_handling(fn):
-    """Handle errors that might arrise while calling out to OpenDNS."""
-    def wrapper(*args, **kwargs):
-        try:
-            result = fn(*args, **kwargs)
-            return result
-        except Exception as e:
-            de_args = repr([a for a in args]) or ''
-            de_kwargs = repr([(a, kwargs[a]) for a in kwargs]) or ''
-            sys.stderr.write('[ERROR] calling {0} {1} {2}\n'.format(fn.__name__, de_args, de_kwargs))
-
-            exc_type, _, exc_traceback = sys.exc_info()
-            sys.stderr.write('[ERROR] {0} {1}\n'.format(exc_type, extract_tb(exc_traceback)))
-
-            if hasattr(e, 'response'):
-                sys.stderr.write('[ERROR] request {0}\n'.format(repr(e.response)))
-            if hasattr(e, 'request'):
-                sys.stderr.write('[ERROR] request {0}\n'.format(repr(e.request)))
-
-            raise e
-    return wrapper
-
-CallRecord = namedtuple('CallRecord', ['time', 'num_calls'])
-
-
-class RateLimiter(object):
-
-    """Limits how many calls can be made per second"""
-
-    def __init__(self, calls_per_sec):
-        self._max_calls_per_second = calls_per_sec
-        self._call_times = []
-        self._outstanding_calls = 0
-
-    def make_calls(self, num_calls=1):
-        """Adds appropriate sleep to avoid making too many calls.
-
-        Args:
-            num_calls: int the number of calls which will be made
-        """
-        self._cull()
-        while self._outstanding_calls + num_calls > self._max_calls_per_second:
-            time.sleep(0.5)
-            self._cull()
-
-        self._call_times.append(CallRecord(time=time.time(), num_calls=num_calls))
-        self._outstanding_calls += num_calls
-
-    def _cull(self):
-        """Remove calls more than 1 minutes old from the queue."""
-        right_now = time.time()
-
-        cull_from = -1
-        for index in xrange(len(self._call_times)):
-            if right_now - self._call_times[index].time >= 1.0:
-                cull_from = index
-                self._outstanding_calls -= self._call_times[index].num_calls
-            else:
-                break
-
-        if cull_from > -1:
-            self._call_times = self._call_times[cull_from + 1:]
+from osxcollector.output_filters.util.domains import expand_domain
+from osxcollector.output_filters.util.error_messages import write_error_message
+from osxcollector.output_filters.util.error_messages import write_exception
+from osxcollector.output_filters.util.http import MultiRequest
 
 
 class InvestigateApi(object):
 
-    """Calls the OpenDNS investigate API"""
+    """Calls the OpenDNS investigate API.
+
+    Applies rate limits and issues parallel requests.
+    """
 
     BASE_URL = 'https://investigate.api.opendns.com/'
-    MAX_SIMULTANEOUS_REQUESTS = 10
 
     def __init__(self, api_key):
-        self._auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
-        self._rate_limiter = RateLimiter(calls_per_sec=10)
+        auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
+        self._requests = MultiRequest(default_headers=auth_header, max_requests=12, rate_limit=30)
 
-    def _make_post_requests(self, path, data=None):
-        post_request = grequests.post(self.BASE_URL + path, data=data, headers=self._auth_header)
-        response = grequests.map([post_request])
-        return response[0].json()
+    @classmethod
+    def _to_url(cls, url_path):
+        try:
+            return u'{0}{1}'.format(cls.BASE_URL, url_path)
+        except Exception as e:
+            write_error_message(url_path)
+            write_exception(e)
+            raise e
 
-    def _make_get_requests(self, path_fmt_string, params):
-        all_responses = []
-        all_urls = [self.BASE_URL + path_fmt_string.format(param.encode('utf-8', errors='ignore')) for param in params]
+    @classmethod
+    def _to_urls(cls, fmt_url_path, url_path_args):
+        url_paths = []
+        for path_arg in url_path_args:
+            try:
+                url_paths.append(fmt_url_path.format(path_arg))
+            except Exception as e:
+                write_error_message(path_arg)
+                write_exception(e)
+                raise e
 
-        chunk_size = self.MAX_SIMULTANEOUS_REQUESTS  # self._rate_limiter.calls_per_sec
-        url_chunks = [all_urls[pos:pos + chunk_size] for pos in xrange(0, len(all_urls), chunk_size)]
-        for chunk in url_chunks:
-            self._rate_limiter.make_calls(num_calls=len(chunk))
-            get_requests = [grequests.get(req_url, headers=self._auth_header) for req_url in chunk]
-            for response in grequests.map(get_requests):
-                if 200 == response.status_code:
-                    all_responses.append(response.json())
-                else:
-                    sys.stderr.write('REQUESTS FAILED {0}\n'.format(response.status_code))
-                    all_responses.append({})
+        return [cls._to_url(url_path) for url_path in url_paths]
 
-        return all_responses
-
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def categorization(self, domains):
         """Calls categorization end point and adds an 'is_suspicious' key to each response.
 
         Args:
-            domains - A list of domains
+            domains: An enumerable of domains
         Returns:
             A dict of {domain: categorization_result}
         """
-        path = 'domains/categorization/?showLabels'
-        response = self._make_post_requests(path, data=simplejson.dumps(domains))
+        url_path = 'domains/categorization/?showLabels'
+        response = self._requests.multi_post(self._to_url(url_path), data=simplejson.dumps(domains))
+        response = response[0]
+
+        # TODO: Some better more expressive exception
+        if not response:
+            raise Exception('dang')
+
         for domain in response.keys():
             response[domain]['is_suspicious'] = self._is_categorization_suspicious(response[domain])
         return response
 
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def security(self, domains):
         """Calls security end point and adds an 'is_suspicious' key to each response.
 
         Args:
-            domains - A list of strings
+            domains: An enumerable of strings
         Returns:
-            A dict of results from the security_info call
+            A dict of {domain: security_result}
         """
-        fmt_string = 'security/name/{0}.json'
-        responses = self._make_get_requests(fmt_string, domains)
+        fmt_url_path = 'security/name/{0}.json'
+
+        urls = self._to_urls(fmt_url_path, domains)
+        responses = self._requests.multi_get(urls)
         responses = dict(zip(domains, responses))
         for domain in responses.keys():
             response = self._trim_security_result(responses[domain])
@@ -146,19 +88,20 @@ class InvestigateApi(object):
 
         return responses
 
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def cooccurrences(self, domains):
         """Get the domains related to input domains.
 
         Args:
-            domains: a list of strings as domain names
+            domains: an enumerable of strings domain names
         Returns:
-            A set of domains
+            An enumerable of string domain names
         """
-        cooccur_domains = set()
+        fmt_url_path = 'recommendations/name/{0}.json'
+        urls = self._to_urls(fmt_url_path, domains)
 
-        fmt_string = 'recommendations/name/{0}.json'
-        responses = self._make_get_requests(fmt_string, domains)
+        cooccur_domains = set()
+        responses = self._requests.multi_get(urls)
         for response in responses:
             for occur_domain in response.get('pfs2', []):
                 for elem in expand_domain(occur_domain[0]):
@@ -166,19 +109,20 @@ class InvestigateApi(object):
 
         return cooccur_domains
 
-    @investigate_error_handling
+    @MultiRequest.error_handling
     def rr_history(self, ips):
         """Get the domains related to input ips.
 
         Args:
-            ips: a list of strings as ips
+            ips: an enumerable of strings as ips
         Returns:
-            A set of domains
+            An enumerable of string domain names
         """
-        rr_domains = set()
+        fmt_url_path = 'dnsdb/ip/a/{0}.json'
+        urls = self._to_urls(fmt_url_path, ips)
 
-        fmt_string = 'dnsdb/ip/a/{0}.json'
-        responses = self._make_get_requests(fmt_string, ips)
+        rr_domains = set()
+        responses = self._requests.multi_get(urls)
         for response in responses:
             for rr_domain in response.get('rrs', []):
                 for elem in expand_domain(rr_domain['rr']):
@@ -187,10 +131,10 @@ class InvestigateApi(object):
         return rr_domains
 
     def _is_categorization_suspicious(self, category_info):
-        """Analyzes info from opendns and makes a boolean determination of suspicious or not.
+        """Analyzes info from OpenDNS and makes a boolean determination of suspicious or not.
 
         Args:
-            category_info: The result of a call to opendns.categorization
+            category_info: The result of a call to the categorization endpoint.
         Returns:
             boolean
         """
@@ -204,10 +148,10 @@ class InvestigateApi(object):
         return False
 
     def _trim_security_result(self, security_info):
-        """Analyzes info from opendns and makes a boolean determination of suspicious or not.
+        """Converts the results of a security call into a smaller dict.
 
         Args:
-            security_info: The result of a call to opendns.categorization
+            security_info: The result of a call to the security endpoint.
         Returns:
             A dict
         """
@@ -230,13 +174,13 @@ class InvestigateApi(object):
         return result
 
     def _is_security_suspicious(self, security_info):
-        """Analyzes info from opendns and makes a boolean determination of suspicious or not.
+        """Analyzes info from OpenDNS and makes a boolean determination of suspicious or not.
 
         Either looks for low values for a specific set of properties, looks for known participation in
         a threat campaign, or looks for unknown domains.
 
         Args:
-            security_info - The result of a call to the security endpoint
+            security_info: The result of a call to the security endpoint
         Returns:
             boolean
         """

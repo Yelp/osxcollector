@@ -1,148 +1,98 @@
 # -*- coding: utf-8 -*-
-from copy import deepcopy
+from contextlib import nested
 
 import testify as T
 from mock import patch
-from osxcollector.output_filters.base_filters. \
-    output_filter import MissingConfigError
-from osxcollector.output_filters.find_blacklisted import Blacklist
-from osxcollector.output_filters.find_blacklisted import create_blacklist
-from osxcollector.output_filters.find_domains import BadDomainError
+from osxcollector.output_filters.find_blacklisted import FindBlacklistedFilter
+from tests.output_filters.base_filters.output_filter_test import RunFilterTest
 
 
-class CreateBlacklistTest(T.TestCase):
-
-    @T.setup_teardown
-    def setup_file_contents(self):
-        file_contents = [
-            # Fruits
-            'apple', 'banana',
-
-            # Cars
-            'corolla', 'datsun'
-        ]
-
-        with patch.object(Blacklist, '_read_blacklist_file_contents', return_value=file_contents) as self._file_contents:
-            yield
+class FindBlacklistedFilterTest(RunFilterTest):
 
     @T.setup
-    def setup_blacklist_date(self):
-        self._blacklist_data = {
-            'blacklist_name': 'only_required',
-            'blacklist_keys': ['fruit_name'],
-            'blacklist_file_path': '/who/cares/I/mock/this.txt'
+    def setup_configs(self):
+        self._hash_config = {
+            'blacklist_name': 'hashes',
+            'blacklist_keys': ['md5', 'sha1', 'sha2'],
+            'blacklist_file_path': '/tmp/hashes_blacklist.txt',
+            'blacklist_is_regex': False
+        }
+        self._hash_file_contents = {
+            'ffff5f60462c38b1d235cb3509876543',
+            'ffff234d2a50a42a87389f1234561a21',
+            'ffff51e77b442ee23188d87e4abcdef0'
         }
 
-    def test_only_required_keys(self):
-        blacklist = create_blacklist(self._blacklist_data)
-        T.assert_equal(blacklist.name, self._blacklist_data['blacklist_name'])
-        T.assert_equal(blacklist._blacklisted_keys, self._blacklist_data['blacklist_keys'])
-        T.assert_equal(blacklist._is_regex, False)
-        T.assert_equal(blacklist._is_domains, False)
+        self._domain_config = {
+            'blacklist_name': 'domains',
+            'blacklist_keys': ['osxcollector_domains'],
+            'blacklist_file_path': '/var/domain_blacklist.txt',
+            'blacklist_is_domains': True,
+            'blacklist_is_regex': True
+        }
+        self._domain_file_contents = {
+            'yelp.com',
+            'github.com',
+            'example.com'
+        }
 
-    def test_missing_required_keys(self):
-        for key in self._blacklist_data.keys():
-            blacklist_data = deepcopy(self._blacklist_data)
-            del blacklist_data[key]
-            with T.assert_raises(MissingConfigError):
-                create_blacklist(blacklist_data)
-
-    def test_required_with_two_keys(self):
-        self._blacklist_data['blacklist_keys'] = ['fruit_name', 'car_name']
-        blacklist = create_blacklist(self._blacklist_data)
-        T.assert_equal(blacklist._blacklisted_keys, self._blacklist_data['blacklist_keys'])
-
-    def test_keys_not_list(self):
-        self._blacklist_data['blacklist_keys'] = 'fruit_name'
-        with T.assert_raises(MissingConfigError):
-            create_blacklist(self._blacklist_data)
-
-    def test_is_regex(self):
-        self._blacklist_data['blacklist_is_regex'] = True
-        blacklist = create_blacklist(self._blacklist_data)
-        T.assert_equal(blacklist._is_regex, True)
-
-    def test_is_domains(self):
-        self._file_contents.return_value = ['apple.com', 'banana.org']
-
-        # Setting 'blacklist_is_domains' overrides 'blacklist_is_regex'
-        self._blacklist_data['blacklist_is_domains'] = True
-        self._blacklist_data['blacklist_is_regex'] = False
-        blacklist = create_blacklist(self._blacklist_data)
-        T.assert_equal(blacklist._is_regex, True)
-        T.assert_equal(blacklist._is_domains, True)
-
-    def test_bad_domains(self):
-        self._blacklist_data['blacklist_is_domains'] = True
-        with T.assert_raises(BadDomainError):
-            create_blacklist(self._blacklist_data)
-
-    def test_match_fruit(self):
-        good_blobs = [
-            {'fruit_name': 'apple'},
-            {'fruit_name': 'banana'},
+    def test_simple_hashes(self):
+        input_blobs = [
+            {'md5': 'ffff5f60462c38b1d235cb3509876543'},
+            {'sha1': 'ffff234d2a50a42a87389f1234561a21'},
+            {'sha2': 'ffff51e77b442ee23188d87e4abcdef0'}
         ]
-
-        bad_blobs = [
-            {'car_name': 'corolla'},
-            {'car_name': 'datsun'},
+        expected_blacklists = [
+            {'hashes': ['ffff5f60462c38b1d235cb3509876543']},
+            {'hashes': ['ffff234d2a50a42a87389f1234561a21']},
+            {'hashes': ['ffff51e77b442ee23188d87e4abcdef0']}
         ]
+        self._test_blacklisted(input_blobs, expected_blacklists, self._hash_config, self._hash_file_contents)
 
-        blacklist = create_blacklist(self._blacklist_data)
-        for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
-        for blob in bad_blobs:
-            T.assert_equal(blacklist.match_line(blob), False)
-
-    def test_match_fruit_and_cars(self):
-        good_blobs = [
-            {'fruit_name': 'apple'},
-            {'fruit_name': 'banana'},
-            {'car_name': 'corolla'},
-            {'car_name': 'datsun'},
+    def test_no_hashes(self):
+        input_blobs = [
+            # Not the right key
+            {'apple': 'ffff5f60462c38b1d235cb3509876543'},
+            # Value not on blacklist
+            {'sha1': 'aaaa234d2a50a42a87389f1234561a21'}
         ]
-
-        self._blacklist_data['blacklist_keys'] = ['fruit_name', 'car_name']
-        blacklist = create_blacklist(self._blacklist_data)
-        for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
-
-    def test_match_fruit_regex(self):
-        good_blobs = [
-            {'fruit_name': 'apple'},
+        expected_blacklists = [
+            None,
+            None
         ]
+        self._test_blacklisted(input_blobs, expected_blacklists, self._hash_config, self._hash_file_contents)
 
-        bad_blobs = [
-            {'fruit_name': 'banana'},
-            {'car_name': 'corolla'},
-            {'car_name': 'datsun'},
+    def test_simple_domains(self):
+        input_blobs = [
+            {'osxcollector_domains': ['biz.yelp.com']},
+            {'osxcollector_domains': ['yelp.github.com']},
+            {'osxcollector_domains': ['example.com']}
         ]
-
-        self._blacklist_data['blacklist_is_regex'] = True
-        self._file_contents.return_value = ['app.*', 'ban.+org']
-        blacklist = create_blacklist(self._blacklist_data)
-        for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
-        for blob in bad_blobs:
-            T.assert_equal(blacklist.match_line(blob), False)
-
-    def test_match_domains(self):
-        good_blobs = [
-            {'fruit_name': 'apple.com'},
-            {'fruit_name': 'www.apple.com'},
-            {'fruit_name': 'www.another-thing.apple.com'},
+        expected_blacklists = [
+            {'domains': ['yelp.com']},
+            {'domains': ['github.com']},
+            {'domains': ['example.com']},
         ]
+        self._test_blacklisted(input_blobs, expected_blacklists, self._domain_config, self._domain_file_contents)
 
-        bad_blobs = [
-            {'fruit_name': 'cran-apple.com'},
-            {'fruit_name': 'apple.org'},
-            {'fruit_name': 'apple.com.jp'},
-            {'car_name': 'apple.com'},
-        ]
-        self._blacklist_data['blacklist_is_domains'] = True
-        self._file_contents.return_value = ['apple.com']
-        blacklist = create_blacklist(self._blacklist_data)
-        for blob in good_blobs:
-            T.assert_equal(blacklist.match_line(blob), True)
-        for blob in bad_blobs:
-            T.assert_equal(blacklist.match_line(blob), False)
+    def _test_blacklisted(self, input_blobs, expected_blacklists, blacklist_config, blacklist_file_contents):
+
+        with nested(
+            patch('osxcollector.output_filters.base_filters.output_filter.Config.get_config', return_value=[blacklist_config]),
+            patch('osxcollector.output_filters.util.blacklist.Blacklist._read_blacklist_file_contents',
+                  return_value=blacklist_file_contents)
+        ):
+            output_filter = FindBlacklistedFilter()
+            output_blobs = self._run_filter(output_filter, input_blobs)
+
+        actual_blacklists = list(blob.get('osxcollector_blacklist', None) for blob in output_blobs)
+        for actual, expected in zip(actual_blacklists, expected_blacklists):
+            # actual = sorted(actual) if actual else actual
+            # expected = sorted(expected) if expected else expected
+            T.assert_equal(actual, expected)
+
+        # Minus 'osxcollector_blacklist' key, the input should be unchanged
+        for input_blob, output_blob in zip(input_blobs, output_blobs):
+            if 'osxcollector_blacklist' in output_blob:
+                del output_blob['osxcollector_blacklist']
+            T.assert_equal(input_blob, output_blob)

@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 #
-# LookupDomainsFilter uses VirusTotal to lookup the values in 'md5' and add 'osxcollector_vthash' key.
+# LookupHashesFilter uses VirusTotal to lookup the values in 'sha2' and add 'osxcollector_vthash' key.
 #
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
@@ -14,20 +14,32 @@ class LookupHashesFilter(ThreatFeedFilter):
 
     """A class to lookup hashes using VirusTotal API."""
 
-    def __init__(self, lookup_when=None, suspicious_when=None):
+    def __init__(self, lookup_when=None):
         super(LookupHashesFilter, self).__init__('sha2',
                                                  'osxcollector_vthash', lookup_when=lookup_when,
-                                                 suspicious_when=suspicious_when, api_key='virustotal')
+                                                 name_of_api_key='virustotal')
 
-    def _lookup_iocs(self):
-        """Caches the OpenDNS info for a set of domains"""
+    def _lookup_iocs(self, all_iocs):
+        """Caches the VirusTotal info for a set of hashes.
+
+        Args:
+            all_iocs - a list of hashes.
+        Returns:
+            A dict with hash as key and threat info as value
+        """
+        threat_info = {}
+
         vt = VirusTotalApi(self._api_key)
-        reports = vt.get_file_reports(self._all_iocs)
+        reports = vt.get_file_reports(all_iocs)
 
         for hash_val in reports.keys():
             report = reports[hash_val]
+            if not report:
+                continue
             if self._should_store_ioc_info(report):
-                self._threat_info_by_iocs[hash_val] = self._trim_hash_report(report)
+                threat_info[hash_val] = self._trim_hash_report(report)
+
+        return threat_info
 
     def _should_store_ioc_info(self, report, min_hits=1):
         """Only store if the hash has > min_hits positive detections.

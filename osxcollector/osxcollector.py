@@ -6,7 +6,7 @@
 #  This work is licensed under the GNU General Public License
 #  This work is a derivation of https://github.com/jipegit/OSXAuditor
 #
-#  Gathers information from plists, sqlite DBs, and the local filesystem to
+#  Gathers information from plists, sqlite DBs, and the local file system to
 #  get information for analyzing a malware infection.
 #
 #  Output to stdout is JSON.  Each line contains a key 'osxcollector_section' which
@@ -34,8 +34,8 @@ from hashlib import sha256
 from json import dumps
 from numbers import Number
 from optparse import OptionParser
-from sqlite3 import OperationalError
 from sqlite3 import connect
+from sqlite3 import OperationalError
 from traceback import extract_tb
 
 import Foundation
@@ -214,7 +214,7 @@ def _microseconds_since_1601_to_datetime(microseconds):
 def _value_to_datetime(val):
     # Try various versions of converting a number to a datetime.
     # Ordering is important as a timestamp may be "valid" with multiple different conversion algorithms
-    # but it won't necessarilly be the correct timestamp
+    # but it won't necessarily be the correct timestamp
     if (isinstance(val, basestring)):
         try:
             val = float(val)
@@ -252,7 +252,7 @@ def _get_extended_attr(file_path, attr):
 
     Args:
         file_path: str path of file to examine
-        attr: key of the attribute to retreive
+        attr: key of the attribute to retrieve
     Returns:
         a list of strings or None
     """
@@ -263,7 +263,7 @@ def _get_extended_attr(file_path, attr):
                 plist_array, _, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
                     buffer(xattr_val), 0, None, None)
                 if plist_error:
-                    Logger.log_error(message='plist deserialization error: {0}'.format(plist_error))
+                    Logger.log_error(message='plist de-serialization error: {0}'.format(plist_error))
                     return None
                 return list(plist_array)
             except Exception as deserialize_plist_e:
@@ -381,7 +381,7 @@ class DictUtils(object):
         """Helper method for get_deep
 
         Args:
-            path: A str representing a chain of keys seperated '.' or an enumerable set of strings
+            path: A str representing a chain of keys separated '.' or an enumerable set of strings
         Returns:
             an enumerable set of strings
         """
@@ -421,7 +421,7 @@ class DictUtils(object):
 
         Args:
             x: A dict
-            path: A 'deep path' to retreive in the dict
+            path: A 'deep path' to retrieve in the dict
             default: A value to return if the path can not be found
         Returns:
             The value of the key or default
@@ -537,7 +537,7 @@ class Collector(object):
     """Examines plists, sqlite dbs, and hashes files to gather info useful for analyzing a malware infection"""
 
     def __init__(self):
-        # A list of the names of accounts with admin priveleges
+        # A list of the names of accounts with admin privileges
         self.admins = []
 
         # A list of HomeDir used when finding per-user data
@@ -659,7 +659,7 @@ class Collector(object):
         """Log the quarantines for a user
 
         Quarantines is basically the info necessary to show the 'Are you sure you wanna run this?' when
-        a user is trying to open a file downloaded from the internet.  For some more details, checkout the
+        a user is trying to open a file downloaded from the Internet.  For some more details, checkout the
         Apple Support explanation of Quarantines: http://support.apple.com/kb/HT3662
 
         Args:
@@ -1079,7 +1079,7 @@ class Collector(object):
 
     @_foreach_homedir
     def _collect_accounts_recent_items(self, homedir):
-        """Log users' recents items"""
+        """Log users' recent items"""
 
         recent_items_account_plist_path = pathjoin(homedir.path, 'Library/Preferences/com.apple.recentitems.plist')
 
