@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# ThreatFeedFilter a base class to find info on IOCs using some random API.
+# ThreatFeedFilter is a base class to find info on IOCs using some random API.
 #
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
@@ -55,7 +55,7 @@ class ThreatFeedFilter(OutputFilter):
 
         Override this method in derived classes to correlate threat_info and blob data.
 
-        For example, the ShadowServer filter looks up MD5 hashes. Since MD5 hashes for different files often collide, the ShadowServer
+        For example, the ShadowServer filter looks up SHA1 hashes. Since SHA1 hashes for different files collide, the ShadowServer
         filter overrides _should_add_threat_info_to_blob and verifies that the filename in the blob matches the filename in the threat
         info.
 

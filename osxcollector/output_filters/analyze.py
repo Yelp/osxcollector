@@ -47,7 +47,7 @@ from osxcollector.output_filters.virustotal. \
 from osxcollector.output_filters.virustotal. \
     lookup_hashes import LookupHashesFilter as VtLookupHashesFilter
 
-DEFAULT_RELATED_DOMAINS_DEPTH = 2
+DEFAULT_RELATED_DOMAINS_GENERATIONS = 2
 
 
 class AnalyzeFilter(ChainFilter):
@@ -62,7 +62,7 @@ class AnalyzeFilter(ChainFilter):
                  initial_file_terms=None,
                  initial_domains=None,
                  initial_ips=None,
-                 related_domains_generations=DEFAULT_RELATED_DOMAINS_DEPTH,
+                 related_domains_generations=DEFAULT_RELATED_DOMAINS_GENERATIONS,
                  monochrome=False,
                  no_shadowserver=False,
                  no_opendns=False,
@@ -133,6 +133,7 @@ def lookup_domains_in_vt_when(blob):
 def find_related_when(blob):
     """When to find related terms or domains.
 
+    Stuff in ShadowServer is not interesting.
     Blacklisted file paths are worth investigating.
     Files where the md5 could not be calculated are also interesting. Root should be able to read files.
     Files with a bad hash in VT are obviously malware, go find related bad stuff.
@@ -142,7 +143,7 @@ def find_related_when(blob):
     Returns:
         boolean
     """
-    if lookup_when_not_in_shadowserver(blob):
+    if 'osxcollector_shadowserver' in blob:
         return False
     if '' == blob.get('md5', None):
         return True
@@ -405,7 +406,7 @@ def main():
                       help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
     parser.add_option('-i', '--ip', dest='ip_terms', default=[], action='append',
                       help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
-    parser.add_option('--related-domains-generations', dest='related_domains_generations', default=DEFAULT_RELATED_DOMAINS_DEPTH,
+    parser.add_option('--related-domains-generations', dest='related_domains_generations', default=DEFAULT_RELATED_DOMAINS_GENERATIONS,
                       help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
     parser.add_option('--readout', dest='readout', action='store_true', default=False,
                       help='[OPTIONAL] Skip the analysis and just output really readable analysis')

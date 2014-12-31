@@ -5,6 +5,7 @@
 # Config is a very simplistic class for reading YAML config.
 #
 # run_filter is a default implementation of a main that reads input from stdin, feeds it to an OutputFilter, and
+# spits the output to stdout.
 #
 import os
 import sys
@@ -79,11 +80,7 @@ class Config(object):
             filter_name: String class name of the filter instantiating this instance of Config.
         """
         self._config = None
-        for loc in [os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF')]:
-
-            # loc is empty when the environment variable is not set
-            if not loc:
-                continue
+        for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF', ''):
 
             try:
                 with open(os.path.join(loc, 'osxcollector.yaml')) as source:
@@ -104,7 +101,7 @@ class Config(object):
         Returns:
             The value of the key or default when the key is not present.
         Raises:
-            MissingConfigError - when key does not exist and no default is supplied.
+            MissingConfigError: when key does not exist and no default is supplied.
         """
         full_key = '{0}.{1}'.format(self._filter_name, key)
         return self.get_config(full_key, default)
@@ -118,7 +115,7 @@ class Config(object):
         Returns:
             The value of the key or default when the key is not present.
         Raises:
-            MissingConfigError when key does not exist and no default is supplied.
+            MissingConfigError: when key does not exist and no default is supplied.
         """
         val = DictUtils.get_deep(self._config, key, default)
         if not val:
