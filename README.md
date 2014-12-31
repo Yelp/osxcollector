@@ -331,6 +331,11 @@ To see lines matching a blacklist try:
 ```shell
 $ jq 'select(has("osxcollector_blacklist"))'
 ```
+To see lines matching a specific blacklist named `domains` try:
+```shell
+$ jq 'select(has("osxcollector_blacklist")) |
+      select(.osxcollector_blacklist | keys[] | contains("domains"))'
+```
 
 ##### RelatedFilesFilter
 `osxcollector.output_filters.related_files.RelatedFilesFilter` takes an initial set of file paths, names, or terms. It breaks this input into individual file and directory names and then searches for these terms across the entire OSXCollector output. The filter is smart and ignores common terms like `bin` or `Library` as well as ignoring user names.
@@ -345,7 +350,8 @@ $ cat CanisAsp.json | \
 
 To see related lines try:
 ```shell
-$ jq 'select(.osxcollector_related=="files")'
+$ jq 'select(has("osxcollector_related")) |
+      select(.osxcollector_related | keys[] | contains("files"))'
 ```
 
 ##### ChromeHistoryFilter
@@ -397,7 +403,8 @@ $ cat NotchCherry.json | \
 
 To see what it found:
 ```shell
-$ jq 'select(.osxcollector_related=="domains")'
+$ jq 'select(has("osxcollector_related")) |
+      select(.osxcollector_related | keys[] | contains("domains"))'
 ```
 
 ##### OpenDNS LookupDomainsFilter
@@ -470,20 +477,22 @@ Then _Very Readable Output Bot_ takes over and prints out an easy-to-digest, hum
 ```shell
 $ cat SlickApocalypse.json | \
     python -m osxcollector.output_filters.find_domains | \
+    python -m osxcollector.output_filters.shadowserver.lookup_hashes | \
+    python -m osxcollector.output_filters.virustotal.lookup_hashes | \
+    python -m osxcollector.output_filters.find_blacklisted | \
     python -m osxcollector.output_filters.related_files | \
-    python -m python -m osxcollector.output_filters.opendns.related_domains | \
+    python -m osxcollector.output_filters.opendns.related_domains | \
     python -m osxcollector.output_filters.opendns.lookup_domains | \
     python -m osxcollector.output_filters.virustotal.lookup_domains | \
-    python -m osxcollector.output_filters.virustotal.lookup_hashes | \
     python -m osxcollector.output_filters.chrome_history | \
     python -m osxcollector.output_filters.firefox_history | \
     tee analyze_SlickApocalypse.json | \
-    jq 'select('
-      'has("osxcollector_vthash" or'
-      'has("osxcollector_vtdomain") or'
-      'has("osxcollector_opendns") or'
-      'has("osxcollector_blacklist") or'
-      'has("osxcollector_related"))'
+    jq 'select(false == has("osxcollector_shadowserver")) |
+        select(has("osxcollector_vthash") or
+               has("osxcollector_vtdomain") or
+               has("osxcollector_opendns") or
+               has("osxcollector_blacklist") or
+               has("osxcollector_related"))'
 ```
 and then letting a wise-cracking analyst explain the results to you. The _Very Readable Output Bot_ even suggests hashes and domains to add to blacklists.
 
