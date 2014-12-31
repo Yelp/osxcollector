@@ -496,6 +496,11 @@ $ emacs osxcollector.yaml</pre></div>
 
 <div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist"))<span class="pl-pds">'</span></span></pre></div>
 
+<p>To see lines matching a specific blacklist named <code>domains</code> try:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist")) |</span>
+<span class="pl-s1">      select(.osxcollector_blacklist | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
+
 <h5>
 <a id="relatedfilesfilter" class="anchor" href="#relatedfilesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>RelatedFilesFilter</h5>
 
@@ -510,7 +515,8 @@ $ emacs osxcollector.yaml</pre></div>
 
 <p>To see related lines try:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_related=="files")<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_related")) |</span>
+<span class="pl-s1">      select(.osxcollector_related | keys[] | contains("files"))<span class="pl-pds">'</span></span></pre></div>
 
 <h5>
 <a id="chromehistoryfilter" class="anchor" href="#chromehistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChromeHistoryFilter</h5>
@@ -564,7 +570,8 @@ $ emacs osxcollector.yaml</pre></div>
 
 <p>To see what it found:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_related=="domains")<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_related")) |</span>
+<span class="pl-s1">      select(.osxcollector_related | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
 
 <h5>
 <a id="opendns-lookupdomainsfilter" class="anchor" href="#opendns-lookupdomainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenDNS LookupDomainsFilter</h5>
@@ -640,20 +647,22 @@ lookups hashes with the ShadowServer bin-test API. This is sort of the opposite 
 
 <div class="highlight highlight-shell"><pre>$ cat SlickApocalypse.json <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.shadowserver.lookup_hashes <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.virustotal.lookup_hashes <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_blacklisted <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.related_files <span class="pl-k">|</span> \
-    python -m python -m osxcollector.output_filters.opendns.related_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.opendns.related_domains <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.opendns.lookup_domains <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.virustotal.lookup_domains <span class="pl-k">|</span> \
-    python -m osxcollector.output_filters.virustotal.lookup_hashes <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.chrome_history <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.firefox_history <span class="pl-k">|</span> \
     tee analyze_SlickApocalypse.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(<span class="pl-pds">'</span></span>
-      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_vthash" or<span class="pl-pds">'</span></span>
-      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_vtdomain") or<span class="pl-pds">'</span></span>
-      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_opendns") or<span class="pl-pds">'</span></span>
-      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_blacklist") or<span class="pl-pds">'</span></span>
-      <span class="pl-s1"><span class="pl-pds">'</span>has("osxcollector_related"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s1"><span class="pl-pds">'</span>select(false == has("osxcollector_shadowserver")) |</span>
+<span class="pl-s1">        select(has("osxcollector_vthash") or</span>
+<span class="pl-s1">               has("osxcollector_vtdomain") or</span>
+<span class="pl-s1">               has("osxcollector_opendns") or</span>
+<span class="pl-s1">               has("osxcollector_blacklist") or</span>
+<span class="pl-s1">               has("osxcollector_related"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>and then letting a wise-cracking analyst explain the results to you. The <em>Very Readable Output Bot</em> even suggests hashes and domains to add to blacklists.</p>
 
