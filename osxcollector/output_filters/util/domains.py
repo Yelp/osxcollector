@@ -9,7 +9,7 @@ from osxcollector.output_filters.exceptions import BadDomainError
 
 
 def expand_domain(domain):
-    """A generator that returns the input with and without the subdomain
+    """A generator that returns the input with and without the subdomain.
 
     Args:
         domain - string

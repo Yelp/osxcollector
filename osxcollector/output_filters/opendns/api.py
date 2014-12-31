@@ -95,7 +95,7 @@ class InvestigateApi(object):
         Args:
             domains: an enumerable of strings domain names
         Returns:
-            An eumerable of string domain names
+            An enumerable of string domain names
         """
         fmt_url_path = 'recommendations/name/{0}.json'
         urls = self._to_urls(fmt_url_path, domains)
@@ -131,7 +131,7 @@ class InvestigateApi(object):
         return rr_domains
 
     def _is_categorization_suspicious(self, category_info):
-        """Analyzes info from opendns and makes a boolean determination of suspicious or not.
+        """Analyzes info from OpenDNS and makes a boolean determination of suspicious or not.
 
         Args:
             category_info: The result of a call to the categorization endpoint.
@@ -174,7 +174,7 @@ class InvestigateApi(object):
         return result
 
     def _is_security_suspicious(self, security_info):
-        """Analyzes info from opendns and makes a boolean determination of suspicious or not.
+        """Analyzes info from OpenDNS and makes a boolean determination of suspicious or not.
 
         Either looks for low values for a specific set of properties, looks for known participation in
         a threat campaign, or looks for unknown domains.

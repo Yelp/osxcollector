@@ -26,7 +26,7 @@ class OutputFilter(object):
     - After all lines have been passed to filter_line, a final call is made OutputFilter.to end_of_lines
 
     There are two common ways a filter deals with lines:
-    - A filter that modifies each line independant of other lines could simply implement filter_line.
+    - A filter that modifies each line independent of other lines could simply implement filter_line.
     - A filter that modifies each line based on other lines may want to accumulate lines until end_of_lines is called,
       then bulk operate on all lines at once.
 
@@ -43,10 +43,10 @@ class OutputFilter(object):
         """Each Line of OSXCollector output will be passed to filter_line.
 
         The OutputFilter should return the line, either modified or unmodified.
-        The OutputFilter can also choose to return nothing, effectively swalling the line.
+        The OutputFilter can also choose to return nothing, effectively swallowing the line.
 
         Args:
-            blob: A dict representing one line of output from osxcollector.
+            blob: A dict representing one line of output from OSXCollector.
         Returns:
             A dict or None
         """

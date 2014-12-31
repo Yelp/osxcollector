@@ -41,7 +41,7 @@ class RateLimiter(object):
         self._outstanding_calls += num_calls
 
     def _cull(self):
-        """Remove calls more than 1 minutes old from the queue."""
+        """Remove calls more than 1 second old from the queue."""
         right_now = time.time()
 
         cull_from = -1
@@ -65,7 +65,7 @@ class MultiRequest(object):
 
     * One url & one param - One request will be made.
     * Multiple url & one query param - Multiple requests will be made, with differing urls and the same query param.
-    * Multiple url & mulitple query params - Multiple requests will be made, with the same url and differning query params.
+    * Multiple url & multiple query params - Multiple requests will be made, with the same url and differing query params.
     """
 
     _VERB_GET = 'GET'

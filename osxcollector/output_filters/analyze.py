@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # The AnalyzeFilter is a handy little tool that ties together many filters to attempt to
-# enahnce the output of OSXCollector with data from threat APIs, compare against blacklists,
+# enhance the output of OSXCollector with data from threat APIs, compare against blacklists,
 # search for lines related to suspicious domains, ips, or files, and generally figure shit out.
 #
 # The more detailed description of what goes on:
@@ -88,7 +88,7 @@ class AnalyzeFilter(ChainFilter):
         filter_chain.append(RelatedFilesFilter(initial_terms=initial_file_terms, when=find_related_when))
         if not no_opendns:
             filter_chain.append(OpenDnsRelatedDomainsFilter(initial_domains=initial_domains,
-                                                            initial_ips=initial_ips, when=find_related_when,
+                                                            initial_ips=initial_ips, related_when=find_related_when,
                                                             generations=related_domains_generations))
 
         # Lookup threat info on suspicious and related stuff
@@ -126,7 +126,7 @@ def lookup_when_not_in_shadowserver(blob):
 
 
 def lookup_domains_in_vt_when(blob):
-    """VT domain lookup is a final step and what to lookup is dependant upon what has been found so far."""
+    """VT domain lookup is a final step and what to lookup is dependent upon what has been found so far."""
     return lookup_when_not_in_shadowserver(blob) and include_in_summary(blob)
 
 
@@ -157,10 +157,10 @@ class _OutputToFileFilter(OutputFilter):
         self._all_blobs = list()
 
     def filter_line(self, blob):
-        """Each Line of osxcollector output will be passed to filter_line.
+        """Each Line of OSXCollector output will be passed to filter_line.
 
         The OutputFilter should return the line, either modified or unmodified.
-        The OutputFilter can also choose to return nothing, effectively swalling the line.
+        The OutputFilter can also choose to return nothing, effectively swallowing the line.
 
         Args:
             output_line: A dict
@@ -203,10 +203,10 @@ class _VeryReadableOutputFilter(OutputFilter):
         self._add_to_blacklist = []
 
     def filter_line(self, blob):
-        """Each Line of osxcollector output will be passed to filter_line.
+        """Each Line of OSXCollector output will be passed to filter_line.
 
         The OutputFilter should return the line, either modified or unmodified.
-        The OutputFilter can also choose to return nothing, effectively swalling the line.
+        The OutputFilter can also choose to return nothing, effectively swallowing the line.
 
         Args:
             output_line: A dict
@@ -262,7 +262,7 @@ class _VeryReadableOutputFilter(OutputFilter):
             self._write('I hope it was worth it!\n\n', self.BOT_COLOR)
 
         if len(self._opendns):
-            self._write('Well, here\'s somes domains OpenDNS wouldn\'t recommend.\n', self.BOT_COLOR)
+            self._write('Well, here\'s some domains OpenDNS wouldn\'t recommend.\n', self.BOT_COLOR)
             self._summarize_blobs(self._opendns)
             self._write('You know you shouldn\'t just click every link you see? #truth\n\n', self.BOT_COLOR)
 
@@ -421,7 +421,7 @@ def main():
     parser.add_option('--input-file', dest='input_file', default=None,
                       help='[OPTIONAL] Path to OSXCollector output to read. Defaults to stdin otherwise.')
 
-    options, _ = parser.parse_args()
+    options, __ = parser.parse_args()
 
     if not options.readout:
         output_filter = AnalyzeFilter(initial_file_terms=options.file_terms, initial_domains=options.domain_terms,

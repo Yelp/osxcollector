@@ -15,15 +15,17 @@ class RelatedDomainsFilter(OutputFilter):
     A whitelist of domains to ignore is read during initialization.
     """
 
-    def __init__(self, initial_domains=None, initial_ips=None, generations=2, when=None):
+    def __init__(self, initial_domains=None, initial_ips=None, generations=2, related_when=None):
         """Initializes the RelatedDomainsFilter.
 
         Args:
             initial_domains: an enumerable of string domain names
             initial_ips: an enumerable of string IPs in the form ''
-            generations: How many generations of related domains to retreive. Passing 1
+            generations: How many generations of related domains to retrieve. Passing 1
               means just find the domains related to the initial input. Passing 2 means also find the
               domains related to the domains related to the initial input.
+            related_when: A boolean function to call to decide whether to add the domains from a line to
+              the list of related domains.
         """
         super(RelatedDomainsFilter, self).__init__()
         self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
@@ -35,7 +37,7 @@ class RelatedDomainsFilter(OutputFilter):
 
         self._related_domains = set(initial_domains) if initial_domains else set()
 
-        self._when = when
+        self._related_when = related_when
         self._generations = generations
 
         self._all_blobs = list()
@@ -44,13 +46,13 @@ class RelatedDomainsFilter(OutputFilter):
         """Accumulate a set of all domains.
 
         Args:
-            blob: A dict representing one line of output from osxcollector.
+            blob: A dict representing one line of output from OSXCollector.
         Returns:
             A dict or None
         """
         self._all_blobs.append(blob)
 
-        if 'osxcollector_domains' in blob and self._when(blob):
+        if 'osxcollector_domains' in blob and self.related_when and self.related_when(blob):
             for domain in blob.get('osxcollector_domains'):
                 self._related_domains.add(domain)
 

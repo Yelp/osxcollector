@@ -9,7 +9,7 @@ class ThreatFeedFilter(OutputFilter):
 
     """A base class to find info on IOCs using some random API.
 
-    Derrived classes need only to implement _lookup_iocs()
+    Derived classes need only to implement _lookup_iocs()
     If necessary, they should implement _should_add_threat_info_to_blob.
 
     It is assumed that the API uses an api_key stored in the config.
@@ -71,7 +71,7 @@ class ThreatFeedFilter(OutputFilter):
         """Accumulate IOCs to lookup with the ThreatFeed.
 
         Args:
-            blob: A dict representing one line of output from osxcollector.
+            blob: A dict representing one line of output from OSXCollector.
         Returns:
             A dict or None
         """

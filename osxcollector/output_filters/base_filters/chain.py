@@ -39,7 +39,7 @@ class ChainFilter(OutputFilter):
         Passes the line to the filter at the head of the chain. Output from each filter flows to it's _next_link.
 
         Args:
-            blob: A dict representing one line of output from osxcollector.
+            blob: A dict representing one line of output from OSXCollector.
         Returns:
             A dict or None
         """
@@ -49,7 +49,7 @@ class ChainFilter(OutputFilter):
         """Pass the line to a link in the chain and pass any output to the next link.
 
         Args:
-            blob: A dict representing one line of output from osxcollector.
+            blob: A dict representing one line of output from OSXCollector.
             link: An OutputFilter
         Returns:
             A dict or None

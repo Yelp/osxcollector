@@ -67,7 +67,7 @@ class FindDomainsFilter(OutputFilter):
     def _url_to_domain(self, maybe_url):
         """Converts an URL to a domain.
 
-        The code deals with ecentricities of both unquote_plus and split_url.
+        The code deals with eccentricities of both unquote_plus and split_url.
 
         Args:
             maybe_url - a string that might be an URL.
