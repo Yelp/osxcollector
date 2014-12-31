@@ -31,7 +31,9 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>
+        <p><a href="https://travis-ci.org/Yelp/osxcollector"><img src="https://travis-ci.org/Yelp/osxcollector.svg" alt="Build Status"></a></p>
+
+<h1>
 <a id="osxcollector-manual" class="anchor" href="#osxcollector-manual" aria-hidden="true"><span class="octicon octicon-link"></span></a>OSXCollector Manual</h1>
 
 <p>OSXCollector is a forensic evidence collection &amp; analysis toolkit for OSX.</p>
@@ -39,7 +41,7 @@
 <h4>
 <a id="forensic-collection" class="anchor" href="#forensic-collection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Forensic Collection</h4>
 
-<p>The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local filesystem.</p>
+<p>The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local file system.</p>
 
 <h4>
 <a id="forensic-analysis" class="anchor" href="#forensic-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Forensic Analysis</h4>
@@ -65,7 +67,7 @@
 Wrote 35394 lines.
 Output <span class="pl-k">in</span> osxcollect-2014_12_21-08_49_39.tar.gz</pre></div>
 
-<p>The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for handoff to an analyst.</p>
+<p>The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for hand-off to an analyst.</p>
 
 <p><code>osxcollector.py</code> also has a lot of useful options to change how collection works:</p>
 
@@ -273,8 +275,7 @@ and other login items from:</p>
 <a id="quarantines-section" class="anchor" href="#quarantines-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
 <code>quarantines</code> section</h5>
 
-<p>Quarantines are basically the info necessary to show the 'Are you sure you wanna
-run this?' when a user is trying to open a file downloaded from the internet.
+<p>Quarantines are basically the info necessary to show the 'Are you sure you wanna run this?' when a user is trying to open a file downloaded from the Internet.
 For some more details, checkout the Apple Support explanation of Quarantines:
 <a href="http://support.apple.com/kb/HT3662">http://support.apple.com/kb/HT3662</a></p>
 
@@ -391,7 +392,7 @@ profile:</p>
 <h4>
 <a id="timestamps-1" class="anchor" href="#timestamps-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Timestamps</h4>
 
-<p>Simply grepping a few minutes before and after a timestamp works great:</p>
+<p>Simply greping a few minutes before and after a timestamp works great:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> grep <span class="pl-s1"><span class="pl-pds">'</span>2014-01-01 11:3[2-8]<span class="pl-pds">'</span></span></pre></div>
 
@@ -498,7 +499,7 @@ $ emacs osxcollector.yaml</pre></div>
 <h5>
 <a id="relatedfilesfilter" class="anchor" href="#relatedfilesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>RelatedFilesFilter</h5>
 
-<p><code>osxcollector.output_filters.related_files.RelatedFilesFilter</code> takes an initial set of file paths, names, or terms. It breaks this input into individual file and directory names and then searches for these terms across the entire OSXCollector output. The filter is smart and ignores common terms like <code>bin</code> or <code>Library</code> as well as ignoring usernames.</p>
+<p><code>osxcollector.output_filters.related_files.RelatedFilesFilter</code> takes an initial set of file paths, names, or terms. It breaks this input into individual file and directory names and then searches for these terms across the entire OSXCollector output. The filter is smart and ignores common terms like <code>bin</code> or <code>Library</code> as well as ignoring user names.</p>
 
 <p>This filter is great for figuring out how <code>evil_invoice.pdf</code> landed up on a machine. It'll find browser history, quarantines, email messages, etc. related to a file.</p>
 
@@ -544,7 +545,7 @@ $ emacs osxcollector.yaml</pre></div>
 <h4>
 <a id="threat-api-filters" class="anchor" href="#threat-api-filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Threat API Filters</h4>
 
-<p>By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. These APIs aren't free but they are useful.</p>
+<p>By taking the output of OSXCollector and looking up further info with OpenDNS and VirusTotal APIs, Yelp enhances the output with useful info. Some of these APIs aren't free but they are useful.</p>
 
 <p>Using these filters as examples, it would be possible to integrate with additional free or premium threat APIs. <code>osxcollector.output_filters.base_filters.threat_feed.ThreatFeedFilter</code> has most of the plumbing for hooking up to arbitrary APIs.</p>
 
@@ -602,7 +603,7 @@ $ emacs osxcollector.yaml</pre></div>
 <h5>
 <a id="virustotal-lookuphashesfilter" class="anchor" href="#virustotal-lookuphashesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>VirusTotal LookupHashesFilter</h5>
 
-<p><code>osxcollector.output_filters.virustotal.lookup_hashes.LookupHashesFilter</code> lookups hashes with the VirusTotal API. This basically finds anything VirusTotal knows about which is a huge timesaver. There's pretty much no false positives here, but there's also no chance of detecting unknown stuff.</p>
+<p><code>osxcollector.output_filters.virustotal.lookup_hashes.LookupHashesFilter</code> lookups hashes with the VirusTotal API. This basically finds anything VirusTotal knows about which is a huge time saver. There's pretty much no false positives here, but there's also no chance of detecting unknown stuff.</p>
 
 <p>Run it as:</p>
 
@@ -613,6 +614,22 @@ $ emacs osxcollector.yaml</pre></div>
 <p>To see what it found:</p>
 
 <div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vthash"))<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="shadowserver-lookuphashesfilter" class="anchor" href="#shadowserver-lookuphashesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ShadowServer LookupHashesFilter</h5>
+
+<p><code>osxcollector.output_filters.shadowserver.lookup_hashes.LookupHashesFilter</code>
+lookups hashes with the ShadowServer bin-test API. This is sort of the opposite of a VirusTotal lookup and returns results when it sees the hashes of known good files. This helps raise confidence that a file is not malicious.</p>
+
+<p>Run it as:</p>
+
+<pre><code>$ cat ArkashKobiashi.json | \
+    python -m osxcollector.output_filters.shadowserver.lookup_hashes
+</code></pre>
+
+<p>To see what it found:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_shadowserver"))<span class="pl-pds">'</span></span></pre></div>
 
 <h4>
 <a id="analyzefilter---the-one-filter-to-rule-them-all" class="anchor" href="#analyzefilter---the-one-filter-to-rule-them-all" aria-hidden="true"><span class="octicon octicon-link"></span></a>AnalyzeFilter - The One Filter to Rule Them All</h4>
