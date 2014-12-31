@@ -14,8 +14,9 @@ class LookupHashesFilter(ThreatFeedFilter):
 
     """A class to lookup hashes using ShadowServer API."""
 
-    def __init__(self, lookup_when=None):
+    def __init__(self, lookup_when=None, cache_file_name=None):
         super(LookupHashesFilter, self).__init__('sha1', 'osxcollector_shadowserver', lookup_when=lookup_when)
+        self._cache_file_name = cache_file_name
 
     def _lookup_iocs(self, all_iocs):
         """Looks up the ShadowServer info for a set of hashes.
@@ -25,7 +26,7 @@ class LookupHashesFilter(ThreatFeedFilter):
         Returns:
             A dict with hash as key and threat info as value
         """
-        ss = ShadowServerApi()
+        ss = ShadowServerApi(cache_file_name=self._cache_file_name)
         return ss.get_bin_test(all_iocs)
 
     def _should_add_threat_info_to_blob(self, blob, threat_info):
@@ -43,7 +44,8 @@ class LookupHashesFilter(ThreatFeedFilter):
 
 
 def main():
-    run_filter(LookupHashesFilter())
+    cache_file_name = './shadowserver_cache.json'
+    run_filter(LookupHashesFilter(cache_file_name=cache_file_name))
 
 
 if __name__ == "__main__":

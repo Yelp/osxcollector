@@ -6,6 +6,7 @@ from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.opendns.api import InvestigateApi
 from osxcollector.output_filters.util.blacklist import create_blacklist
+from osxcollector.output_filters.util.domains import expand_domain
 
 
 class RelatedDomainsFilter(OutputFilter):
@@ -84,12 +85,34 @@ class RelatedDomainsFilter(OutputFilter):
         related_domains = set()
 
         if domains:
-            related_domains.update(self._investigate.cooccurrences(domains))
+            cooccurrence_info = self._investigate.cooccurrences(domains)
+            related_domains.update(self.__cooccurrences_to_domains(cooccurrence_info))
 
         if ips:
-            related_domains.update(self._investigate.rr_history(ips))
+            rr_history_info = self._investigate.rr_history(ips)
+            related_domains.update(self._rr_history_to_domains(rr_history_info))
 
         return related_domains
+
+    def _cooccurrences_to_domains(self, cooccurrence_info):
+        domains = []
+
+        for cooccurence in cooccurrence_info:
+            for occur_domain in cooccurence.get('pfs2', []):
+                for elem in expand_domain(occur_domain[0]):
+                    domains.add(elem)
+
+        return domains
+
+    def _rr_history_to_domains(self, rr_history_info):
+        domains = []
+
+        for rr_history in rr_history_info:
+            for rr_domain in rr_history.get('rrs', []):
+                for elem in expand_domain(rr_domain['rr']):
+                    domains.add(elem)
+
+        return domains
 
 
 def main():

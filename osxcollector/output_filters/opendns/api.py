@@ -2,10 +2,10 @@
 #
 # InvestigateApi makes calls to the OpenDNS Investigate API.
 #
-from collections import namedtuple
+import sys
 
 import simplejson
-from osxcollector.output_filters.util.domains import expand_domain
+from osxcollector.output_filters.util.api_cache import ApiCache
 from osxcollector.output_filters.util.error_messages import write_error_message
 from osxcollector.output_filters.util.error_messages import write_exception
 from osxcollector.output_filters.util.http import MultiRequest
@@ -20,9 +20,12 @@ class InvestigateApi(object):
 
     BASE_URL = 'https://investigate.api.opendns.com/'
 
-    def __init__(self, api_key):
+    def __init__(self, api_key, cache_file_name=None):
         auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
         self._requests = MultiRequest(default_headers=auth_header, max_requests=12, rate_limit=30)
+
+        # Create an ApiCache if instructed to
+        self._cache = ApiCache(cache_file_name) if cache_file_name else None
 
     @classmethod
     def _to_url(cls, url_path):
@@ -56,16 +59,28 @@ class InvestigateApi(object):
             A dict of {domain: categorization_result}
         """
         url_path = 'domains/categorization/?showLabels'
-        response = self._requests.multi_post(self._to_url(url_path), data=simplejson.dumps(domains))
-        response = response[0]
+        all_responses = {}
 
-        # TODO: Some better more expressive exception
-        if not response:
-            raise Exception('dang')
+        if self._cache:
+            api_name = 'opendns-categorization'
+            all_responses = self._cache.bulk_lookup(api_name, domains)
+            domains = [key for key in domains if key not in all_responses.keys()]
 
-        for domain in response.keys():
-            response[domain]['is_suspicious'] = self._is_categorization_suspicious(response[domain])
-        return response
+        if len(domains):
+            sys.stderr.write('[DOMAIN COUNT] {0}\n'.format(len(domains)))
+            response = self._requests.multi_post(self._to_url(url_path), data=simplejson.dumps(domains))
+            response = response[0]
+
+            # TODO: Some better more expressive exception
+            if not response:
+                raise Exception('dang')
+
+            for domain in response.keys():
+                if self._cache:
+                    self._cache.cache_value(api_name, domain, response[domain])
+                all_responses[domain] = response[domain]
+
+        return all_responses
 
     @MultiRequest.error_handling
     def security(self, domains):
@@ -77,16 +92,23 @@ class InvestigateApi(object):
             A dict of {domain: security_result}
         """
         fmt_url_path = 'security/name/{0}.json'
+        all_responses = {}
 
-        urls = self._to_urls(fmt_url_path, domains)
-        responses = self._requests.multi_get(urls)
-        responses = dict(zip(domains, responses))
-        for domain in responses.keys():
-            response = self._trim_security_result(responses[domain])
-            response['is_suspicious'] = self._is_security_suspicious(response)
-            responses[domain] = response
+        if self._cache:
+            api_name = 'opendns-security'
+            all_responses = self._cache.bulk_lookup(api_name, domains)
+            domains = [key for key in domains if key not in all_responses.keys()]
 
-        return responses
+        if len(domains):
+            urls = self._to_urls(fmt_url_path, domains)
+            responses = self._requests.multi_get(urls)
+            responses = dict(zip(domains, responses))
+            for domain in responses.keys():
+                if self._cache:
+                    self._cache.cache_value(api_name, domain, responses[domain])
+                all_responses[domain] = responses[domain]
+
+        return all_responses
 
     @MultiRequest.error_handling
     def cooccurrences(self, domains):
@@ -98,16 +120,23 @@ class InvestigateApi(object):
             An enumerable of string domain names
         """
         fmt_url_path = 'recommendations/name/{0}.json'
-        urls = self._to_urls(fmt_url_path, domains)
+        all_responses = {}
 
-        cooccur_domains = set()
-        responses = self._requests.multi_get(urls)
-        for response in responses:
-            for occur_domain in response.get('pfs2', []):
-                for elem in expand_domain(occur_domain[0]):
-                    cooccur_domains.add(elem)
+        if self._cache:
+            api_name = 'opendns-cooccurrences'
+            all_responses = self._cache.bulk_lookup(api_name, domains)
+            domains = [key for key in domains if key not in all_responses.keys()]
 
-        return cooccur_domains
+        if len(domains):
+            urls = self._to_urls(fmt_url_path, domains)
+            responses = self._requests.multi_get(urls)
+            responses = dict(zip(domains, responses))
+            for domain in responses.keys():
+                if self._cache:
+                    self._cache.cache_value(api_name, domain, responses[domain])
+                all_responses[domain] = responses[domain]
+
+        return all_responses
 
     @MultiRequest.error_handling
     def rr_history(self, ips):
@@ -119,131 +148,27 @@ class InvestigateApi(object):
             An enumerable of string domain names
         """
         fmt_url_path = 'dnsdb/ip/a/{0}.json'
-        urls = self._to_urls(fmt_url_path, ips)
+        all_responses = {}
 
-        rr_domains = set()
-        responses = self._requests.multi_get(urls)
-        for response in responses:
-            for rr_domain in response.get('rrs', []):
-                for elem in expand_domain(rr_domain['rr']):
-                    rr_domains.add(elem)
+        if self._cache:
+            api_name = 'opendns-rr_history'
+            all_responses = self._cache.bulk_lookup(api_name, ips)
+            ips = [key for key in ips if key not in all_responses.keys()]
 
-        return rr_domains
+        if len(ips):
+            urls = self._to_urls(fmt_url_path, ips)
+            responses = self._requests.multi_get(urls)
+            responses = dict(zip(ips, responses))
+            for ip in responses.keys():
+                if self._cache:
+                    self._cache.cache_value(api_name, ip, responses[ip])
+                all_responses[ip] = responses[ip]
 
-    def _is_categorization_suspicious(self, category_info):
-        """Analyzes info from OpenDNS and makes a boolean determination of suspicious or not.
+        return all_responses
 
-        Args:
-            category_info: The result of a call to the categorization endpoint.
-        Returns:
-            boolean
-        """
-        if -1 == category_info['status']:
-            return True
-        elif any([cat in self.SUSPICIOUS_CATEGORIES for cat in category_info['content_categories']]):
-            return True
-        elif any([cat in self.SUSPICIOUS_CATEGORIES for cat in category_info['security_categories']]):
-            return True
+        # for response in responses:
+        #     for rr_domain in response.get('rrs', []):
+        #         for elem in expand_domain(rr_domain['rr']):
+        #             rr_domains.add(elem)
 
-        return False
-
-    def _trim_security_result(self, security_info):
-        """Converts the results of a security call into a smaller dict.
-
-        Args:
-            security_info: The result of a call to the security endpoint.
-        Returns:
-            A dict
-        """
-        # dga_score sometimes has the wrong sign, fix that please
-        dga_score = security_info.get('dga_score', 0)
-        if dga_score > 0:
-            security_info['dga_score'] = -1 * dga_score
-
-        # There's a lot of info in the security_info, trim it
-        result = {}
-        for security_check in self.SECURITY_CHECKS:
-            if security_check.key in security_info:
-                result[security_check.key] = security_info[security_check.key]
-        for key in self.SECURITY_BAD_KEYS:
-            if key in security_info:
-                result[key] = security_info[key]
-
-        result['found'] = security_info.get('found', False)
-
-        return result
-
-    def _is_security_suspicious(self, security_info):
-        """Analyzes info from OpenDNS and makes a boolean determination of suspicious or not.
-
-        Either looks for low values for a specific set of properties, looks for known participation in
-        a threat campaign, or looks for unknown domains.
-
-        Args:
-            security_info: The result of a call to the security endpoint
-        Returns:
-            boolean
-        """
-        # Categorization of site
-        if any([security_info.get(key, None) for key in self.SECURITY_BAD_KEYS]):
-            return True
-
-        for security_check in self.SECURITY_CHECKS:
-            if security_info.get(security_check.key, security_check.max) <= security_check.threshold:
-                return True
-
-        if not security_info.get('found', False):
-            return True
-
-        return False
-
-    # Domain categories to consider suspicious
-    SUSPICIOUS_CATEGORIES = [
-        'Adware',
-        'Botnet',
-        'Typo Squatting',
-        'Drive-by Downloads/Exploits',
-        'Mobile Threats',
-        'High Risk Sites and Locations',
-        'Malware',
-        'Phishing'
-    ]
-
-    SecurityCheck = namedtuple('SecurityCheck', ['key', 'min', 'max', 'threshold'])
-    SECURITY_CHECKS = [
-        # Domain Generation Algorithm. This score is generated based on the likeliness of the domain name being
-        # generated by an algorithm rather than a human. This algorithm is designed to identify domains which have
-        # been created using an automated randomization strategy, which is a common evasion technique in malware kits
-        # or botnets. This score ranges from -100 (suspicious) to 0 (benign)
-        # <http://labs.opendns.com/2013/10/24/mysterious-dga-lets-investigate-sgraph/>
-        SecurityCheck('dga_score', -100, 0, -70),
-
-        # Suspicious rank for a domain that reviews based on the lookup behavior of client IP for the domain.
-        # Securerank is designed to identify hostnames requested by known infected clients but never requested
-        # by clean clients, assuming these domains are more likely to be bad.
-        # Scores returned range from -100 (suspicious) to 100 (benign).
-        # <http://labs.opendns.com/2013/03/28/secure-rank-a-large-scale-discovery-algorithm-for-predictive-detection/>
-        SecurityCheck('securerank2', -100, 100, -10),
-
-        # ASN reputation score, ranges from -100 to 0 with -100 being very suspicious
-        SecurityCheck('asn_score', -100, 0, -3),
-
-        # Prefix ranks domains given their IP prefixes (An IP prefix is the first three octets in an IP address)
-        # and the reputation score of these prefixes.
-        # Ranges from -100 to 0, -100 being very suspicious
-        SecurityCheck('prefix_score', -100, 0, -12),
-
-        # RIP ranks domains given their IP addresses and the reputation score of these IP addresses.
-        # Ranges from -100 to 0, -100 being very suspicious
-        SecurityCheck('rip_score', -100, 0, -25)
-    ]
-
-    SECURITY_BAD_KEYS = [
-        # The name of any known attacks associated with this domain.
-        # Returns blank is no known threat associated with domain.
-        'attack',
-
-        # The type of the known attack, such as botnet or APT.
-        # Returns blank if no known threat associated with domain.
-        'threat_type'
-    ]
+        # return rr_domains
