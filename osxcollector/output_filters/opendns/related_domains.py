@@ -6,6 +6,7 @@ from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.opendns.api import InvestigateApi
 from osxcollector.output_filters.util.blacklist import create_blacklist
+from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.util.domains import expand_domain
 
 
@@ -29,9 +30,10 @@ class RelatedDomainsFilter(OutputFilter):
               the list of related domains.
         """
         super(RelatedDomainsFilter, self).__init__()
-        self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
+        self._whitelist = create_blacklist(config_get_deep('domain_whitelist'))
 
-        self._investigate = InvestigateApi(self.config.get_config('api_key.opendns'))
+        cache_file_name = config_get_deep('opendns.RelatedDomainsFilter.cache_file_name', None)
+        self._investigate = InvestigateApi(config_get_deep('api_key.opendns'), cache_file_name=cache_file_name)
 
         self._initial_domains = set(initial_domains) if initial_domains else set()
         self._initial_ips = set(initial_ips) if initial_ips else set()
@@ -53,13 +55,20 @@ class RelatedDomainsFilter(OutputFilter):
         """
         self._all_blobs.append(blob)
 
-        if 'osxcollector_domains' in blob and self.related_when and self.related_when(blob):
+        if 'osxcollector_domains' in blob and self._related_when and self._related_when(blob):
             for domain in blob.get('osxcollector_domains'):
                 self._related_domains.add(domain)
 
         return None
 
     def end_of_lines(self):
+        """Called after all lines have been fed to filter_output_line.
+
+        The OutputFilter performs any processing that requires the complete input to have already been fed.
+
+        Returns:
+            An enumerable of dicts
+        """
         domains = self._initial_domains
         ips = self._initial_ips
 
@@ -75,9 +84,11 @@ class RelatedDomainsFilter(OutputFilter):
 
         for blob in self._all_blobs:
             if self._related_domains and 'osxcollector_domains' in blob:
-                if any([domain in self._related_domains for domain in blob.get('osxcollector_domains')]):
-                    blob.setdefault('osxcollector_related', [])
-                    blob['osxcollector_related'].append('domains')
+                for domain in blob.get('osxcollector_domains'):
+                    if domain in self._related_domains:
+                        blob.setdefault('osxcollector_related', {})
+                        blob['osxcollector_related'].setdefault('domains', [])
+                        blob['osxcollector_related']['domains'].append(domain)
 
         return self._all_blobs
 

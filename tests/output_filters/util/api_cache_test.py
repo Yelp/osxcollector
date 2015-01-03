@@ -7,7 +7,7 @@ from mock import patch
 from osxcollector.output_filters.util.api_cache import ApiCache
 
 
-class ApiCacheTest(T.TestCase):
+class ApiCacheFileIOTest(T.TestCase):
 
     """Allows for setting and retrieving results of API calls."""
 

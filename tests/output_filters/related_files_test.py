@@ -1,59 +1,72 @@
 # -*- coding: utf-8 -*-
 import testify as T
 from osxcollector.output_filters.related_files import RelatedFilesFilter
-from tests.output_filters.base_filters.output_filter_test import RunFilterTest
+from tests.output_filters.run_filter_test import assert_key_added_to_blob
+from tests.output_filters.run_filter_test import run_filter_test
 
 
 def when_anytime(blob):
     return True
 
 
-class CreateTermsTest(T.TestCase):
+class RelatedFilesFilterTest(T.TestCase):
+
+    @T.teardown
+    def teardown_outputfilter(self):
+        self._output_filter = None
+
+    def _run_filter_test(self, input_blobs=None, initial_terms=None, expected_terms=None,
+                         expected_usernames=None, when=when_anytime, expected_is_related=None):
+
+        def create_related_files_filter():
+            self._output_filter = RelatedFilesFilter(when=when, initial_terms=initial_terms)
+            return self._output_filter
+
+        output_blobs = run_filter_test(create_related_files_filter, input_blobs=input_blobs)
+        if expected_terms:
+            T.assert_equal(sorted(expected_terms), sorted(self._output_filter.terms))
+        if expected_usernames:
+            T.assert_equal(sorted(expected_usernames), sorted(self._output_filter.usernames))
+        if expected_is_related:
+            assert_key_added_to_blob('osxcollector_related', expected_is_related, input_blobs, output_blobs)
+        return output_blobs
+
+
+class CreateTermsTest(RelatedFilesFilterTest):
 
     def test_single_term(self):
         initial_terms = ['one_word']
         expected = ['one_word']
-        self._test_create_terms(initial_terms, expected)
+        self._run_filter_test(initial_terms=initial_terms, expected_terms=expected)
 
     def test_multi_terms(self):
         initial_terms = ['one_word', 'pants', 'face']
         expected = ['one_word', 'pants', 'face']
-        self._test_create_terms(initial_terms, expected)
+        self._run_filter_test(initial_terms=initial_terms, expected_terms=expected)
 
     def test_split_terms(self):
         initial_terms = ['/ivanlei/source/osxcollector']
         expected = ['ivanlei', 'source', 'osxcollector']
-        self._test_create_terms(initial_terms, expected)
+        self._run_filter_test(initial_terms=initial_terms, expected_terms=expected)
 
     def test_whitelist_terms(self):
         initial_terms = ['/Users/ivanlei/source/osxcollector', '/Users/ivanlei/virtual_envs/osxcollector/bin/python']
         expected = ['ivanlei', 'source', 'osxcollector', 'virtual_envs']
-        self._test_create_terms(initial_terms, expected)
+        self._run_filter_test(initial_terms=initial_terms, expected_terms=expected)
 
     def test_whitelist_username_terms(self):
         initial_terms = ['/Users/ivanlei/source/osxcollector', '/Users/ivanlei/virtual_envs/osxcollector/bin/python']
         expected = ['source', 'osxcollector', 'virtual_envs']
         blob = {'osxcollector_username': 'ivanlei'}
 
-        self._test_create_terms(initial_terms, expected, blob)
-
-    def _test_create_terms(self, initial_terms, expected_terms, blob=None):
-        output_filter = RelatedFilesFilter(when=when_anytime, initial_terms=initial_terms)
-        if blob:
-            output_filter.filter_line(blob)
-        output_filter.end_of_lines()
-        T.assert_equal(sorted(expected_terms), sorted(output_filter.terms))
+        self._run_filter_test(input_blobs=[blob], initial_terms=initial_terms, expected_terms=expected, expected_usernames=['ivanlei'])
 
 
-class FindUserNamesTest(T.TestCase):
+class FindUserNamesTest(RelatedFilesFilterTest):
 
     def test_find_username(self):
         blob = {'osxcollector_username': 'bob'}
-        expected = ['bob']
-
-        output_filter = RelatedFilesFilter(when=when_anytime)
-        output_filter.filter_line(blob)
-        T.assert_equal(sorted(expected), sorted(output_filter._usernames))
+        self._run_filter_test(input_blobs=[blob], expected_usernames=['bob'])
 
     def test_find_multiple_username(self):
         blobs = [
@@ -63,24 +76,20 @@ class FindUserNamesTest(T.TestCase):
             {'banana': 'pants'}
         ]
         expected = ['bob', 'jim']
-
-        output_filter = RelatedFilesFilter(when=when_anytime)
-        for blob in blobs:
-            output_filter.filter_line(blob)
-        T.assert_equal(sorted(expected), sorted(output_filter.usernames))
+        self._run_filter_test(input_blobs=blobs, expected_usernames=expected)
 
 
-class RelatedFilesFilterTest(RunFilterTest):
+class RelatedFilesFilterTest(RelatedFilesFilterTest):
 
     def test_single_term(self):
         input_blobs = [
             {'banana': '/var/bin/magic_value'}
         ]
         expected_is_related = [
-            ['magic_value']
+            {'files': ['magic_value']}
         ]
         initial_terms = ['magic_value']
-        self._test_related_files(input_blobs, expected_is_related, initial_terms=initial_terms)
+        self._run_filter_test(input_blobs=input_blobs, initial_terms=initial_terms, expected_is_related=expected_is_related)
 
     def test_multi_term(self):
         input_blobs = [
@@ -89,12 +98,12 @@ class RelatedFilesFilterTest(RunFilterTest):
             {'shandy': '/var/bin/magic/value/hat'}
         ]
         expected_is_related = [
-            ['magic'],
-            ['value'],
-            ['magic', 'value']
+            {'files': ['magic']},
+            {'files': ['value']},
+            {'files': ['magic', 'value']}
         ]
         initial_terms = ['magic', 'value']
-        self._test_related_files(input_blobs, expected_is_related, initial_terms=initial_terms)
+        self._run_filter_test(input_blobs=input_blobs, initial_terms=initial_terms, expected_is_related=expected_is_related)
 
     def test_split_term(self):
         input_blobs = [
@@ -103,12 +112,12 @@ class RelatedFilesFilterTest(RunFilterTest):
             {'shandy': '/var/bin/magic/value/hat'}
         ]
         expected_is_related = [
-            ['magic'],
-            ['value'],
-            ['magic', 'value']
+            {'files': ['magic']},
+            {'files': ['value']},
+            {'files': ['magic', 'value']}
         ]
         initial_terms = ['magic/value']
-        self._test_related_files(input_blobs, expected_is_related, initial_terms=initial_terms)
+        self._run_filter_test(input_blobs=input_blobs, initial_terms=initial_terms, expected_is_related=expected_is_related)
 
     def test_discover_term(self):
         input_blobs = [
@@ -118,12 +127,12 @@ class RelatedFilesFilterTest(RunFilterTest):
             {'lemmon': '/lime/rickey'}
         ]
         expected_is_related = [
-            ['magic', 'value'],
-            ['magic'],
-            ['value'],
+            {'files': ['magic', 'value']},
+            {'files': ['magic']},
+            {'files': ['value']},
             None
         ]
-        self._test_related_files(input_blobs, expected_is_related)
+        self._run_filter_test(input_blobs=input_blobs, expected_is_related=expected_is_related)
 
     def test_skip_username(self):
         input_blobs = [
@@ -133,15 +142,15 @@ class RelatedFilesFilterTest(RunFilterTest):
             {'lemmon': '/lime/rickey'}
         ]
         expected_is_related = [
-            ['value'],
+            {'files': ['value']},
             None,
-            ['value'],
+            {'files': ['value']},
             None
         ]
-        self._test_related_files(input_blobs, expected_is_related)
+        self._run_filter_test(input_blobs=input_blobs, expected_is_related=expected_is_related)
 
     def test_when(self):
-        def when(blob):
+        def when_binbing(blob):
             return 'bingbing' in blob
 
         input_blobs = [
@@ -152,26 +161,10 @@ class RelatedFilesFilterTest(RunFilterTest):
             {'lemmon': '/lime/rickey'}
         ]
         expected_is_related = [
-            ['magic'],
+            {'files': ['magic']},
             None,
-            ['magic'],
+            {'files': ['magic']},
             None,
             None
         ]
-        self._test_related_files(input_blobs, expected_is_related, when=when)
-
-    def _test_related_files(self, input_blobs, expected_is_related, when=when_anytime, initial_terms=None):
-        output_filter = RelatedFilesFilter(when=when, initial_terms=initial_terms)
-        output_blobs = self._run_filter(output_filter, input_blobs)
-
-        actual_is_related = list(blob.get('osxcollector_related', {}).get('files', None) for blob in output_blobs)
-        for actual, expected in zip(actual_is_related, expected_is_related):
-            actual = sorted(actual) if actual else actual
-            expected = sorted(expected) if expected else expected
-            T.assert_equal(actual, expected)
-
-        # Minus 'osxcollector_related' key, the input should be unchanged
-        for input_blob, output_blob in zip(input_blobs, output_blobs):
-            if 'osxcollector_related' in output_blob:
-                del output_blob['osxcollector_related']
-            T.assert_equal(input_blob, output_blob)
+        self._run_filter_test(input_blobs=input_blobs, when=when_binbing, expected_is_related=expected_is_related)

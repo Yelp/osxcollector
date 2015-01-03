@@ -36,3 +36,19 @@ domain_whitelist:
     blacklist_file_path: "/tmp/domain_whitelist.txt"
     blacklist_is_domains: True
     blacklist_is_regex: True
+
+opendns:
+    LookupDomainsFilter:
+        cache_file_name: "/tmp/cache.opendns.LookupDomainsFilter.json"
+    RelatedDomainsFilter:
+        cache_file_name: "/tmp/cache.opendns.RelatedDomainsFilter.json"
+
+shadowserver:
+    LookupHashesFilter:
+        cache_file_name: "/tmp/cache.shadowserver.LookupHashesFilter.json"
+
+virustotal:
+    LookupHashesFilter:
+        cache_file_name: "/tmp/cache.virustotal.LookupHashesFilter.json"
+    LookupDomainsFilter:
+        cache_file_name: "/tmp/cache.virustotal.LookupDomainsFilter.json"

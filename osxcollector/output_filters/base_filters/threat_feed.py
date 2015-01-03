@@ -3,6 +3,7 @@
 # ThreatFeedFilter is a base class to find info on IOCs using some random API.
 #
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.util.config import config_get_deep
 
 
 class ThreatFeedFilter(OutputFilter):
@@ -29,7 +30,7 @@ class ThreatFeedFilter(OutputFilter):
         super(ThreatFeedFilter, self).__init__()
 
         if name_of_api_key:
-            self._api_key = self.config.get_config('api_key.{0}'.format(name_of_api_key))
+            self._api_key = config_get_deep('api_key.{0}'.format(name_of_api_key))
 
         self._lookup_when = lookup_when
         self._blobs_with_iocs = list()

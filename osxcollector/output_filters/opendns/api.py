@@ -2,8 +2,6 @@
 #
 # InvestigateApi makes calls to the OpenDNS Investigate API.
 #
-import sys
-
 import simplejson
 from osxcollector.output_filters.util.api_cache import ApiCache
 from osxcollector.output_filters.util.error_messages import write_error_message
@@ -67,7 +65,6 @@ class InvestigateApi(object):
             domains = [key for key in domains if key not in all_responses.keys()]
 
         if len(domains):
-            sys.stderr.write('[DOMAIN COUNT] {0}\n'.format(len(domains)))
             response = self._requests.multi_post(self._to_url(url_path), data=simplejson.dumps(domains))
             response = response[0]
 
@@ -83,6 +80,33 @@ class InvestigateApi(object):
         return all_responses
 
     @MultiRequest.error_handling
+    def _multi_get(self, cache_api_name, fmt_url_path, url_params):
+        """Makes multiple GETs to an OpenDNS endpoint.
+
+        Args:
+            cache_api_name: string api_name for caching
+            fmt_url_path: format string for building URL paths
+            url_params: An enumerable of strings used in building URLs
+        Returns:
+            A dict of {url_param: api_result}
+        """
+        all_responses = {}
+
+        if self._cache:
+            all_responses = self._cache.bulk_lookup(cache_api_name, url_params)
+            url_params = [key for key in url_params if key not in all_responses.keys()]
+
+        if len(url_params):
+            urls = self._to_urls(fmt_url_path, url_params)
+            responses = self._requests.multi_get(urls)
+            responses = dict(zip(url_params, responses))
+            for url_param in responses.keys():
+                if self._cache:
+                    self._cache.cache_value(cache_api_name, url_param, responses[url_param])
+                all_responses[url_param] = responses[url_param]
+
+        return all_responses
+
     def security(self, domains):
         """Calls security end point and adds an 'is_suspicious' key to each response.
 
@@ -91,26 +115,10 @@ class InvestigateApi(object):
         Returns:
             A dict of {domain: security_result}
         """
+        api_name = 'opendns-security'
         fmt_url_path = 'security/name/{0}.json'
-        all_responses = {}
+        return self._multi_get(api_name, fmt_url_path, domains)
 
-        if self._cache:
-            api_name = 'opendns-security'
-            all_responses = self._cache.bulk_lookup(api_name, domains)
-            domains = [key for key in domains if key not in all_responses.keys()]
-
-        if len(domains):
-            urls = self._to_urls(fmt_url_path, domains)
-            responses = self._requests.multi_get(urls)
-            responses = dict(zip(domains, responses))
-            for domain in responses.keys():
-                if self._cache:
-                    self._cache.cache_value(api_name, domain, responses[domain])
-                all_responses[domain] = responses[domain]
-
-        return all_responses
-
-    @MultiRequest.error_handling
     def cooccurrences(self, domains):
         """Get the domains related to input domains.
 
@@ -119,26 +127,10 @@ class InvestigateApi(object):
         Returns:
             An enumerable of string domain names
         """
+        api_name = 'opendns-cooccurrences'
         fmt_url_path = 'recommendations/name/{0}.json'
-        all_responses = {}
+        return self._multi_get(api_name, fmt_url_path, domains)
 
-        if self._cache:
-            api_name = 'opendns-cooccurrences'
-            all_responses = self._cache.bulk_lookup(api_name, domains)
-            domains = [key for key in domains if key not in all_responses.keys()]
-
-        if len(domains):
-            urls = self._to_urls(fmt_url_path, domains)
-            responses = self._requests.multi_get(urls)
-            responses = dict(zip(domains, responses))
-            for domain in responses.keys():
-                if self._cache:
-                    self._cache.cache_value(api_name, domain, responses[domain])
-                all_responses[domain] = responses[domain]
-
-        return all_responses
-
-    @MultiRequest.error_handling
     def rr_history(self, ips):
         """Get the domains related to input ips.
 
@@ -147,28 +139,6 @@ class InvestigateApi(object):
         Returns:
             An enumerable of string domain names
         """
+        api_name = 'opendns-rr_history'
         fmt_url_path = 'dnsdb/ip/a/{0}.json'
-        all_responses = {}
-
-        if self._cache:
-            api_name = 'opendns-rr_history'
-            all_responses = self._cache.bulk_lookup(api_name, ips)
-            ips = [key for key in ips if key not in all_responses.keys()]
-
-        if len(ips):
-            urls = self._to_urls(fmt_url_path, ips)
-            responses = self._requests.multi_get(urls)
-            responses = dict(zip(ips, responses))
-            for ip in responses.keys():
-                if self._cache:
-                    self._cache.cache_value(api_name, ip, responses[ip])
-                all_responses[ip] = responses[ip]
-
-        return all_responses
-
-        # for response in responses:
-        #     for rr_domain in response.get('rrs', []):
-        #         for elem in expand_domain(rr_domain['rr']):
-        #             rr_domains.add(elem)
-
-        # return rr_domains
+        return self._multi_get(api_name, fmt_url_path, ips)

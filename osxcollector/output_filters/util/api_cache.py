@@ -19,20 +19,35 @@ class ApiCache(object):
         self._cache = self._read_cache_from_file()
 
     def __del__(self):
-        self.close()
-
-    def close(self):
-        """Writes the cached values to disk.
+        """Ensures cache is persisted to disk before object is destroyed.
 
         Using a destructor is a bit inflammatory but it seems like a very nice way to write a file when "everything is done".
         The ApiCache avoids circular dependencies so it should work out.
         """
-        if not self._cache:
-            return
+        if self._cache:
+            self.close()
 
-        with(open(self._cache_file_name, 'w')) as fp:
-            fp.write(simplejson.dumps(self._cache))
-            self._cache = None
+    def close(self):
+        if self._cache:
+            with(open(self._cache_file_name, 'w')) as fp:
+                fp.write(simplejson.dumps(self._cache))
+                self._cache = None
+
+    # def _open_read_file(self):
+    #     """Explicitly encapsulates calls to `__builtin__.open` to allow easy mocking.
+
+    #     Returns:
+    #         A File Object
+    #     """
+    #     return
+
+    # def _open_write_file(self):
+    #     """Explicitly encapsulates calls to `__builtin__.open` to allow easy mocking.
+
+    #     Returns:
+    #         A File Object
+    #     """
+    #     return
 
     def _read_cache_from_file(self):
         """Read the contents of the cache from a file on disk."""
