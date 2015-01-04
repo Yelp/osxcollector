@@ -6,6 +6,7 @@ import os
 
 import yaml
 from osxcollector.osxcollector import DictUtils
+from osxcollector.output_filters.exceptions import MissingConfigError
 
 
 def config_get_deep(key, default=None):
@@ -26,10 +27,20 @@ def _read_config():
     Returns:
         dict of config
     """
+    with open(_config_file_path()) as source:
+        return yaml.load(source.read())
+
+
+def _config_file_path():
+    """Find the path to the config file.
+
+    Returns:
+        String file path
+    Raises:
+        MissingConfigError if no config file is found
+    """
     for loc in os.curdir, os.path.expanduser('~'), os.environ.get('OSXCOLLECTOR_CONF', ''):
-        try:
-            with open(os.path.join(loc, 'osxcollector.yaml')) as source:
-                return yaml.load(source.read())
-        except IOError:
-            pass
-    return {}
+        path = os.path.join(loc, 'osxcollector.yaml')
+        if os.path.exists(path):
+            return path
+    raise MissingConfigError()

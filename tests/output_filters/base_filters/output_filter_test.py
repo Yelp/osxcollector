@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import testify as T
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from tests.output_filters.run_filter_test import run_filter_test
+from tests.output_filters.run_filter_test import RunFilterTest
 
 
-class OutputFilterTest(T.TestCase):
+class OutputFilterTest(RunFilterTest):
 
     def test_filter_line(self):
         input_blobs = [
@@ -26,4 +26,4 @@ class OutputFilterTest(T.TestCase):
             {'fungo': 'dingo', 'bingo': [11, 37], 'banana': {'a': 11}},
             {'span': 'div', 'head': ['tail', 22], 'orange': {'lemmon': 'zits'}}
         ]
-        run_filter_test(lambda: OutputFilter(), input_blobs, expected_output_blobs=input_blobs)
+        self.run_test(lambda: OutputFilter(), input_blobs, expected_output_blobs=input_blobs)

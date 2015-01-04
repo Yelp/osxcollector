@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-import testify as T
 from osxcollector.output_filters.opendns. \
     related_domains import RelatedDomainsFilter
-from tests.output_filters.run_filter_test import run_filter_test
+from tests.output_filters.run_filter_test import RunFilterTest
 
 
-class RelatedDomainsFilterTest(T.TestCase):
+class RelatedDomainsFilterTest(RunFilterTest):
 
     def test_no_domains(self):
         input_blobs = [
@@ -13,4 +12,4 @@ class RelatedDomainsFilterTest(T.TestCase):
             {'span': 'div', 'head': ['tail', 22], 'orange': {'lemmon': 'zits'}}
         ]
 
-        run_filter_test(lambda: RelatedDomainsFilter(), input_blobs=input_blobs, expected_output_blobs=input_blobs)
+        self.run_test(lambda: RelatedDomainsFilter(), input_blobs=input_blobs, expected_output_blobs=input_blobs)

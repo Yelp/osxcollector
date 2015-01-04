@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
-import testify as T
 from osxcollector.output_filters.find_domains import FindDomainsFilter
-from tests.output_filters.run_filter_test import assert_key_added_to_blob
-from tests.output_filters.run_filter_test import run_filter_test
+from tests.output_filters.run_filter_test import RunFilterTest
 
 
-class FindDomainsFilterTest(T.TestCase):
+class FindDomainsFilterTest(RunFilterTest):
 
-    @T.setup
-    def setup_inputs(self):
-        self._output_filter = FindDomainsFilter()
+    """Tests many variants of blobs with a domain in them."""
 
     def _run_test(self, input_blob, expected_domains):
-        output_blobs = run_filter_test(lambda: FindDomainsFilter(), [input_blob])
-        assert_key_added_to_blob('osxcollector_domains', [expected_domains], [input_blob], output_blobs)
+        output_blobs = self.run_test(lambda: FindDomainsFilter(), [input_blob])
+        self.assert_key_added_to_blob('osxcollector_domains', [expected_domains], [input_blob], output_blobs)
 
     def test_no_domain(self):
         input_blob = {'fungo': 'kidney'}

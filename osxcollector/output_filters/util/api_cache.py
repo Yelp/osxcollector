@@ -29,25 +29,12 @@ class ApiCache(object):
 
     def close(self):
         if self._cache:
-            with(open(self._cache_file_name, 'w')) as fp:
-                fp.write(simplejson.dumps(self._cache))
-                self._cache = None
+            self._write_cache_to_file()
+            self._cache = None
 
-    # def _open_read_file(self):
-    #     """Explicitly encapsulates calls to `__builtin__.open` to allow easy mocking.
-
-    #     Returns:
-    #         A File Object
-    #     """
-    #     return
-
-    # def _open_write_file(self):
-    #     """Explicitly encapsulates calls to `__builtin__.open` to allow easy mocking.
-
-    #     Returns:
-    #         A File Object
-    #     """
-    #     return
+    def _write_cache_to_file(self):
+        with(open(self._cache_file_name, 'w')) as fp:
+            fp.write(simplejson.dumps(self._cache))
 
     def _read_cache_from_file(self):
         """Read the contents of the cache from a file on disk."""
