@@ -4,7 +4,7 @@
 OSXCollector is a forensic evidence collection & analysis toolkit for OSX.
 
 #### Forensic Collection
-The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local file system.
+The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, SQLite databases and the local file system.
 
 #### Forensic Analysis
 Armed with the forensic collection, an analyst can answer the question like:
@@ -93,10 +93,10 @@ For records representing downloaded files:
 * `xattr-wherefrom`: A list containing the source and referrer URLs for the downloaded file.
 * `xattr-quarantines`: A string describing which application downloaded the file.
 
-##### Sqllite Records
-For records representing a row of a sqllite database:
+##### SQLite Records
+For records representing a row of a SQLite database:
 * `osxcollector_table_name`: The table name the row comes from.
-* `osxcollector_db_path`: The absolute path to the sqllite file.
+* `osxcollector_db_path`: The absolute path to the SQLite file.
 
 For records that represent data associated with a specific user:
 * `osxcollector_username`: The name of the user
