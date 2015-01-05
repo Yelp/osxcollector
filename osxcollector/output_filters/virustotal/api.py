@@ -58,6 +58,22 @@ class VirusTotalApi(object):
         responses = self._make_requests(self.BASE_DOMAIN + 'file/report', params)
         return dict([(resource, response) for resource, response in zip(resources, responses)])
 
+    def get_url_reports(self, resources):
+        """Retrieves a scan report on a given URL.
+
+        Args:
+            resources: list of URLs.
+            Each list element can be also a CSV list made up of a combination of hashes
+            and scan_ids so as to perform a batch request with one single call
+            (up to 4 resources per call with the standard request rate).
+            When sending multiples, the scan_ids or URLs must be separated by a new line character.
+        Returns:
+            dict
+        """
+        params = [{"resource": resource, 'apikey': self._api_key} for resource in resources]
+        responses = self._make_requests(self.BASE_DOMAIN + 'url/report', params)
+        return dict([(resource, response) for resource, response in zip(resources, responses)])
+
     def get_domain_reports(self, domains):
         params = [{"domain": domain, 'apikey': self._api_key} for domain in domains]
         responses = self._make_requests(self.BASE_DOMAIN + 'domain/report', params)
