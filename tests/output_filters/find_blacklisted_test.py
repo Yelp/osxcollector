@@ -46,7 +46,7 @@ class FindBlacklistedFilterTest(RunFilterTest):
 
     def _run_test(self, input_blobs, expected_blacklists):
 
-        output_blobs = self.run_test(lambda: FindBlacklistedFilter(), input_blobs)
+        output_blobs = self.run_test(FindBlacklistedFilter, input_blobs)
 
         # added_key, expected_values, input_blobs, output_blobs
         self.assert_key_added_to_blob('osxcollector_blacklist', expected_blacklists, input_blobs, output_blobs)

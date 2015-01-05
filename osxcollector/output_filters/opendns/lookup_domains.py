@@ -80,9 +80,9 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
         if -1 == status:
             return True
-        elif any([cat in self.SUSPICIOUS_CATEGORIES for cat in content_categories]):
+        elif len(security_categories):
             return True
-        elif any([cat in self.SUSPICIOUS_CATEGORIES for cat in security_categories]):
+        elif any([cat in self.SUSPICIOUS_CATEGORIES for cat in content_categories]):
             return True
         return False
 

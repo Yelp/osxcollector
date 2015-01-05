@@ -6,7 +6,7 @@ from tests.output_filters.run_filter_test import RunFilterTest
 
 class ChainFilterTest(RunFilterTest):
 
-    def test_run_output_filter(self):
+    def test_run_chain_filter(self):
         input_blobs = [
             {'fungo': 'dingo', 'bingo': [11, 37], 'banana': {'a': 11}},
             {'span': 'div', 'head': ['tail', 22], 'orange': {'lemmon': 'zits'}}

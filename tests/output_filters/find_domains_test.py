@@ -8,7 +8,7 @@ class FindDomainsFilterTest(RunFilterTest):
     """Tests many variants of blobs with a domain in them."""
 
     def _run_test(self, input_blob, expected_domains):
-        output_blobs = self.run_test(lambda: FindDomainsFilter(), [input_blob])
+        output_blobs = self.run_test(FindDomainsFilter, [input_blob])
         self.assert_key_added_to_blob('osxcollector_domains', [expected_domains], [input_blob], output_blobs)
 
     def test_no_domain(self):

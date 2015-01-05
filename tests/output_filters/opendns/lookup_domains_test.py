@@ -12,4 +12,4 @@ class LookupDomainsFilterTest(RunFilterTest):
             {'span': 'div', 'head': ['tail', 22], 'orange': {'lemmon': 'zits'}}
         ]
 
-        self.run_test(lambda: LookupDomainsFilter(), input_blobs=input_blobs, expected_output_blobs=input_blobs)
+        self.run_test(LookupDomainsFilter, input_blobs=input_blobs, expected_output_blobs=input_blobs)

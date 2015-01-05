@@ -6,7 +6,7 @@ from tests.output_filters.run_filter_test import RunFilterTest
 
 class LookupHashesFilterTest(RunFilterTest):
 
-    def test_no_domains(self):
+    def test_no_hashes(self):
         input_blobs = [
             {'fungo': 'dingo', 'bingo': [11, 37], 'banana': {'a': 11}},
             {'span': 'div', 'head': ['tail', 22], 'orange': {'lemmon': 'zits'}}

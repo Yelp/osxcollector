@@ -32,18 +32,18 @@ domain_whitelist:
     blacklist_is_domains: True
     blacklist_is_regex: True
 
-opendns:
-    LookupDomainsFilter:
-        cache_file_name: "./tests/output_filters/data/cache.opendns.LookupDomainsFilter.json"
-    RelatedDomainsFilter:
-        cache_file_name: "./tests/output_filters/data/cache.opendns.RelatedDomainsFilter.json"
-
 shadowserver:
     LookupHashesFilter:
         cache_file_name: "./tests/output_filters/data/cache.shadowserver.LookupHashesFilter.json"
 
-virustotal:
-    LookupHashesFilter:
-        cache_file_name: "./tests/output_filters/data/cache.virustotal.LookupHashesFilter.json"
-    LookupDomainsFilter:
-        cache_file_name: "./tests/output_filters/data/cache.virustotal.LookupDomainsFilter.json"
+# No cache data is available for virustotal or opendns yet
+# virustotal:
+#     LookupHashesFilter:
+#         cache_file_name: "./tests/output_filters/data/cache.virustotal.LookupHashesFilter.json"
+#     LookupDomainsFilter:
+#         cache_file_name: "./tests/output_filters/data/cache.virustotal.LookupDomainsFilter.json"
+# opendns:
+#     LookupDomainsFilter:
+#         cache_file_name: "./tests/output_filters/data/cache.opendns.LookupDomainsFilter.json"
+#     RelatedDomainsFilter:
+#         cache_file_name: "./tests/output_filters/data/cache.opendns.RelatedDomainsFilter.json"

@@ -3,6 +3,7 @@
 # ApiCache creates an on disk cache of API call results
 #
 import simplejson
+from simplejson.scanner import JSONDecodeError
 
 
 class ApiCache(object):
@@ -24,15 +25,16 @@ class ApiCache(object):
         Using a destructor is a bit inflammatory but it seems like a very nice way to write a file when "everything is done".
         The ApiCache avoids circular dependencies so it should work out.
         """
-        if self._cache:
-            self.close()
+        self.close()
 
     def close(self):
+        """Write the contents of the cache to disk and clear the in memory cache."""
         if self._cache:
             self._write_cache_to_file()
             self._cache = None
 
     def _write_cache_to_file(self):
+        """Write the contents of the cache to a file on disk."""
         with(open(self._cache_file_name, 'w')) as fp:
             fp.write(simplejson.dumps(self._cache))
 
@@ -43,7 +45,7 @@ class ApiCache(object):
             with(open(self._cache_file_name, 'r')) as fp:
                 contents = fp.read()
                 cache = simplejson.loads(contents)
-        except IOError:
+        except (IOError, JSONDecodeError):
             # The file could not be read. This is not a problem if the file does not exist.
             pass
 

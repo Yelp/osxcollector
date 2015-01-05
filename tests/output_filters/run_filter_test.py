@@ -78,11 +78,25 @@ class RunFilterTest(T.TestCase):
 
 
 def assert_equal_sorted(a, b):
+    """A version of T.assert_equal that ignores the ordering of lists or sets.
+
+    Args:
+        a: first item to compare
+        b: next time to compare
+    Raises:
+        assert when items don't match
+    """
     T.assert_equal(sort_for_comparison(a), sort_for_comparison(b))
 
 
 def sort_for_comparison(val):
-    """Sort the input whether if it is a list or dict, return it unchanged otherwise."""
+    """Sort the input whether if it is a list or dict, return it unchanged otherwise.
+
+    Args:
+        val: A value of any type
+    Returns:
+        A more easily comparable version of the input
+    """
     if isinstance(val, list):
         return sorted(val)
     elif isinstance(val, set):

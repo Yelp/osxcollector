@@ -26,4 +26,4 @@ class OutputFilterTest(RunFilterTest):
             {'fungo': 'dingo', 'bingo': [11, 37], 'banana': {'a': 11}},
             {'span': 'div', 'head': ['tail', 22], 'orange': {'lemmon': 'zits'}}
         ]
-        self.run_test(lambda: OutputFilter(), input_blobs, expected_output_blobs=input_blobs)
+        self.run_test(OutputFilter, input_blobs, expected_output_blobs=input_blobs)
