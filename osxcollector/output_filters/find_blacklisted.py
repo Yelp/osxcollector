@@ -7,6 +7,7 @@
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.util.blacklist import create_blacklist
+from osxcollector.output_filters.util.config import config_get_deep
 
 
 class FindBlacklistedFilter(OutputFilter):
@@ -30,7 +31,7 @@ class FindBlacklistedFilter(OutputFilter):
 
     def _init_blacklists(self):
         """Reads the config and builds a list of blacklists."""
-        return [create_blacklist(config_chunk) for config_chunk in self.config.get_config('blacklists')]
+        return [create_blacklist(config_chunk) for config_chunk in config_get_deep('blacklists')]
 
     def filter_line(self, blob):
         """Find blacklisted values in a line.

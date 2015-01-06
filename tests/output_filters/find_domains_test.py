@@ -1,30 +1,19 @@
 # -*- coding: utf-8 -*-
-import testify as T
 from osxcollector.output_filters.find_domains import FindDomainsFilter
-from tests.output_filters.base_filters.output_filter_test import RunFilterTest
+from tests.output_filters.run_filter_test import RunFilterTest
 
 
 class FindDomainsFilterTest(RunFilterTest):
 
-    @T.setup
-    def setup_inputs(self):
-        self._output_filter = FindDomainsFilter()
+    """Tests many variants of blobs with a domain in them."""
 
     def _run_test(self, input_blob, expected_domains):
-        output_blob = self._run_filter(self._output_filter, [input_blob])[0]
-
-        # Domains should match
-        actual_domains = output_blob.get('osxcollector_domains', [])
-        T.assert_equal(sorted(expected_domains), sorted(actual_domains))
-
-        # Minus 'osxcollector_domains' key, the input should be unchanged
-        if 'osxcollector_domains' in output_blob:
-            del output_blob['osxcollector_domains']
-        T.assert_equal(input_blob, output_blob)
+        output_blobs = self.run_test(FindDomainsFilter, [input_blob])
+        self.assert_key_added_to_blob('osxcollector_domains', [expected_domains], [input_blob], output_blobs)
 
     def test_no_domain(self):
         input_blob = {'fungo': 'kidney'}
-        self._run_test(input_blob, [])
+        self._run_test(input_blob, None)
 
     def test_tld(self):
         input_blob = {'fungo': 'http://www.example.com'}

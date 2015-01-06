@@ -8,6 +8,7 @@ from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.util.blacklist import create_blacklist
+from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
@@ -18,7 +19,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
     def __init__(self, lookup_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_vtdomain',
                                                   lookup_when=lookup_when, name_of_api_key='virustotal')
-        self._whitelist = create_blacklist(self.config.get_config('domain_whitelist'))
+        self._whitelist = create_blacklist(config_get_deep('domain_whitelist'))
 
     def _lookup_iocs(self, all_iocs):
         """Caches the VirusTotal info for a set of domains.
@@ -32,7 +33,8 @@ class LookupDomainsFilter(ThreatFeedFilter):
         """
         threat_info = {}
 
-        vt = VirusTotalApi(self._api_key)
+        cache_file_name = config_get_deep('virustotal.LookupDomainsFilter.cache_file_name', None)
+        vt = VirusTotalApi(self._api_key, cache_file_name=cache_file_name)
 
         iocs = filter(lambda x: not self._whitelist.match_values(x), all_iocs)
         reports = vt.get_domain_reports(iocs)

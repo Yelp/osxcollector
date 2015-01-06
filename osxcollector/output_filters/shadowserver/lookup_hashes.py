@@ -8,6 +8,7 @@ from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.shadowserver.api import ShadowServerApi
+from osxcollector.output_filters.util.config import config_get_deep
 
 
 class LookupHashesFilter(ThreatFeedFilter):
@@ -25,7 +26,8 @@ class LookupHashesFilter(ThreatFeedFilter):
         Returns:
             A dict with hash as key and threat info as value
         """
-        ss = ShadowServerApi()
+        cache_file_name = config_get_deep('shadowserver.LookupHashesFilter.cache_file_name', None)
+        ss = ShadowServerApi(cache_file_name=cache_file_name)
         return ss.get_bin_test(all_iocs)
 
     def _should_add_threat_info_to_blob(self, blob, threat_info):

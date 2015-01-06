@@ -7,6 +7,7 @@
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
@@ -29,7 +30,8 @@ class LookupHashesFilter(ThreatFeedFilter):
         """
         threat_info = {}
 
-        vt = VirusTotalApi(self._api_key)
+        cache_file_name = config_get_deep('virustotal.LookupHashesFilter.cache_file_name', None)
+        vt = VirusTotalApi(self._api_key, cache_file_name=cache_file_name)
         reports = vt.get_file_reports(all_iocs)
 
         for hash_val in reports.keys():
