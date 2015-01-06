@@ -52,3 +52,5 @@ virustotal:
         cache_file_name: "/tmp/cache.virustotal.LookupHashesFilter.json"
     LookupDomainsFilter:
         cache_file_name: "/tmp/cache.virustotal.LookupDomainsFilter.json"
+    LookupURLsFilter:
+        cache_file_name: "/tmp/cache.virustotal.LookupURLsFilter.json"

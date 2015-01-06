@@ -9,6 +9,7 @@ import re
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
@@ -33,10 +34,17 @@ class LookupURLsFilter(ThreatFeedFilter):
         return check_url_scheme
 
     def _lookup_iocs(self, all_iocs):
-        """Looks up the VirusTotal report for a set of URLs"""
+        """Caches the VirusTotal info for a set of URLs.
+
+        Args:
+            all_iocs - a list of URLs.
+        Returns:
+            A dict with URL as key and threat info as value
+        """
         threat_info = {}
 
-        vt = VirusTotalApi(self._api_key)
+        cache_file_name = config_get_deep('virustotal.LookupURLsFilter.cache_file_name', None)
+        vt = VirusTotalApi(self._api_key, cache_file_name=cache_file_name)
         reports = vt.get_url_reports(all_iocs)
 
         for url in reports.keys():
