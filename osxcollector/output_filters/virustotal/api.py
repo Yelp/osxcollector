@@ -1,63 +1,86 @@
 # -*- coding: utf-8 -*-
 #
 # VirusTotalApi makes calls to the VirusTotal API.
-# It uses the grequests library to make many calls in parrallel.
 #
-import sys
-from traceback import extract_tb
-
-import grequests
-
-
-def _exception_handler(request, exception):
-    exc_type, _, exc_traceback = sys.exc_info()
-    sys.stderr.write('[ERROR] {0} {1}\n'.format(exc_type, extract_tb(exc_traceback)))
+from osxcollector.output_filters.util.api_cache import ApiCache
+from osxcollector.output_filters.util.http import MultiRequest
 
 
 class VirusTotalApi(object):
-    BASE_DOMAIN = 'http://www.virustotal.com/vtapi/v2/'
-    REQ_TIMEOUT = 25.0
-    MAX_SIMULTANEOUS_REQUESTS = 10
+    BASE_DOMAIN = 'https://www.virustotal.com/vtapi/v2/'
 
-    def __init__(self, api_key):
+    def __init__(self, api_key, cache_file_name=None):
+        """Establishes basic HTTP params and loads a cache.
+
+        Args:
+            api_key: VirusTotal API key
+            cache_file_name: String file name of cache.
+        """
         self._api_key = api_key
+        self._requests = MultiRequest()
 
-    def _get_request(self, endpoint_url, param):
-        return grequests.get(endpoint_url, params=param, timeout=self.REQ_TIMEOUT)
+        # Create an ApiCache if instructed to
+        self._cache = ApiCache(cache_file_name) if cache_file_name else None
 
-    def _make_requests(self, endpoint_url, params):
+    @MultiRequest.error_handling
+    def get_file_reports(self, resources):
+        """Retrieves the most recent reports for a set of md5, sha1, and/or sha2 hashes.
 
-        all_responses = []
-        chunk_size = self.MAX_SIMULTANEOUS_REQUESTS
-        chunks = [params[pos:pos + chunk_size] for pos in xrange(0, len(params), chunk_size)]
-        for chunk in chunks:
-            get_requests = [self._get_request(endpoint_url, param) for param in chunk]
-            for get_response in grequests.map(get_requests):
-                if not get_response:
+        Args:
+            resources: list of string hashes.
+        Returns:
+            A dict with the hash as key and the VT report as value.
+        """
+        all_responses = {}
+        if self._cache:
+            api_name = 'virustotal-file-reports'
+            all_responses = self._cache.bulk_lookup(api_name, resources)
+            resources = [key for key in resources if key not in all_responses.keys()]
+
+        RESOURCES_PER_REQ = 25
+        resource_chunks = [','.join(resources[pos:pos + RESOURCES_PER_REQ]) for pos in xrange(0, len(resources), RESOURCES_PER_REQ)]
+
+        params = [{"resource": resource_chunk, 'apikey': self._api_key} for resource_chunk in resource_chunks]
+        responses = self._requests.multi_get(self.BASE_DOMAIN + 'file/report', query_params=params)
+        for response_chunk in responses:
+            if not isinstance(response_chunk, list):
+                response_chunk = [response_chunk]
+            for response in response_chunk:
+                if not response:
                     continue
-                if 200 == get_response.status_code:
-                    all_responses.append(get_response.json())
-                else:
-                    sys.stderr.write('REQUESTS FAILED {0}\n'.format(get_response.status_code))
-                    all_responses.append({})
+
+                if self._cache:
+                    self._cache.cache_value(api_name, response['resource'], response)
+                all_responses[response['resource']] = response
 
         return all_responses
 
-    def get_file_reports(self, resources):
-        """Retrieves the most recent report on a given sample (md5/sha1/sha256 hash).
+    @MultiRequest.error_handling
+    def get_domain_reports(self, domains):
+        """Retrieves the most recent VT info for a set of domains.
 
         Args:
-            resources: list of md5/sha1/sha256 hashes.
-            Each list element can be also a CSV list made up of a combination of hashes
-            (up to 4 items with the standard request rate), this allows to perform
-            a batch request with one single call.
+            domains: list of string domains.
         Returns:
-            dict
+            A dict with the domain as key and the VT report as value.
         """
-        params = [{"resource": resource, 'apikey': self._api_key} for resource in resources]
-        responses = self._make_requests(self.BASE_DOMAIN + 'file/report', params)
-        return dict([(resource, response) for resource, response in zip(resources, responses)])
+        all_responses = {}
+        if self._cache:
+            api_name = 'virustotal-domain-reports'
+            all_responses = self._cache.bulk_lookup(api_name, domains)
+            domains = [key for key in domains if key not in all_responses.keys()]
 
+        params = [{"domain": domain, 'apikey': self._api_key} for domain in domains]
+        responses = self._requests.multi_get(self.BASE_DOMAIN + 'domain/report', query_params=params)
+
+        for domain, response in zip(domains, responses):
+            if self._cache:
+                self._cache.cache_value(api_name, domain, response)
+            all_responses[domain] = response
+
+        return all_responses
+
+    @MultiRequest.error_handling
     def get_url_reports(self, resources):
         """Retrieves a scan report on a given URL.
 
@@ -73,8 +96,3 @@ class VirusTotalApi(object):
         params = [{"resource": resource, 'apikey': self._api_key} for resource in resources]
         responses = self._make_requests(self.BASE_DOMAIN + 'url/report', params)
         return dict([(resource, response) for resource, response in zip(resources, responses)])
-
-    def get_domain_reports(self, domains):
-        params = [{"domain": domain, 'apikey': self._api_key} for domain in domains]
-        responses = self._make_requests(self.BASE_DOMAIN + 'domain/report', params)
-        return dict([(domain, response) for domain, response in zip(domains, responses)])

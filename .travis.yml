@@ -1,0 +1,9 @@
+# This forces OS X builds on travis
+language: objective-c
+
+os: osx
+
+install:
+    - sudo pip install tox
+
+script: make test

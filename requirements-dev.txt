@@ -1,5 +1,5 @@
-investigate==1.0.0
 grequests==0.2.0
+mock==1.0.1
 pre-commit==0.3.2
 pyflakes==0.8.1
 simplejson==3.6.5

@@ -7,26 +7,46 @@
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.util.blacklist import create_blacklist
+from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
 class LookupDomainsFilter(ThreatFeedFilter):
 
-    """A class to find suspicious hashes using VirusTotal API."""
+    """A class to lookup hashes using VirusTotal API."""
 
-    def __init__(self, only_lookup_when=None, is_suspicious_when=None):
+    def __init__(self, lookup_when=None):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_vtdomain',
-                                                  only_lookup_when=only_lookup_when, is_suspicious_when=is_suspicious_when,
-                                                  api_key='virustotal')
+                                                  lookup_when=lookup_when, name_of_api_key='virustotal')
+        self._whitelist = create_blacklist(config_get_deep('domain_whitelist'))
 
-    def _lookup_iocs(self):
-        """Caches the OpenDNS info for a set of domains"""
-        vt = VirusTotalApi(self._api_key)
-        reports = vt.get_domain_reports(self._all_iocs)
+    def _lookup_iocs(self, all_iocs):
+        """Caches the VirusTotal info for a set of domains.
+
+        Domains on a whitelist will be ignored.
+
+        Args:
+            all_iocs - a list of domains.
+        Returns:
+            A dict with domain as key and threat info as value
+        """
+        threat_info = {}
+
+        cache_file_name = config_get_deep('virustotal.LookupDomainsFilter.cache_file_name', None)
+        vt = VirusTotalApi(self._api_key, cache_file_name=cache_file_name)
+
+        iocs = filter(lambda x: not self._whitelist.match_values(x), all_iocs)
+        reports = vt.get_domain_reports(iocs)
         for domain in reports.keys():
+            if not reports[domain]:
+                continue
+
             trimmed_report = self._trim_domain_report(domain, reports[domain])
             if self._should_store_ioc_info(trimmed_report):
-                self._threat_info_by_iocs[domain] = trimmed_report
+                threat_info[domain] = trimmed_report
+
+        return threat_info
 
     def _should_store_ioc_info(self, trimmed_report):
         """Decide whether a report from VT is interesting enough to store in the output.

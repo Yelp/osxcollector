@@ -6,7 +6,7 @@
 #  This work is licensed under the GNU General Public License
 #  This work is a derivation of https://github.com/jipegit/OSXAuditor
 #
-#  Gathers information from plists, sqlite DBs, and the local filesystem to
+#  Gathers information from plists, sqlite DBs, and the local file system to
 #  get information for analyzing a malware infection.
 #
 #  Output to stdout is JSON.  Each line contains a key 'osxcollector_section' which
@@ -41,7 +41,7 @@ from traceback import extract_tb
 import Foundation
 from xattr import getxattr
 
-__version__ = '1.2'
+__version__ = '1.3'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
@@ -68,7 +68,8 @@ def _get_homedirs():
 
     Takes care of filtering out '.'
 
-    :return: list of HomeDir
+    Returns:
+        list of HomeDir
     """
     homedirs = []
     users_dir_path = pathjoin(ROOT_PATH, 'Users')
@@ -83,8 +84,10 @@ def listdir(dir_path):
 
     Takes care of filtering out known useless dot files.
 
-    :param dir_path: str path of directory to list
-    :return: list of str
+    Args:
+        dir_path: str path of directory to list
+    Returns:
+        list of str
     """
     if not os.path.isdir(dir_path):
         return []
@@ -94,6 +97,13 @@ def listdir(dir_path):
 
 
 def _relative_path(path):
+    """Strips leading slash from a path.
+
+    Args:
+        path - a file path
+    Returns:
+        string
+    """
     if path.startswith('/'):
         return path[1:]
     return path
@@ -102,9 +112,11 @@ def _relative_path(path):
 def pathjoin(path, *args):
     """Version of os.path.join that assumes every argument after the first is a relative path
 
-    :param path: The first path part
-    :param args: A list of further paths
-    :return" string of joined paths
+    Args:
+        path: The first path part
+        args: A list of further paths
+    Returns:
+        string of joined paths
     """
     if args:
         normed_args = [_relative_path(arg) for arg in args]
@@ -116,8 +128,10 @@ def pathjoin(path, *args):
 def _hash_file(file_path):
     """Return the md5, sha1, sha256 hash of a file.
 
-    :param file_path: str path of file to hash
-    :return: list of 3 hex strings.  Empty strings on failure.
+    Args:
+        file_path: str path of file to hash
+    Returns:
+        list of 3 hex strings.  Empty strings on failure.
     """
     hashers = [
         md5(),
@@ -147,7 +161,7 @@ MIN_YEAR = 2004
 
 
 def _timestamp_errorhandling(func):
-    """Timestamps that are less than MIN_YEAR or after the current date are invalid"""
+    """Decorator to handle timestamps that are less than MIN_YEAR or after the current date are invalid"""
     def wrapper(*args, **kwargs):
         try:
             dt = func(*args, **kwargs)
@@ -200,7 +214,7 @@ def _microseconds_since_1601_to_datetime(microseconds):
 def _value_to_datetime(val):
     # Try various versions of converting a number to a datetime.
     # Ordering is important as a timestamp may be "valid" with multiple different conversion algorithms
-    # but it won't necessarilly be the correct timestamp
+    # but it won't necessarily be the correct timestamp
     if (isinstance(val, basestring)):
         try:
             val = float(val)
@@ -219,35 +233,56 @@ def _datetime_to_string(dt):
         return None
 
 
-KMD_ITEM_WHERE_FROMS = "com.apple.metadata:kMDItemWhereFroms"
+ATTR_KMD_ITEM_WHERE_FROMS = 'com.apple.metadata:kMDItemWhereFroms'
+ATTR_QUARANTINE = 'com.apple.quarantine'
 
 
 def _get_where_froms(file_path):
-    """Get kMDItemWhereFroms from a file, returns an array of strings or None if no value is set.
-    Found on https://gist.github.com/dunhamsteve/2889617
+    return _get_extended_attr(file_path, ATTR_KMD_ITEM_WHERE_FROMS)
+
+
+def _get_quarantines(file_path):
+    return _get_extended_attr(file_path, ATTR_QUARANTINE)
+
+
+def _get_extended_attr(file_path, attr):
+    """Get extended attributes from a file, returns an array of strings or None if no value is set.
+
+    Inspired by https://gist.github.com/dunhamsteve/2889617
+
+    Args:
+        file_path: str path of file to examine
+        attr: key of the attribute to retrieve
+    Returns:
+        a list of strings or None
     """
     try:
-        plist = buffer(getxattr(file_path, KMD_ITEM_WHERE_FROMS))
-        if plist:
+        xattr_val = getxattr(file_path, attr)
+        if xattr_val.startswith('bplist'):
             try:
-                plist_array, plist_format, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
-                    plist, 0, None, None)
+                plist_array, _, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
+                    buffer(xattr_val), 0, None, None)
                 if plist_error:
-                    Logger.log_error(message='plist deserialization error: {0}'.format(plist_error))
+                    Logger.log_error(message='plist de-serialization error: {0}'.format(plist_error))
                     return None
                 return list(plist_array)
             except Exception as deserialize_plist_e:
-                Logger.log_exception(deserialize_plist_e, message='_get_where_froms failed on {0}'.format(file_path))
+                Logger.log_exception(deserialize_plist_e, message='_get_extended_attr failed on {0} for {1}'.format(file_path, attr))
+        else:
+            return [xattr_val]
     except KeyError:
         pass  # ignore missing key in xattr
     return None
 
 
-def _get_file_info(file_path, log_where_froms=False):
+def _get_file_info(file_path, log_xattr=False):
     """Gather info about a file including hash and dates
 
-    :param file_path: str path of file to hash
-    :return: dict with key ['md5', 'sha1', 'sha2', file_path', 'mtime', 'ctime']
+    Args:
+        file_path: str path of file to hash
+        log_xattr: boolean whether to log extended attributes of a file
+    Returns:
+        dict with key ['md5', 'sha1', 'sha2', file_path', 'mtime', 'ctime']
     """
     md5_hash, sha1_hash, sha2_hash = '', '', ''
     mtime = ''
@@ -265,8 +300,15 @@ def _get_file_info(file_path, log_where_froms=False):
             'mtime': mtime,
             'ctime': ctime
         }
-        if log_where_froms:
-            file_info['where_froms'] = _get_where_froms(file_path)
+        if log_xattr:
+            where_from = _get_where_froms(file_path)
+            if where_from:
+                file_info['xattr-wherefrom'] = where_from
+
+            quarantines = _get_quarantines(file_path)
+            if quarantines:
+                file_info['xattr-quarantines'] = quarantines
+
         return file_info
 
     return {}
@@ -274,10 +316,12 @@ def _get_file_info(file_path, log_where_froms=False):
 
 def _normalize_val(val, key=None):
     """Transform a value read from SqlLite or a plist into a string
+
     Special case handling deals with things derived from basestring, buffer, or numbers.Number
 
-    :param val: A value of any type
-    :param key: The key associated with the value.  Will attempt to convert timestamps to a date
+    Args:
+        val: A value of any type
+        key: The key associated with the value.  Will attempt to convert timestamps to a date
         based on the key name
     :returns: A string
     """
@@ -336,8 +380,10 @@ class DictUtils(object):
     def _link_path_to_chain(cls, path):
         """Helper method for get_deep
 
-        :param path: A str representing a chain of keys seperated '.' or an enumerable set of strings
-        :return: an enumerable set of strings
+        Args:
+            path: A str representing a chain of keys separated '.' or an enumerable set of strings
+        Returns:
+            an enumerable set of strings
         """
         if path == '':
             return []
@@ -350,10 +396,12 @@ class DictUtils(object):
     def _get_deep_by_chain(cls, x, chain, default=None):
         """Grab data from a dict using a ['key1', 'key2', 'key3'] chain param to do deep traversal.
 
-        :param x: A dict
-        :param chain: an enumerable set of strings
-        :param default: A value to return if the path can not be found
-        :return: The value of the key or default
+        Args:
+            x: A dict
+            chain: an enumerable set of strings
+            default: A value to return if the path can not be found
+        Returns:
+            The value of the key or default
         """
         if chain == []:
             return default
@@ -371,10 +419,12 @@ class DictUtils(object):
     def get_deep(cls, x, path='', default=None):
         """Grab data from a dict using a 'key1.key2.key3' path param to do deep traversal.
 
-        :param x: A dict
-        :param path: A 'deep path' to retreive in the dict
-        :param default: A value to return if the path can not be found
-        :return: The value of the key or default
+        Args:
+            x: A dict
+            path: A 'deep path' to retrieve in the dict
+            default: A value to return if the path can not be found
+        Returns:
+            The value of the key or default
         """
         chain = cls._link_path_to_chain(path)
         return cls._get_deep_by_chain(x, chain, default=default)
@@ -406,7 +456,8 @@ class Logger(object):
     def log_dict(cls, record):
         """Splats out a JSON blob to stdout.
 
-        :param record: a dict of data
+        Args:
+            record: a dict of data
         """
         record.update(Logger.Extra.extras)
         try:
@@ -422,7 +473,8 @@ class Logger(object):
     def log_warning(cls, message):
         """Writes a warning message to JSON output and optionally splats a string to stderr if DEBUG_MODE.
 
-        :param message: String with a warning message
+        Args:
+            message: String with a warning message
         """
         global DEBUG_MODE
 
@@ -436,7 +488,8 @@ class Logger(object):
     def log_error(cls, message):
         """Writes a warning message to JSON output and to stderr.
 
-        :param message: String with a warning message
+        Args:
+            message: String with a warning message
         """
         cls.log_dict({'osxcollector_error': message})
         sys.stderr.write('[ERROR] ')
@@ -447,12 +500,13 @@ class Logger(object):
     def log_exception(cls, e, message=''):
         """Splat out an Exception instance as a warning
 
-        :param e: An instance of an Exception
-        :param message: a str message to log with the Exception
+        Args:
+            e: An instance of an Exception
+            message: a str message to log with the Exception
         """
         exc_type, _, exc_traceback = sys.exc_info()
 
-        to_print = '{0} {1} {2}'.format(message, exc_type, extract_tb(exc_traceback))
+        to_print = '{0} {1} {2} {3}'.format(message, e.message or '', exc_type, extract_tb(exc_traceback))
         cls.log_error(to_print)
 
     class Extra(object):
@@ -483,11 +537,7 @@ class Collector(object):
     """Examines plists, sqlite dbs, and hashes files to gather info useful for analyzing a malware infection"""
 
     def __init__(self):
-        """Constructor
-
-        :param logger: An instance of Logger
-        """
-        # A list of the names of accounts with admin priveleges
+        # A list of the names of accounts with admin privileges
         self.admins = []
 
         # A list of HomeDir used when finding per-user data
@@ -496,7 +546,8 @@ class Collector(object):
     def collect(self, section_list=None):
         """The primary public method for collecting data.
 
-        :param section_list: OPTIONAL A list of strings with names of sections to collect.
+        Args:
+            section_list: OPTIONAL A list of strings with names of sections to collect.
         """
 
         sections = [
@@ -528,7 +579,6 @@ class Collector(object):
     def _foreach_homedir(func):
         """A decorator to ensure a method is called for each user's homedir.
 
-
         As a side-effect, this adds the 'osxcollector_username' key to Logger output.
         """
 
@@ -547,8 +597,10 @@ class Collector(object):
 
         The return should be suitable for JSON serialization.
 
-        :param plist_path: The path to the file to read.
-        :return: a dict. Empty dict on failure.
+        Args:
+            plist_path: The path to the file to read.
+        Returns:
+            a dict. Empty dict on failure.
         """
         if not os.path.isfile(plist_path):
             # TODO(ivanlei): Explore adding a warning here for missing plist files.  At the very least it might help
@@ -569,9 +621,10 @@ class Collector(object):
     def _log_items_in_plist(self, plist, path, transform=None):
         """Dive into the dict representation of a plist and log all items under a specific path
 
-        :param plist: A dict representation of a plist.
-        :param path: A str which will be passed to get_deep()
-        :param transform: An optional method for transforming each item before logging.
+        Args:
+            plist: A dict representation of a plist.
+            path: A str which will be passed to get_deep()
+            transform: An optional method for transforming each item before logging.
         """
         for item in DictUtils.get_deep(plist, path=path, default=[]):
             try:
@@ -582,7 +635,12 @@ class Collector(object):
                 Logger.log_exception(log_items_in_plist_e)
 
     def _log_file_info_for_directory(self, dir_path, recurse=False):
-        """Logs file information for every file in a directory"""
+        """Logs file information for every file in a directory.
+
+        Args:
+            dir_path: string path to a directory
+            recurse: boolean, whether to recurse into child directories
+        """
         if not os.path.isdir(dir_path):
             Logger.log_warning('Directory not found {0}'.format(dir_path))
             return
@@ -601,8 +659,11 @@ class Collector(object):
         """Log the quarantines for a user
 
         Quarantines is basically the info necessary to show the 'Are you sure you wanna run this?' when
-        a user is trying to open a file downloaded from the internet.  For some more details, checkout the
+        a user is trying to open a file downloaded from the Internet.  For some more details, checkout the
         Apple Support explanation of Quarantines: http://support.apple.com/kb/HT3662
+
+        Args:
+            homedir: A HomeDir
         """
 
         # OS X >= 10.7
@@ -614,8 +675,9 @@ class Collector(object):
         self._log_sqlite_db(db_path)
 
     def _log_xprotect(self):
-        """XProtect adds hash-based malware checking to quarantine files. The plist for XProtect is at:
-        /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/XProtect.plist
+        """XProtect adds hash-based malware checking to quarantine files.
+
+        The plist for XProtect is at: /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/XProtect.plist
 
         XProtect also add minimum versions for Internet Plugins. That plist is at:
         /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/XProtect.meta.plist
@@ -805,8 +867,9 @@ class Collector(object):
     def _log_sqlite_table(self, table_name, cursor):
         """Dump a SQLite table
 
-        :param table_name: The name of the table to dump
-        :param cursor: sqlite3 cursor object
+        Args:
+            table_name: The name of the table to dump
+            cursor: sqlite3 cursor object
         """
         with Logger.Extra('osxcollector_table_name', table_name):
 
@@ -831,7 +894,8 @@ class Collector(object):
     def _log_sqlite_db(self, sqlite_db_path):
         """Dump a SQLite database file as JSON.
 
-        :param sqlite_db_path: The path to the SqlLite file
+        Args:
+            sqlite_db_path: The path to the SqlLite file
         """
         if not os.path.isfile(sqlite_db_path):
             Logger.log_warning('File not found {0}'.format(sqlite_db_path))
@@ -1015,7 +1079,7 @@ class Collector(object):
 
     @_foreach_homedir
     def _collect_accounts_recent_items(self, homedir):
-        """Log users' recents items"""
+        """Log users' recent items"""
 
         recent_items_account_plist_path = pathjoin(homedir.path, 'Library/Preferences/com.apple.recentitems.plist')
 
@@ -1072,26 +1136,39 @@ class LogFileArchiver(object):
     def archive_logs(self, target_dir_path):
         """Main method for archiving files
 
-        :param target_dir_path: Path the directory files should be archived to
+        Args:
+            target_dir_path: Path the directory files should be archived to
         """
-        log_dir_path = pathjoin(ROOT_PATH, 'private/var/log')
+        to_archive = [
+            ('private/var/log', 'system.'),
+            ('Library/Logs', None),
+        ]
 
-        system_log_file_names = [file_name for file_name in listdir(log_dir_path) if file_name.startswith('system.')]
-        for file_name in system_log_file_names:
-            src = pathjoin(log_dir_path, file_name)
-            dst = pathjoin(target_dir_path, file_name)
-            try:
-                shutil.copyfile(src, dst)
-            except Exception as archive_e:
-                debugbreak()
-                Logger.log_exception(archive_e)
+        for log_path, log_file_prefix in to_archive:
+            log_dir_path = pathjoin(ROOT_PATH, log_path)
+
+            for file_name in listdir(log_dir_path):
+                if log_file_prefix and not file_name.startswith(log_file_prefix):
+                    continue
+
+                src = pathjoin(log_dir_path, file_name)
+                if not os.path.isfile(src):
+                    continue
+
+                dst = pathjoin(target_dir_path, file_name)
+                try:
+                    shutil.copyfile(src, dst)
+                except Exception as archive_e:
+                    debugbreak()
+                    Logger.log_exception(archive_e, message='src[{0}] dst[{1}]'.format(src, dst))
 
     def compress_directory(self, file_name, output_dir_path, target_dir_path):
         """Compress a directory into a .tar.gz
 
-        :param file_name: The name of the .tar.gz to file to create.  Do not include the extension.
-        :param output_dir_path: The directory to place the output file in.
-        :param target_dir_path: The directory to compress
+        Args:
+            file_name: The name of the .tar.gz to file to create.  Do not include the extension.
+            output_dir_path: The directory to place the output file in.
+            target_dir_path: The directory to compress
         """
         try:
             # Zip the whole thing up
@@ -1112,8 +1189,6 @@ def main():
     parser = OptionParser(usage='usage: %prog [options]', version='%prog ' + __version__)
     parser.add_option('-i', '--id', dest='incident_prefix', default='osxcollect',
                       help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
-    parser.add_option('-o', '--outputfile', dest='output_file_name', default=None,
-                      help='[OPTIONAL] Name of the output file. Default name uses the timestamp. Try \'/dev/stdout\' for fun!')
     parser.add_option('-p', '--path', dest='rootpath', default='/',
                       help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited by default.')
     parser.add_option('-s', '--section', dest='section_list', default=[], action='append',
@@ -1138,7 +1213,7 @@ def main():
     os.makedirs(output_directory)
 
     # Create an output file name
-    output_file_name = options.output_file_name or pathjoin(output_directory, '{0}.json'.format(incident_id))
+    output_file_name = pathjoin(output_directory, '{0}.json'.format(incident_id))
 
     # Collect information from plists and sqlite dbs and such
     with open(output_file_name, 'w') as output_file:

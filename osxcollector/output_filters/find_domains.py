@@ -8,9 +8,11 @@ import re
 from urllib import unquote_plus
 from urlparse import urlsplit
 
-import tldextract
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.exceptions import BadDomainError
+from osxcollector.output_filters.util.domains import clean_domain
+from osxcollector.output_filters.util.domains import expand_domain
 
 
 class FindDomainsFilter(OutputFilter):
@@ -33,7 +35,7 @@ class FindDomainsFilter(OutputFilter):
 
         # self._domains accumulates domains during calls to _look_for_domains
         if len(self._domains):
-            blob['osxcollector_domains'] = list(self._domains)
+            blob['osxcollector_domains'] = sorted(list(self._domains))
 
         return blob
 
@@ -65,7 +67,7 @@ class FindDomainsFilter(OutputFilter):
     def _url_to_domain(self, maybe_url):
         """Converts an URL to a domain.
 
-        The code deals with ecentricities of both unquote_plus and split_url.
+        The code deals with eccentricities of both unquote_plus and split_url.
 
         Args:
             maybe_url - a string that might be an URL.
@@ -95,45 +97,6 @@ class FindDomainsFilter(OutputFilter):
 
     SCHEMES = re.compile('((https?)|ftp)')
     HOST_KEYS = ['host', 'host_key', 'baseDomain']
-
-
-def expand_domain(domain):
-    """A generator that returns the input with and without the subdomain
-
-    Args:
-        domain - string
-    Returns:
-        generator that returns strings
-    """
-    extraction = tldextract.extract(domain)
-    if extraction.subdomain:
-        yield '.'.join(extraction)
-    yield '.'.join(extraction[1:])
-
-
-def clean_domain(unclean_domain):
-    """Removing errant characters and stuff from a domain name.
-
-    Args:
-        unclean_domain: string
-    Returns:
-        string domain name
-    Raises:
-        BadDomainError - when a clean domain can't be made
-    """
-
-    extracted = tldextract.extract(unclean_domain)
-    if bool(extracted.domain and extracted.suffix):
-        start_index = 1 if not extracted.subdomain else 0
-        domain = '.'.join(extracted[start_index:]).lstrip('.')
-        return domain
-    raise BadDomainError('Can not clean {0} {1}'.format(unclean_domain, repr(extracted)))
-
-
-class BadDomainError(Exception):
-
-    """An error to throw when a domain is invalid."""
-    pass
 
 
 def main():
