@@ -3,6 +3,7 @@
 # VirusTotalApi makes calls to the VirusTotal API.
 #
 from osxcollector.output_filters.util.api_cache import ApiCache
+from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.util.http import MultiRequest
 
 
@@ -112,8 +113,8 @@ class VirusTotalApi(object):
         Returns:
             A list of the concatenated resources.
         """
-        RESOURCES_PER_REQ = 25
-        return [resource_delim.join(resources[pos:pos + RESOURCES_PER_REQ]) for pos in xrange(0, len(resources), RESOURCES_PER_REQ)]
+        resources_per_req = config_get_deep('virustotal.resources_per_req', 25)
+        return [resource_delim.join(resources[pos:pos + resources_per_req]) for pos in xrange(0, len(resources), resources_per_req)]
 
     def _request_reports(self, resource_param_name, resources, endpoint_name):
         """Sends multiples requests for the resources to a particular endpoint.
