@@ -18,13 +18,13 @@ class LookupURLsFilter(ThreatFeedFilter):
 
     SCHEMES = re.compile('https?')
 
-    def __init__(self, only_lookup_when=None, is_suspicious_when=None):
-        lookup_when_url_scheme_matches = self._generate_only_lookup_when(only_lookup_when)
+    def __init__(self, lookup_when=None):
+        lookup_when_url_scheme_matches = self._generate_lookup_when(lookup_when)
         super(LookupURLsFilter, self).__init__('LSQuarantineDataURLString', 'osxcollector_vturl',
-                                                 only_lookup_when=lookup_when_url_scheme_matches, is_suspicious_when=is_suspicious_when,
-                                                 api_key='virustotal')
+                                                 lookup_when=lookup_when_url_scheme_matches,
+                                                 name_of_api_key='virustotal')
 
-    def _generate_only_lookup_when(self, only_lookup_when):
+    def _generate_lookup_when(self, only_lookup_when):
         """Generates functions that checks whether the blob contains a valid URL
         in LSQuarantineDataURLString field.
         """
@@ -32,15 +32,21 @@ class LookupURLsFilter(ThreatFeedFilter):
             return self.SCHEMES.match(blob.get('LSQuarantineDataURLString')) and (not only_lookup_when or only_lookup_when(blob))
         return check_url_scheme
 
-    def _lookup_iocs(self):
+    def _lookup_iocs(self, all_iocs):
         """Looks up the VirusTotal report for a set of URLs"""
+        threat_info = {}
+
         vt = VirusTotalApi(self._api_key)
-        reports = vt.get_url_reports(self._all_iocs)
+        reports = vt.get_url_reports(all_iocs)
 
         for url in reports.keys():
-            trimmed_report = self._trim_url_report(reports[url])
-            if self._should_store_ioc_info(trimmed_report):
-                self._threat_info_by_iocs[url] = trimmed_report
+            report = reports[url]
+            if not report:
+                continue
+            if self._should_store_ioc_info(report):
+                threat_info[url] = self._trim_url_report(report)
+
+        return threat_info
 
     def _should_store_ioc_info(self, report, min_hits=1):
         """Only store if the hash has > min_hits positive detections.

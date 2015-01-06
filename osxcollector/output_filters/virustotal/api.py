@@ -94,5 +94,5 @@ class VirusTotalApi(object):
             dict
         """
         params = [{"resource": resource, 'apikey': self._api_key} for resource in resources]
-        responses = self._make_requests(self.BASE_DOMAIN + 'url/report', params)
+        responses = self._requests.multi_get(self.BASE_DOMAIN + 'url/report', params)
         return dict([(resource, response) for resource, response in zip(resources, responses)])
