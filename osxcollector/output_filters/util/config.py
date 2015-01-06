@@ -16,7 +16,7 @@ def config_get_deep(key, default=None):
         key: Dictionary key to lookup in config
         default: Value to return if key is not found
     Returns:
-        Value for config or default if not found otherwise
+        Value from config or default if not found otherwise
     """
     return DictUtils.get_deep(_read_config(), key, default)
 

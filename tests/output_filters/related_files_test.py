@@ -73,8 +73,9 @@ class CreateTermsTest(RelatedFilesFilterTest):
         initial_terms = ['/Users/ivanlei/source/osxcollector', '/Users/ivanlei/virtual_envs/osxcollector/bin/python']
         expected = ['source', 'osxcollector', 'virtual_envs']
         blob = {'osxcollector_username': 'ivanlei'}
+        expected_usernames = ['ivanlei']
 
-        self._run_test(input_blobs=[blob], initial_terms=initial_terms, expected_terms=expected, expected_usernames=['ivanlei'])
+        self._run_test(input_blobs=[blob], initial_terms=initial_terms, expected_terms=expected, expected_usernames=expected_usernames)
 
 
 class FindUserNamesTest(RelatedFilesFilterTest):
@@ -83,7 +84,8 @@ class FindUserNamesTest(RelatedFilesFilterTest):
 
     def test_find_username(self):
         blob = {'osxcollector_username': 'bob'}
-        self._run_test(input_blobs=[blob], expected_usernames=['bob'])
+        expected_usernames = ['bob']
+        self._run_test(input_blobs=[blob], expected_usernames=expected_usernames)
 
     def test_find_multiple_username(self):
         blobs = [
@@ -92,8 +94,8 @@ class FindUserNamesTest(RelatedFilesFilterTest):
             {'osxcollector_username': 'bob'},
             {'banana': 'pants'}
         ]
-        expected = ['bob', 'jim']
-        self._run_test(input_blobs=blobs, expected_usernames=expected)
+        expected_usernames = ['bob', 'jim']
+        self._run_test(input_blobs=blobs, expected_usernames=expected_usernames)
 
 
 class RelatedFilesFilterTest(RelatedFilesFilterTest):

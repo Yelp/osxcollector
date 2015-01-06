@@ -22,9 +22,6 @@ class RunFilterTest(T.TestCase):
             create_filter: A callable that returns an OutputFilter.
             input_blobs: An array of dicts to pass to OutputFilter. These will be serialized into strings and passed as stdin.
             expected_output_blobs: An array of dicts the output of the OutputFilter must match.
-            config_initial_contents: A dict of config.
-            api_cache_initial_contents: A dict of config.
-            blacklist_file_contents: An enumerable with contents of a blacklist file.
         """
         if not input_blobs:
             input_blobs = []
@@ -57,7 +54,7 @@ class RunFilterTest(T.TestCase):
         """Verifies that a single key has been added to each input_blob with an expected value.
 
         Asserts that effectively:
-        output_blobs = [input_blob.update(key=expected_value) for input_blob, expected_value in zip(expected_values, input_blobs)]
+        output_blobs = [input_blob.update(key=expected_value) for expected_value, input_blob in zip(expected_values, input_blobs)]
 
         Args:
             added_key: The name of the key that should have been added.
@@ -90,7 +87,7 @@ def assert_equal_sorted(a, b):
 
 
 def sort_for_comparison(val):
-    """Sort the input whether if it is a list or dict, return it unchanged otherwise.
+    """Sort the input if it is a list or dict or set, return it unchanged otherwise.
 
     Args:
         val: A value of any type

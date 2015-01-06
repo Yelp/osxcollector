@@ -68,7 +68,6 @@ class ApiCache(object):
         Args:
             api_name: a string name of the API. Keys and values are segmented by api_name.
             key: a string key for the specific call.
-            value: the value of the call using the specific key
         """
         if api_name in self._cache:
             return self._cache[api_name].get(key, None)
