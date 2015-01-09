@@ -33,7 +33,7 @@ class VirusTotalApi(object):
             A dict with the hash as key and the VT report as value.
         """
         api_name = 'virustotal-file-reports'
-        (all_responses, resources) = self._bulk_cache_lookup(api_name, resources)
+        all_responses, resources = self._bulk_cache_lookup(api_name, resources)
 
         resource_chunks = self._prepare_resource_chunks(resources)
         response_chunks = self._request_reports("resource", resource_chunks, 'file/report')

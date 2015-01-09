@@ -30,7 +30,7 @@ class LookupURLsFilter(ThreatFeedFilter):
         in LSQuarantineDataURLString field.
         """
         def check_url_scheme(blob):
-            return self.SCHEMES.match(blob.get('LSQuarantineDataURLString')) and (not only_lookup_when or only_lookup_when(blob))
+            return self.SCHEMES.match(blob['LSQuarantineDataURLString']) and (not only_lookup_when or only_lookup_when(blob))
         return check_url_scheme
 
     def _lookup_iocs(self, all_iocs):
