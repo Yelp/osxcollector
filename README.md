@@ -455,6 +455,29 @@ To see what it found:
 $ jq 'select(has("osxcollector_vthash"))'
 ```
 
+##### VirusTotal LookupURLsFilter
+`osxcollector.output_filters.virustotal.lookup_hashes.LookupURLsFilter` lookups URLs with the VirusTotal API. As this only looks up the reports, it may not find the reports for some unknown URLs.
+
+Run it as:
+```
+$ cat PippinNightstar.json | \
+    python -m osxcollector.output_filters.virustotal.lookup_urls
+```
+
+To see what it found:
+```shell
+$ jq 'select(has("osxcollector_vturl"))'
+```
+
+###### Maximum resources per request
+Both VirusTotal LookupHashesFilter and LookupURLsFilter can save time by including in a single API request the reports for the multiple resources (hashes or URLs).
+As the number of the maximum resources in a request depends on whether you are using a Public or Private API key it is configurable in `osxcollector.yaml` file
+in `virustotal` section:
+```
+resources_per_req: 4
+```
+
+
 ##### ShadowServer LookupHashesFilter
 `osxcollector.output_filters.shadowserver.lookup_hashes.LookupHashesFilter`
 lookups hashes with the ShadowServer bin-test API. This is sort of the opposite of a VirusTotal lookup and returns results when it sees the hashes of known good files. This helps raise confidence that a file is not malicious.
