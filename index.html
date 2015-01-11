@@ -41,7 +41,7 @@
 <h4>
 <a id="forensic-collection" class="anchor" href="#forensic-collection" aria-hidden="true"><span class="octicon octicon-link"></span></a>Forensic Collection</h4>
 
-<p>The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, sqlite databases and the local file system.</p>
+<p>The collection script runs on a potentially infected machine and outputs a JSON file that describes the target machine. OSXCollector gathers information from plists, SQLite databases and the local file system.</p>
 
 <h4>
 <a id="forensic-analysis" class="anchor" href="#forensic-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Forensic Analysis</h4>
@@ -169,15 +169,15 @@ Enables verbose output and python breakpoints. If something is wrong with OSXCol
 </ul>
 
 <h5>
-<a id="sqllite-records" class="anchor" href="#sqllite-records" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sqllite Records</h5>
+<a id="sqlite-records" class="anchor" href="#sqlite-records" aria-hidden="true"><span class="octicon octicon-link"></span></a>SQLite Records</h5>
 
-<p>For records representing a row of a sqllite database:</p>
+<p>For records representing a row of a SQLite database:</p>
 
 <ul>
 <li>
 <code>osxcollector_table_name</code>: The table name the row comes from.</li>
 <li>
-<code>osxcollector_db_path</code>: The absolute path to the sqllite file.</li>
+<code>osxcollector_db_path</code>: The absolute path to the SQLite file.</li>
 </ul>
 
 <p>For records that represent data associated with a specific user:</p>
@@ -621,6 +621,31 @@ $ emacs osxcollector.yaml</pre></div>
 <p>To see what it found:</p>
 
 <div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vthash"))<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="virustotal-lookupurlsfilter" class="anchor" href="#virustotal-lookupurlsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>VirusTotal LookupURLsFilter</h5>
+
+<p><code>osxcollector.output_filters.virustotal.lookup_hashes.LookupURLsFilter</code> lookups URLs with the VirusTotal API. As this only looks up the reports, it may not find the reports for some unknown URLs.</p>
+
+<p>Run it as:</p>
+
+<pre><code>$ cat PippinNightstar.json | \
+    python -m osxcollector.output_filters.virustotal.lookup_urls
+</code></pre>
+
+<p>To see what it found:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vturl"))<span class="pl-pds">'</span></span></pre></div>
+
+<h6>
+<a id="maximum-resources-per-request" class="anchor" href="#maximum-resources-per-request" aria-hidden="true"><span class="octicon octicon-link"></span></a>Maximum resources per request</h6>
+
+<p>Both VirusTotal LookupHashesFilter and LookupURLsFilter can save time by including in a single API request the reports for the multiple resources (hashes or URLs).
+As the number of the maximum resources in a request depends on whether you are using a Public or Private API key it is configurable in <code>osxcollector.yaml</code> file
+in <code>virustotal</code> section:</p>
+
+<pre><code>resources_per_req: 4
+</code></pre>
 
 <h5>
 <a id="shadowserver-lookuphashesfilter" class="anchor" href="#shadowserver-lookuphashesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ShadowServer LookupHashesFilter</h5>
