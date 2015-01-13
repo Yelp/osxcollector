@@ -70,7 +70,7 @@ class Blacklist(object):
             with open(self._file_path, 'r') as value_file:
                 return value_file.readlines()
         except IOError as e:
-            raise MissingConfigError(e.msg)
+            raise MissingConfigError(str(e))
 
     def _convert_to_matching_term(self, blacklisted_value):
         """Convert a blacklisted_value to a regex.
