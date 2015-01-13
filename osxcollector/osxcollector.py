@@ -24,6 +24,7 @@ import calendar
 import os
 import shutil
 import sys
+from argparse import ArgumentParser
 from collections import namedtuple
 from datetime import datetime
 from datetime import timedelta
@@ -33,7 +34,6 @@ from hashlib import sha1
 from hashlib import sha256
 from json import dumps
 from numbers import Number
-from optparse import OptionParser
 from sqlite3 import connect
 from sqlite3 import OperationalError
 from traceback import extract_tb
@@ -1186,26 +1186,27 @@ def main():
     euid = os.geteuid()
     egid = os.getegid()
 
-    parser = OptionParser(usage='usage: %prog [options]', version='%prog ' + __version__)
-    parser.add_option('-i', '--id', dest='incident_prefix', default='osxcollect',
-                      help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
-    parser.add_option('-p', '--path', dest='rootpath', default='/',
-                      help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited by default.')
-    parser.add_option('-s', '--section', dest='section_list', default=[], action='append',
-                      help='[OPTIONAL] Just run the named section.  May be specified more than once.')
-    parser.add_option('-d', '--debug', action='store_true', default=False,
-                      help='[OPTIONAL] Enable verbose output and python breakpoints.')
-    options, _ = parser.parse_args()
+    parser = ArgumentParser()
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
+    parser.add_argument('-i', '--id', dest='incident_prefix', default='osxcollect',
+                        help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
+    parser.add_argument('-p', '--path', dest='rootpath', default='/',
+                        help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited by default.')
+    parser.add_argument('-s', '--section', dest='section_list', default=[], action='append',
+                        help='[OPTIONAL] Just run the named section.  May be specified more than once.')
+    parser.add_argument('-d', '--debug', action='store_true', default=False,
+                        help='[OPTIONAL] Enable verbose output and python breakpoints.')
+    args = parser.parse_args()
 
-    DEBUG_MODE = options.debug
-    ROOT_PATH = options.rootpath
+    DEBUG_MODE = args.debug
+    ROOT_PATH = args.rootpath
 
     if ROOT_PATH == '/' and (euid != 0 and egid != 0):
         Logger.log_error('Must run as root!\n')
         return
 
     # Create an incident ID
-    prefix = options.incident_prefix
+    prefix = args.incident_prefix
     incident_id = '{0}-{1}'.format(prefix, datetime.now().strftime('%Y_%m_%d-%H_%M_%S'))
 
     # Make a directory named for the output
@@ -1219,7 +1220,7 @@ def main():
     with open(output_file_name, 'w') as output_file:
         Logger.set_output_file(output_file)
         with Logger.Extra('osxcollector_incident_id', incident_id):
-            Collector().collect(section_list=options.section_list)
+            Collector().collect(section_list=args.section_list)
 
         # Archive log files
         log_file_archiver = LogFileArchiver()
