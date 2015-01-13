@@ -64,3 +64,11 @@ class LookupHashesFilterTest(RunFilterTest):
         T.assert_equal(1, len(output_blobs))
 
         T.assert_not_in('osxcollector_shadowserver', output_blobs[0])
+
+    def test_partial_filename(self):
+        """Change the filename and don't match"""
+        self._known_sha1_input[0]['file_path'] = '/System/Library/Extensions/System.kext/PlugIns/Libkern.kext/Not_Quite_Libkern'
+        output_blobs = self.run_test(LookupHashesFilter, self._known_sha1_input)
+        T.assert_equal(1, len(output_blobs))
+
+        T.assert_not_in('osxcollector_shadowserver', output_blobs[0])

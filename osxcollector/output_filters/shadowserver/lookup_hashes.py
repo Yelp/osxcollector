@@ -4,6 +4,8 @@
 #
 # LookupHashesFilter uses ShadowServer to lookup the values in 'sha1' and add 'osxcollector_shadowserver' key.
 #
+import os.path
+
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.base_filters. \
     threat_feed import ThreatFeedFilter
@@ -39,9 +41,8 @@ class LookupHashesFilter(ThreatFeedFilter):
         Returns:
             boolean
         """
-        if blob.get('file_path', '').endswith(threat_info.get('filename', '')):
-            return True
-        return False
+        blob_filename = os.path.split(blob.get('file_path', ''))[-1]
+        return blob_filename == threat_info.get('filename', '')
 
 
 def main():

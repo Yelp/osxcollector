@@ -22,8 +22,8 @@ class LookupURLsFilter(ThreatFeedFilter):
     def __init__(self, lookup_when=None):
         lookup_when_url_scheme_matches = self._generate_lookup_when(lookup_when)
         super(LookupURLsFilter, self).__init__('LSQuarantineDataURLString', 'osxcollector_vturl',
-                                                 lookup_when=lookup_when_url_scheme_matches,
-                                                 name_of_api_key='virustotal')
+                                               lookup_when=lookup_when_url_scheme_matches,
+                                               name_of_api_key='virustotal')
 
     def _generate_lookup_when(self, only_lookup_when):
         """Generates functions that checks whether the blob contains a valid URL
