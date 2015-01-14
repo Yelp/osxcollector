@@ -34,8 +34,8 @@ from hashlib import sha1
 from hashlib import sha256
 from json import dumps
 from numbers import Number
-from sqlite3 import connect
 from sqlite3 import OperationalError
+from sqlite3 import connect
 from traceback import extract_tb
 
 import Foundation
@@ -612,7 +612,14 @@ class Collector(object):
                 plist_path, Foundation.NSUncachedRead, None)
             plist_dictionary, _, _ = Foundation.NSPropertyListSerialization.propertyListFromData_mutabilityOption_format_errorDescription_(
                 plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
-            return _normalize_val(plist_dictionary)
+            plist = _normalize_val(plist_dictionary)
+
+            # If the output of _read_plist is not a dict, things aren't going to work properly. Log an informative error.
+            if not isinstance(plist, dict):
+                Logger.log_error('plist is wrong type. plist_path[{0}] type[{1}]'.format(plist_path, plist.__class__.__name__))
+                plist = {}
+
+            return plist
         except Exception as read_plist_e:
             Logger.log_exception(read_plist_e, message='_read_plist failed on {0}'.format(plist_path))
 
