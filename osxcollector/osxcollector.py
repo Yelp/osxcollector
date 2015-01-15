@@ -932,7 +932,9 @@ class Collector(object):
                     self._raw_log_sqlite_db("{0}.tmp".format(sqlite_db_path))
                     os.remove("{0}.tmp".format(sqlite_db_path))
 
-                Logger.log_warning('{0} was locked. Copied to {0}.tmp & analyzed.'.format(sqlite_db_path))
+                    Logger.log_warning('{0} was locked. Copied to {0}.tmp & analyzed.'.format(sqlite_db_path))
+                else:
+                    Logger.log_exception(connection_e, message='failed _log_sqlite_db')
 
     @_foreach_homedir
     def _collect_firefox(self, homedir):
