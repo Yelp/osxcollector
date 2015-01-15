@@ -898,6 +898,18 @@ class Collector(object):
             except Exception as per_table_e:
                 Logger.log_exception(per_table_e, message='failed _log_sqlite_table')
 
+    def _raw_log_sqlite_db(self, sqlite_db_path):
+
+        with connect(sqlite_db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * from sqlite_master WHERE type = "table"')
+            tables = cursor.fetchall()
+            table_names = [table[2] for table in tables]
+
+            for table_name in table_names:
+                self._log_sqlite_table(table_name, cursor)
+
+
     def _log_sqlite_db(self, sqlite_db_path):
         """Dump a SQLite database file as JSON.
 
@@ -912,20 +924,17 @@ class Collector(object):
 
             # Connect and get all table names
             try:
-                with connect(sqlite_db_path) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute('SELECT * from sqlite_master WHERE type = "table"')
-                    tables = cursor.fetchall()
-                    table_names = [table[2] for table in tables]
-
-                    for table_name in table_names:
-                        self._log_sqlite_table(table_name, cursor)
+                self._raw_log_sqlite_db(sqlite_db_path)
 
             except Exception as connection_e:
                 if isinstance(connection_e, OperationalError) and -1 != connection_e.message.find('locked'):
-                    Logger.log_error('!!LOCKED DB!! DID YOU FORGET TO CLOSE CHROME?')
+                    shutil.copyfile(sqlite_db_path, "{0}.tmp".format(sqlite_db_path))
+                    self._raw_log_sqlite_db("{0}.tmp".format(sqlite_db_path))
+                    os.remove("{0}.tmp".format(sqlite_db_path))
 
-                Logger.log_exception(connection_e, message='failed _log_sqlite_db')
+                    Logger.log_warning('{0} was locked. Copied to {0}.tmp & analyzed.'.format(sqlite_db_path))
+                else:
+                    Logger.log_exception(connection_e, message='failed _log_sqlite_db')
 
     @_foreach_homedir
     def _collect_firefox(self, homedir):
