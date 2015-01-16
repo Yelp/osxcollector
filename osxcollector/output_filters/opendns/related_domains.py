@@ -97,7 +97,7 @@ class RelatedDomainsFilter(OutputFilter):
 
         if domains:
             cooccurrence_info = self._investigate.cooccurrences(domains)
-            related_domains.update(self.__cooccurrences_to_domains(cooccurrence_info))
+            related_domains.update(self._cooccurrences_to_domains(cooccurrence_info))
 
         if ips:
             rr_history_info = self._investigate.rr_history(ips)
