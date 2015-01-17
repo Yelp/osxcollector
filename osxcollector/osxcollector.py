@@ -33,9 +33,10 @@ from hashlib import md5
 from hashlib import sha1
 from hashlib import sha256
 from json import dumps
+from json import loads
 from numbers import Number
-from sqlite3 import OperationalError
 from sqlite3 import connect
+from sqlite3 import OperationalError
 from traceback import extract_tb
 
 import Foundation
@@ -871,6 +872,39 @@ class Collector(object):
                 dir_path = pathjoin(homedir.path, path_to_dir)
                 self._log_file_info_for_directory(dir_path)
 
+    def _collect_json_files(self, dir_path):
+        """Collect all JSON files in a directory
+
+        Args:
+            dir_path: Absolute path to the directory
+            """
+        if not os.path.isdir(dir_path):
+            Logger.log_warning('Directory not found {0}'.format(dir_path))
+            return
+
+        json_files = [file_name for file_name in listdir(
+            dir_path) if file_name.endswith('.json')]
+        for file_name in json_files:
+            self._log_json_file(dir_path, file_name)
+
+    def _log_json_file(self, dir_path, file_name):
+        """Dump a JSON file to a single log line
+
+        Args:
+            dir_path: Absolute path to the directory
+            file_name: File name
+        """
+        try:
+            with open(pathjoin(dir_path, file_name), 'r') as fp:
+                file_contents = fp.read()
+                record = loads(file_contents)
+                with Logger.Extra('osxcollector_json_file', file_name):
+                    Logger.log_dict({'contents': record})
+
+        except Exception as log_json_e:
+            Logger.log_exception(
+                log_json_e, message='failed _log_json_file dir_path[{0}] file_name[{1}]'.format(dir_path, file_name))
+
     def _log_sqlite_table(self, table_name, cursor):
         """Dump a SQLite table
 
@@ -908,7 +942,6 @@ class Collector(object):
 
             for table_name in table_names:
                 self._log_sqlite_table(table_name, cursor)
-
 
     def _log_sqlite_db(self, sqlite_db_path):
         """Dump a SQLite database file as JSON.
@@ -966,6 +999,9 @@ class Collector(object):
             for subsection_name, db_name in sqlite_dbs:
                 with Logger.Extra('osxcollector_subsection', subsection_name):
                     self._log_sqlite_db(pathjoin(profile_path, db_name))
+
+            with Logger.Extra('osxcollector_subsection', 'json_files'):
+                self._collect_json_files(profile_path)
 
     @_foreach_homedir
     def _collect_safari(self, homedir):
@@ -1030,6 +1066,9 @@ class Collector(object):
                     # Files ending in '-journal' are encrypted
                     if not db_path.endswith('-journal') and not os.path.isdir(db_path):
                         self._log_sqlite_db(db_path)
+
+        with Logger.Extra('osxcollector_subsection', 'preferences'):
+            self._log_json_file(chrome_path, 'preferences')
 
     def _collect_kext(self):
         """Log the Kernel extensions"""

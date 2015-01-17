@@ -7,21 +7,22 @@
 # search for lines related to suspicious domains, ips, or files, and generally figure shit out.
 #
 # The more detailed description of what goes on:
-#  1. Find all the domains in every line. Add them to the output lines.
-#  2. Find any file hashes or domains that are on blacklists. Mark those lines.
-#  3. Take any filepaths from the command line and mark all lines related to those.
-#  4. Take any domain or IP from the command line and use OpenDNS Investigate API to find all the domains
+#  1. Parse out browser extension information.
+#  2. Find all the domains in every line. Add them to the output lines.
+#  3. Find any file hashes or domains that are on blacklists. Mark those lines.
+#  4. Take any filepaths from the command line and mark all lines related to those.
+#  5. Take any domain or IP from the command line and use OpenDNS Investigate API to find all the domains
 #     related to those domains and all the domains related to those related domains - basically the 1st and 2nd
 #     generation related domains. Mark any lines where these domains appear.
-#  5. Lookup all sha1 hashes in ShadowServer's bin-test whitelist. Files that match both hash and filename are ignored by further filters.
-#  6. Lookup file hashes in VirusTotal and mark any lines with suspicious files hashes.
-#  7. Lookup all the domains in the file with OpenDNS Investigate. Categorize and score the domains.
+#  6. Lookup all sha1 hashes in ShadowServer's bin-test whitelist. Files that match both hash and filename are ignored by further filters.
+#  7. Lookup file hashes in VirusTotal and mark any lines with suspicious files hashes.
+#  8. Lookup all the domains in the file with OpenDNS Investigate. Categorize and score the domains.
 #     Mark all the lines that contain domains that were scored as "suspicious".
-#  8. Lookup suspicious domains, those domains on a blacklist, or those related to the initial input in VirusTotal.
-#  9. Cleanup the browser history and sort it in descending time order.
-# 10. Save all the enhanced output to a new file.
-# 11. Look at all the interesting lines in the file and try to summarize them in some very human readable output.
-# 12. Party!
+#  9. Lookup suspicious domains, those domains on a blacklist, or those related to the initial input in VirusTotal.
+# 10. Cleanup the browser history and sort it in descending time order.
+# 11. Save all the enhanced output to a new file.
+# 12. Look at all the interesting lines in the file and try to summarize them in some very human readable output.
+# 13. Party!
 #
 import sys
 from argparse import ArgumentParser
@@ -31,10 +32,16 @@ import simplejson
 from osxcollector.output_filters.base_filters.chain import ChainFilter
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
-from osxcollector.output_filters.chrome_history import ChromeHistoryFilter
+from osxcollector.output_filters.chrome. \
+    find_extensions import FindExtensionsFilter as ChromeExtensionsFilter
+from osxcollector.output_filters.chrome. \
+    sort_history import SortHistoryFilter as ChromeHistoryFilter
 from osxcollector.output_filters.find_blacklisted import FindBlacklistedFilter
 from osxcollector.output_filters.find_domains import FindDomainsFilter
-from osxcollector.output_filters.firefox_history import FirefoxHistoryFilter
+from osxcollector.output_filters.firefox. \
+    find_extensions import FindExtensionsFilter as FirefoxExtensionsFilter
+from osxcollector.output_filters.firefox. \
+    sort_history import SortHistoryFilter as FirefoxHistoryFilter
 from osxcollector.output_filters.opendns. \
     lookup_domains import LookupDomainsFilter as OpenDnsLookupDomainsFilter
 from osxcollector.output_filters.opendns. \
@@ -70,6 +77,9 @@ class AnalyzeFilter(ChainFilter):
                  ):
 
         filter_chain = []
+
+        filter_chain.append(ChromeExtensionsFilter())
+        filter_chain.append(FirefoxExtensionsFilter())
 
         filter_chain.append(FindDomainsFilter())
 
