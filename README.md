@@ -399,17 +399,6 @@ $ jq 'select(.osxcollector_section=="chrome" and
              .osxcollector_subsection=="extensions")'
 ```
 
-To see an interesting minimal view:
-```shell
-$ jq -c 'select(.osxcollector_subsection=="extensions" and
-                .osxcollector_section=="chrome") |
-        {"state": .state,
-         "was_installed_by_default": .was_installed_by_default,
-         "name": .manifest.name,
-         "description": .manifest.description,
-         "path": .path}'
-```
-
 ##### FirefoxExtensionsFilter
 `osxcollector.output_filters.firefox.find_extensions.FindExtensionsFilter` looks for extensions in the Firefox JSON files.
 
@@ -423,17 +412,6 @@ To see Firefox extensions:
 ```shell
 $ jq 'select(.osxcollector_section=="firefox" and
              .osxcollector_subsection=="extensions")'
-```
-
-To see an interesting minimal view:
-```shell
-$ jq -c 'select(.osxcollector_subsection=="extensions" and
-                .osxcollector_section=="firefox") |
-        {"state": .state,
-         "was_installed_by_default": .was_installed_by_default,
-         "name": .manifest.name,
-         "description": .manifest.description,
-         "path": .path}'
 ```
 
 #### Threat API Filters

@@ -30,14 +30,19 @@ class FindExtensionsFilter(OutputFilter):
             return blob
 
         extensions_blobs = DictUtils.get_deep(blob, 'contents.addons', [])
-        for val in extensions_blobs:
-            val['osxcollector_section'] = 'firefox'
-            val['osxcollector_subsection'] = 'extensions'
-            val['osxcollector_incident_id'] = blob['osxcollector_incident_id']
+        for addon in extensions_blobs:
+            extension = {
+                'osxcollector_section': 'firefox',
+                'osxcollector_subsection': 'extensions',
+                'osxcollector_incident_id': 'osxcollector_incident_id',
+                'name': DictUtils.get_deep(addon, 'defaultLocale.name', addon.get('name')),
+                'description': DictUtils.get_deep(addon, 'defaultLocale.description', addon.get('description')),
+                'path': addon.get('id')
+            }
             if blob.get('osxcollector_username'):
-                val['osxcollector_username'] = blob['osxcollector_username']
+                extension['osxcollector_username'] = blob['osxcollector_username']
 
-            self._new_lines.append(val)
+            self._new_lines.append(extension)
 
     def end_of_lines(self):
         return self._new_lines
