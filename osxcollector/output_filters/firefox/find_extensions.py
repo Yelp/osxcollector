@@ -34,6 +34,9 @@ class FindExtensionsFilter(OutputFilter):
             val['osxcollector_section'] = 'firefox'
             val['osxcollector_subsection'] = 'extensions'
             val['osxcollector_incident_id'] = blob['osxcollector_incident_id']
+            if blob.get('osxcollector_username'):
+                val['osxcollector_username'] = blob['osxcollector_username']
+
             self._new_lines.append(val)
 
     def end_of_lines(self):

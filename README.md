@@ -355,12 +355,12 @@ $ jq 'select(has("osxcollector_related")) |
 ```
 
 ##### ChromeHistoryFilter
-`osxcollector.output_filters.chome_history.ChromeHistoryFilter` builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains _more_ info. The `core_transition` and `page_transition` keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.
+`osxcollector.output_filters.chrome.sort_history.SortHistoryFilter` builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains _more_ info. The `core_transition` and `page_transition` keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.
 
 Run it as:
 ```shell
 $ cat PrinceCrazy.json | \
-    python -m osxcollector.output_filters.chrome_history
+    python -m osxcollector.output_filters.chrome.sort_history
 ```
 
 To see Chrome browser history:
@@ -371,17 +371,69 @@ $ jq 'select(.osxcollector_browser_history=="chrome")'
 This is great mixed with a grep in a certain time window, like maybe the 5 minutes before that hinky download happened.
 
 ##### FirefoxHistoryFilter
-`osxcollector.output_filters.firefox_history.FirefoxHistoryFilter` builds a really nice Firefox browser history sorted in descending time order. It's a lot like the `ChromeHistoryFilter`.
+`osxcollector.output_filters.firefox.sort_history.SortHistoryFilter` builds a really nice Firefox browser history sorted in descending time order. It's a lot like the `ChromeHistoryFilter`.
 
 Run it as:
 ```shell
 $ cat CousingLobe.json | \
-    python -m osxcollector.output_filters.firefox_history
+    python -m osxcollector.output_filters.firefox.sort_history
 ```
 
 To see Firefox browser history:
 ```shell
 $ jq 'select(.osxcollector_browser_history=="firefox")'
+```
+
+##### ChromeExtensionsFilter
+`osxcollector.output_filters.chrome.find_extensions.FindExtensionsFilter` looks for extensions in the Chrome JSON files.
+
+Run it as:
+```shell
+$ cat MotherlyWolf.json | \
+    python -m osxcollector.output_filters.chrome.find_extensions
+```
+
+To see Chrome extensions:
+```shell
+$ jq 'select(.osxcollector_section=="chrome" and
+             .osxcollector_subsection=="extensions")'
+```
+
+To see an interesting minimal view:
+```shell
+$ jq -c 'select(.osxcollector_subsection=="extensions" and
+                .osxcollector_section=="chrome") |
+        {"state": .state,
+         "was_installed_by_default": .was_installed_by_default,
+         "name": .manifest.name,
+         "description": .manifest.description,
+         "path": .path}'
+```
+
+##### FirefoxExtensionsFilter
+`osxcollector.output_filters.firefox.find_extensions.FindExtensionsFilter` looks for extensions in the Firefox JSON files.
+
+Run it as:
+```shell
+$ cat FlawlessPelican.json | \
+    python -m osxcollector.output_filters.firefox.find_extensions
+```
+
+To see Firefox extensions:
+```shell
+$ jq 'select(.osxcollector_section=="firefox" and
+             .osxcollector_subsection=="extensions")'
+```
+
+To see an interesting minimal view:
+```shell
+$ jq -c 'select(.osxcollector_subsection=="extensions" and
+                .osxcollector_section=="firefox") |
+        {"state": .state,
+         "was_installed_by_default": .was_installed_by_default,
+         "name": .manifest.name,
+         "description": .manifest.description,
+         "path": .path}'
 ```
 
 #### Threat API Filters
@@ -404,7 +456,9 @@ $ cat NotchCherry.json | \
 To see what it found:
 ```shell
 $ jq 'select(has("osxcollector_related")) |
-      select(.osxcollector_related | keys[] | contains("domains"))'
+      select(.osxcollector_related |
+             keys[] |
+             contains("domains"))'
 ```
 
 ##### OpenDNS LookupDomainsFilter
@@ -499,6 +553,8 @@ $ jq 'select(has("osxcollector_shadowserver"))'
 Then _Very Readable Output Bot_ takes over and prints out an easy-to-digest, human-readable, nearly-English summary of what it found. It's basically equivalent to running:
 ```shell
 $ cat SlickApocalypse.json | \
+    python -m osxcollector.output_filters.chrome.find_extensions.FindExtensionsFilter | \
+    python -m osxcollector.output_filters.firefox.find_extensions.FindExtensionsFilter | \
     python -m osxcollector.output_filters.find_domains | \
     python -m osxcollector.output_filters.shadowserver.lookup_hashes | \
     python -m osxcollector.output_filters.virustotal.lookup_hashes | \
