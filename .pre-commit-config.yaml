@@ -2,6 +2,7 @@
     sha: master
     hooks:
     -   id: autopep8-wrapper
+        args: ['-i', '--ignore=E501']
     -   id: check-json
     -   id: check-yaml
     -   id: end-of-file-fixer
