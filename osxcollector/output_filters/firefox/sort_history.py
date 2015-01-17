@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 #
-# FirefoxHistoryFilter creates a clean sorted Firefox browser history and tags lines with {'osxcollector_browser_history': 'firefox'}
+# SortHistoryFilter creates a clean sorted Firefox browser history and tags lines with {'osxcollector_browser_history': 'firefox'}
 #
 import copy
 
@@ -10,7 +10,7 @@ from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
-class FirefoxHistoryFilter(OutputFilter):
+class SortHistoryFilter(OutputFilter):
 
     """Joins Firefox browser history 'visits' and 'urls' tables, producing a time sorted browser history.
 
@@ -20,7 +20,7 @@ class FirefoxHistoryFilter(OutputFilter):
     """
 
     def __init__(self):
-        super(FirefoxHistoryFilter, self).__init__()
+        super(SortHistoryFilter, self).__init__()
 
         self._visits_table = dict()
         self._places_table = dict()
@@ -84,7 +84,7 @@ class FirefoxHistoryFilter(OutputFilter):
 
 
 def main():
-    run_filter(FirefoxHistoryFilter())
+    run_filter(SortHistoryFilter())
 
 
 if __name__ == "__main__":

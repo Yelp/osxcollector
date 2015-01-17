@@ -2,7 +2,7 @@
 
 # -*- coding: utf-8 -*-
 #
-# FindExtensionsFilter reads the Chrome preferences JSON blob and creates records about the extensions and plugins.
+# FindExtensionsFilter reads the Firefox JSON blobs and creates records about the extensions and plugins.
 #
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
@@ -11,10 +11,10 @@ from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 class FindExtensionsFilter(OutputFilter):
 
-    """Reads the Chrome preferences JSON blob and creates records about the extensions and plugins.
+    """Reads the Firefox JSON blobs and creates records about the extensions and plugins.
 
     In the output look a line where:
-    ('osxcollector_section' == 'chrome' and 'osxcollector_subsection' == 'preferences')
+    ('osxcollector_section' == 'firefox' and 'osxcollector_subsection' == 'json_files')
     and then parse the heck out of the extensions.
     """
 
@@ -23,13 +23,15 @@ class FindExtensionsFilter(OutputFilter):
         self._new_lines = []
 
     def filter_line(self, blob):
-        if 'chrome' != blob.get('osxcollector_section') and 'preferences' != blob.get('osxcollector_subsection'):
+        if 'chrome' != blob.get('osxcollector_section') and 'json_files' != blob.get('osxcollector_subsection'):
             return blob
 
-        extensions_blob = DictUtils.get_deep(blob, 'contents.extensions.settings', {})
-        for key in extensions_blob.keys():
-            val = extensions_blob[key]
-            val['osxcollector_section'] = 'chrome'
+        if blob.get('osxcollector_json_file') not in ['addons.json', 'extensions.json']:
+            return blob
+
+        extensions_blobs = DictUtils.get_deep(blob, 'contents.addons', [])
+        for val in extensions_blobs:
+            val['osxcollector_section'] = 'firefox'
             val['osxcollector_subsection'] = 'extensions'
             val['osxcollector_incident_id'] = blob['osxcollector_incident_id']
             self._new_lines.append(val)

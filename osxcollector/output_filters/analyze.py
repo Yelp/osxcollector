@@ -38,7 +38,10 @@ from osxcollector.output_filters.chrome. \
     sort_history import SortHistoryFilter as ChromeHistoryFilter
 from osxcollector.output_filters.find_blacklisted import FindBlacklistedFilter
 from osxcollector.output_filters.find_domains import FindDomainsFilter
-from osxcollector.output_filters.firefox_history import FirefoxHistoryFilter
+from osxcollector.output_filters.firefox. \
+    find_extensions import FindExtensionsFilter as FirefoxExtensionsFilter
+from osxcollector.output_filters.firefox. \
+    sort_history import SortHistoryFilter as FirefoxHistoryFilter
 from osxcollector.output_filters.opendns. \
     lookup_domains import LookupDomainsFilter as OpenDnsLookupDomainsFilter
 from osxcollector.output_filters.opendns. \
@@ -76,6 +79,7 @@ class AnalyzeFilter(ChainFilter):
         filter_chain = []
 
         filter_chain.append(ChromeExtensionsFilter())
+        filter_chain.append(FirefoxExtensionsFilter())
 
         filter_chain.append(FindDomainsFilter())
 
