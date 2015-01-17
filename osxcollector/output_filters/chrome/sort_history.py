@@ -2,13 +2,13 @@
 
 # -*- coding: utf-8 -*-
 #
-# ChromeHistoryFilter creates a clean sorted Chrome browser history and tags lines with {'osxcollector_browser_history': 'chrome'}
+# SortHistoryFilter creates a clean sorted Chrome browser history and tags lines with {'osxcollector_browser_history': 'chrome'}
 #
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
-class ChromeHistoryFilter(OutputFilter):
+class SortHistoryFilter(OutputFilter):
 
     """Joins Chrome browser history 'visits' and 'urls' tables, producing a time sorted browser history.
 
@@ -18,7 +18,7 @@ class ChromeHistoryFilter(OutputFilter):
     """
 
     def __init__(self):
-        super(ChromeHistoryFilter, self).__init__()
+        super(SortHistoryFilter, self).__init__()
 
         self._visits_table = dict()
         self._urls_table = dict()
@@ -276,7 +276,7 @@ class ChromeHistoryFilter(OutputFilter):
 
 
 def main():
-    run_filter(ChromeHistoryFilter())
+    run_filter(SortHistoryFilter())
 
 
 if __name__ == "__main__":

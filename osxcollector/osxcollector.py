@@ -1067,7 +1067,7 @@ class Collector(object):
                     if not db_path.endswith('-journal') and not os.path.isdir(db_path):
                         self._log_sqlite_db(db_path)
 
-        with Logger.Extra('osxcollector_subsection', 'Preferences'):
+        with Logger.Extra('osxcollector_subsection', 'preferences'):
             self._log_json_file(chrome_path, 'preferences')
 
     def _collect_kext(self):
