@@ -297,8 +297,7 @@ def _get_file_info(file_path, log_xattr=False):
         md5_hash, sha1_hash, sha2_hash = _hash_file(file_path)
         try:
             signature_chain = CodeSignChecker.get_signature_chain(file_path)
-        except CodeSignChecker.CodeSignCheckerError as codesign_e:
-            Logger.log_exception(codesign_e)
+        except CodeSignChecker.CodeSignCheckerError:
             signature_chain = []
 
         file_info = {
@@ -894,20 +893,22 @@ class Collector(object):
 
         return wrapper
 
-    def _read_plist(self, plist_path):
+    def _read_plist(self, plist_path, default=None):
         """Read a plist file and return a dict representing it.
 
         The return should be suitable for JSON serialization.
 
         Args:
             plist_path: The path to the file to read.
+            default: The value to return on error
         Returns:
-            a dict. Empty dict on failure.
+            a dict or list. Empty dict on failure.
         """
+        if not default:
+            default = {}
+
         if not os.path.isfile(plist_path):
-            # TODO(ivanlei): Explore adding a warning here for missing plist files.  At the very least it might help
-            # find some unnecessary attempts to read a directory as a plist
-            return {}
+            return default
 
         try:
             plist_nsdata, error_message = Foundation.NSData.dataWithContentsOfFile_options_error_(
@@ -916,16 +917,16 @@ class Collector(object):
                 plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
             plist = _normalize_val(plist_dictionary)
 
-            # If the output of _read_plist is not a dict, things aren't going to work properly. Log an informative error.
-            if not isinstance(plist, dict):
+            # If the output of _read_plist is not a dict or list, things aren't going to work properly. Log an informative error.
+            if not isinstance(plist, dict) and not isinstance(plist, list):
                 Logger.log_error('plist is wrong type. plist_path[{0}] type[{1}]'.format(plist_path, plist.__class__.__name__))
-                plist = {}
+                return default
 
             return plist
         except Exception as read_plist_e:
             Logger.log_exception(read_plist_e, message='_read_plist failed on {0}'.format(plist_path))
 
-        return {}
+        return default
 
     def _log_items_in_plist(self, plist, path, transform=None):
         """Dive into the dict representation of a plist and log all items under a specific path
@@ -1472,7 +1473,7 @@ class Collector(object):
 
         # Read the installed applications history
         with Logger.Extra('osxcollector_subsection', 'install_history'):
-            plist = self._read_plist(pathjoin(ROOT_PATH, 'Library/Receipts/InstallHistory.plist'))
+            plist = self._read_plist(pathjoin(ROOT_PATH, 'Library/Receipts/InstallHistory.plist'), default=[])
             for installed_app in plist:
                 Logger.log_dict(installed_app)
 
