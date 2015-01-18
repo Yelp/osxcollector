@@ -521,12 +521,12 @@ $ emacs osxcollector.yaml</pre></div>
 <h5>
 <a id="chromehistoryfilter" class="anchor" href="#chromehistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChromeHistoryFilter</h5>
 
-<p><code>osxcollector.output_filters.chome_history.ChromeHistoryFilter</code> builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains <em>more</em> info. The <code>core_transition</code> and <code>page_transition</code> keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.</p>
+<p><code>osxcollector.output_filters.chrome.sort_history.SortHistoryFilter</code> builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains <em>more</em> info. The <code>core_transition</code> and <code>page_transition</code> keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.</p>
 
 <p>Run it as:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat PrinceCrazy.json <span class="pl-k">|</span> \
-    python -m osxcollector.output_filters.chrome_history</pre></div>
+    python -m osxcollector.output_filters.chrome.sort_history</pre></div>
 
 <p>To see Chrome browser history:</p>
 
@@ -537,16 +537,46 @@ $ emacs osxcollector.yaml</pre></div>
 <h5>
 <a id="firefoxhistoryfilter" class="anchor" href="#firefoxhistoryfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FirefoxHistoryFilter</h5>
 
-<p><code>osxcollector.output_filters.firefox_history.FirefoxHistoryFilter</code> builds a really nice Firefox browser history sorted in descending time order. It's a lot like the <code>ChromeHistoryFilter</code>.</p>
+<p><code>osxcollector.output_filters.firefox.sort_history.SortHistoryFilter</code> builds a really nice Firefox browser history sorted in descending time order. It's a lot like the <code>ChromeHistoryFilter</code>.</p>
 
 <p>Run it as:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat CousingLobe.json <span class="pl-k">|</span> \
-    python -m osxcollector.output_filters.firefox_history</pre></div>
+    python -m osxcollector.output_filters.firefox.sort_history</pre></div>
 
 <p>To see Firefox browser history:</p>
 
 <div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="firefox")<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="chromeextensionsfilter" class="anchor" href="#chromeextensionsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChromeExtensionsFilter</h5>
+
+<p><code>osxcollector.output_filters.chrome.find_extensions.FindExtensionsFilter</code> looks for extensions in the Chrome JSON files.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat MotherlyWolf.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.chrome.find_extensions</pre></div>
+
+<p>To see Chrome extensions:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="chrome" and</span>
+<span class="pl-s1">             .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
+
+<h5>
+<a id="firefoxextensionsfilter" class="anchor" href="#firefoxextensionsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FirefoxExtensionsFilter</h5>
+
+<p><code>osxcollector.output_filters.firefox.find_extensions.FindExtensionsFilter</code> looks for extensions in the Firefox JSON files.</p>
+
+<p>Run it as:</p>
+
+<div class="highlight highlight-shell"><pre>$ cat FlawlessPelican.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.firefox.find_extensions</pre></div>
+
+<p>To see Firefox extensions:</p>
+
+<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="firefox" and</span>
+<span class="pl-s1">             .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
 
 <h4>
 <a id="threat-api-filters" class="anchor" href="#threat-api-filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Threat API Filters</h4>
@@ -571,7 +601,9 @@ $ emacs osxcollector.yaml</pre></div>
 <p>To see what it found:</p>
 
 <div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_related")) |</span>
-<span class="pl-s1">      select(.osxcollector_related | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
+<span class="pl-s1">      select(.osxcollector_related |</span>
+<span class="pl-s1">             keys[] |</span>
+<span class="pl-s1">             contains("domains"))<span class="pl-pds">'</span></span></pre></div>
 
 <h5>
 <a id="opendns-lookupdomainsfilter" class="anchor" href="#opendns-lookupdomainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenDNS LookupDomainsFilter</h5>
@@ -671,6 +703,8 @@ lookups hashes with the ShadowServer bin-test API. This is sort of the opposite 
 <p>Then <em>Very Readable Output Bot</em> takes over and prints out an easy-to-digest, human-readable, nearly-English summary of what it found. It's basically equivalent to running:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat SlickApocalypse.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.chrome.find_extensions.FindExtensionsFilter <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.firefox.find_extensions.FindExtensionsFilter <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.shadowserver.lookup_hashes <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.virustotal.lookup_hashes <span class="pl-k">|</span> \
