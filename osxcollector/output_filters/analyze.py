@@ -73,7 +73,9 @@ class AnalyzeFilter(ChainFilter):
                  monochrome=False,
                  no_shadowserver=False,
                  no_opendns=False,
-                 no_virustotal=False
+                 no_virustotal=False,
+                 no_signature_chain=False,
+                 no_browser_ext=False
                  ):
 
         filter_chain = []
@@ -113,7 +115,8 @@ class AnalyzeFilter(ChainFilter):
 
         # Summarize what has happened
         filter_chain.append(_OutputToFileFilter())
-        filter_chain.append(_VeryReadableOutputFilter(monochrome=monochrome))
+        filter_chain.append(_VeryReadableOutputFilter(monochrome=monochrome, no_signature_chain=no_signature_chain,
+                                                      no_browser_ext=no_browser_ext))
 
         super(AnalyzeFilter, self).__init__(filter_chain)
 
@@ -202,14 +205,19 @@ class _OutputToFileFilter(OutputFilter):
 
 class _VeryReadableOutputFilter(OutputFilter):
 
-    def __init__(self, monochrome=False):
+    def __init__(self, monochrome=False, show_signature_chain=False, show_browser_ext=False):
         super(_VeryReadableOutputFilter, self).__init__()
         self._vthash = []
         self._vtdomain = []
         self._opendns = []
         self._blacklist = []
         self._related = []
+        self._signature_chain = []
+        self._extensions = []
         self._monochrome = monochrome
+        self._show_signature_chain = show_signature_chain
+        self._show_browser_ext = show_browser_ext
+
         self._add_to_blacklist = []
 
     def filter_line(self, blob):
@@ -226,14 +234,28 @@ class _VeryReadableOutputFilter(OutputFilter):
         """
         if 'osxcollector_vthash' in blob:
             self._vthash.append(blob)
+
         if 'osxcollector_vtdomain' in blob:
             self._vtdomain.append(blob)
+
         if 'osxcollector_opendns' in blob:
             self._opendns.append(blob)
+
         if 'osxcollector_blacklist' in blob:
             self._blacklist.append(blob)
+
         if 'osxcollector_related' in blob:
             self._related.append(blob)
+
+        if self._show_signature_chain:
+            if 'signature_chain' in blob and blob['osxcollector_section'] in ['startup', 'kext']:
+                signature_chain = blob['signature_chain']
+                if not len(signature_chain) or 'Apple Root CA' != signature_chain[-1]:
+                    self._signature_chain.append(blob)
+
+        if self._show_browser_ext:
+            if blob['osxcollector_section'] in ['firefox', 'chrome'] and blob.get('osxcollector_subsection') == 'extensions':
+                self._extensions.append(blob)
 
         return None
 
@@ -285,6 +307,16 @@ class _VeryReadableOutputFilter(OutputFilter):
             self._write('This whole things started with just a few clues. Now look what I found.\n', self.BOT_COLOR)
             self._summarize_blobs(self._related)
             self._write('Nothing hides from Very Readable Output Bot\n\n', self.BOT_COLOR)
+
+        if len(self._signature_chain):
+            self._write('If these binaries were signed by \'Apple Root CA\' I\'d trust them more.\n', self.BOT_COLOR)
+            self._summarize_blobs(self._signature_chain)
+            self._write('Let\'s just try and stick with some safe software\n\n', self.BOT_COLOR)
+
+        if len(self._extensions):
+            self._write('Let\'s see what\'s hiding in the browser, shall we.\n', self.BOT_COLOR)
+            self._summarize_blobs(self._extensions)
+            self._write('You know these things have privileges galore.\n\n', self.BOT_COLOR)
 
         if len(self._add_to_blacklist):
             self._add_to_blacklist = list(set(self._add_to_blacklist))
@@ -428,6 +460,10 @@ def main():
                         help='[OPTIONAL] Don\'t run VirusTotal filters')
     parser.add_argument('--no-shadowserver', dest='no_shadowserver', action='store_true', default=False,
                         help='[OPTIONAL] Don\'t run ShadowServer filters')
+    parser.add_argument('--show-signature-chain', dest='show_signature_chain', action='store_true', default=False,
+                        help='[OPTIONAL] Output unsigned startup items and kexts.')
+    parser.add_argument('--show-browser-ext', dest='show_browser_ext', action='store_true', default=False,
+                        help='[OPTIONAL] Output the list of installed browser extensions.')
     parser.add_argument('--input-file', dest='input_file', default=None,
                         help='[OPTIONAL] Path to OSXCollector output to read. Defaults to stdin otherwise.')
 
@@ -437,9 +473,11 @@ def main():
         output_filter = AnalyzeFilter(initial_file_terms=args.file_terms, initial_domains=args.domain_terms,
                                       initial_ips=args.ip_terms, related_domains_generations=args.related_domains_generations,
                                       monochrome=args.monochrome, no_opendns=args.no_opendns, no_virustotal=args.no_virustotal,
-                                      no_shadowserver=args.no_shadowserver)
+                                      no_shadowserver=args.no_shadowserver, show_signature_chain=args.show_signature_chain,
+                                      show_browser_ext=args.show_browser_ext)
     else:
-        output_filter = _VeryReadableOutputFilter(monochrome=args.monochrome)
+        output_filter = _VeryReadableOutputFilter(monochrome=args.monochrome, show_signature_chain=args.show_signature_chain,
+                                                  show_browser_ext=args.show_browser_ext)
 
     if args.input_file:
         with(open(args.input_file, 'r')) as fp_in:

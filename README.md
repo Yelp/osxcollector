@@ -88,6 +88,7 @@ For records representing files there are a bunch of useful keys:
 * `md5`: MD5 hash of the file contents.
 * `sha1`: SHA1 hash of the file contents.
 * `sha2`: SHA2 hash of the file contents.
+* `signature_chain`: The common names of the certs in the file's signing chain
 
 For records representing downloaded files:
 * `xattr-wherefrom`: A list containing the source and referrer URLs for the downloaded file.
@@ -570,11 +571,20 @@ $ make test
 ```
 
 #### Development Tips
-The functionality of OSXCollector is stored in a single file: `osxcollector.py`.
+The functionality of OSXCollector is stored in a single file: `osxcollector.py`. The collector should run on a naked install of OS X without any additional packages or dependencies.
 
-Ensure that all of the osxcollector tests pass before editing the source code. You can run the tests using: `make test`
+Ensure that all of the OSXCollector tests pass before editing the source code. You can run the tests using: `make test`
 
 After making changes to the source code, run `make test` again to verify that your changes did not break any of the tests.
 
 ## License
 This work is licensed under the GNU General Public License and a derivation of [https://github.com/jipegit/OSXAuditor](https://github.com/jipegit/OSXAuditor)
+
+## Resources
+Want to learn more about OS X forensics?
+* [Sarah Edward's mac4n6.com](http://www.mac4n6.com/) - The best presentations on Mac forensics.
+
+A couple of other interesting tools:
+* [KnockKnock](https://github.com/synack/knockknock) - KnockKnock is a command line python script that displays persistent OS X binaries that are set to execute automatically at each boot.
+* [Grr](https://github.com/google/grr) - Google Rapid Response: remote live forensics for incident response
+* [osquery](https://github.com/facebook/osquery) - SQL powered operating system instrumentation, monitoring, and analytics
