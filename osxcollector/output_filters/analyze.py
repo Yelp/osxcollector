@@ -74,8 +74,8 @@ class AnalyzeFilter(ChainFilter):
                  no_shadowserver=False,
                  no_opendns=False,
                  no_virustotal=False,
-                 no_signature_chain=False,
-                 no_browser_ext=False
+                 show_signature_chain=False,
+                 show_browser_ext=False
                  ):
 
         filter_chain = []
@@ -115,8 +115,8 @@ class AnalyzeFilter(ChainFilter):
 
         # Summarize what has happened
         filter_chain.append(_OutputToFileFilter())
-        filter_chain.append(_VeryReadableOutputFilter(monochrome=monochrome, no_signature_chain=no_signature_chain,
-                                                      no_browser_ext=no_browser_ext))
+        filter_chain.append(_VeryReadableOutputFilter(monochrome=monochrome, show_signature_chain=show_signature_chain,
+                                                      show_browser_ext=show_browser_ext))
 
         super(AnalyzeFilter, self).__init__(filter_chain)
 
