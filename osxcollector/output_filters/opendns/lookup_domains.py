@@ -112,7 +112,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
                     'domain': domain,
                     'categorization': categorized[domain],
                     'security': self._trim_security_result(security[domain]),
-                    'link': 'https://investigate.opendns.com/domain-view/name/{0}/view'.format(domain)
+                    'link': 'https://investigate.opendns.com/domain-view/name/{0}/view'.format(domain.encode('utf-8', errors='ignore'))
                 }
 
         return threat_info

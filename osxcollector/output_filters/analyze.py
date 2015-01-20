@@ -268,7 +268,11 @@ class _VeryReadableOutputFilter(OutputFilter):
     def _write(self, msg, color=END_COLOR):
         if not self._monochrome:
             sys.stdout.write(color)
-        sys.stdout.write(msg)
+        try:
+            sys.stdout.write(msg.encode("utf-8", errors="ignore"))
+        except UnicodeDecodeError:
+            # TODO: add optional debug information about the error
+            sys.stdout.write(msg)
         if not self._monochrome:
             sys.stdout.write(self.END_COLOR)
 
