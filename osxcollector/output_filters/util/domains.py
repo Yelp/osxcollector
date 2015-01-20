@@ -20,10 +20,10 @@ def expand_domain(domain):
 
     if extraction.subdomain:
         subdomain = '.'.join(extraction)
-        yield subdomain.encode('utf-8', errors='ignore')
+        yield subdomain
 
     fulldomain = '.'.join(extraction[1:])
-    yield fulldomain.encode('utf-8', errors='ignore')
+    yield fulldomain
 
 
 def clean_domain(unclean_domain):
