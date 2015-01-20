@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # FindBlacklistedFilter adds 'osxcollector_blacklist' key to lines matching a blacklist.

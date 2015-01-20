@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # LookupURLsFilter uses VirusTotal to lookup the URLs in 'LSQuarantineDataURLString' and add 'osxcollector_vturl' key.

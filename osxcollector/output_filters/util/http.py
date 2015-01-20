@@ -10,6 +10,7 @@ import time
 from collections import namedtuple
 
 import grequests
+
 from osxcollector.output_filters.exceptions import InvalidRequestError
 from osxcollector.output_filters.util.error_messages import write_error_message
 from osxcollector.output_filters.util.error_messages import write_exception

@@ -3,6 +3,7 @@
 # InvestigateApi makes calls to the OpenDNS Investigate API.
 #
 import simplejson
+
 from osxcollector.output_filters.util.api_cache import ApiCache
 from osxcollector.output_filters.util.error_messages import write_error_message
 from osxcollector.output_filters.util.error_messages import write_exception

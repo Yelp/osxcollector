@@ -3,6 +3,7 @@
 # ShadowServerApi makes calls to the ShadowServer APIs.
 #
 import simplejson
+
 from osxcollector.output_filters.util.api_cache import ApiCache
 from osxcollector.output_filters.util.http import MultiRequest
 

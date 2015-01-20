@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import testify as T
 from mock import patch
+
 from osxcollector.output_filters.util.config import config_get_deep
 
 

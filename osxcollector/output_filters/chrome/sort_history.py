@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # SortHistoryFilter creates a clean sorted Chrome browser history and tags lines with {'osxcollector_browser_history': 'chrome'}

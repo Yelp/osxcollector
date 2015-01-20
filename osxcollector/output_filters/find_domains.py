@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # FindDomainsFilter looks for domains in all input lines and adds those domains into the 'osxcollector_domains' key.

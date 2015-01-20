@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import testify as T
+
 from osxcollector import osxcollector
 
 

@@ -4,6 +4,7 @@ import simplejson
 import testify as T
 from mock import mock_open
 from mock import patch
+
 from osxcollector.output_filters.util.api_cache import ApiCache
 
 

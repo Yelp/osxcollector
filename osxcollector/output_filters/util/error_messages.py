@@ -2,7 +2,6 @@
 #
 # A set of simple methods for writing messages to stderr
 #
-
 import sys
 from traceback import extract_tb
 from traceback import format_list

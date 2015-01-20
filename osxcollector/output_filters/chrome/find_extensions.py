@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # FindExtensionsFilter reads the Chrome preferences JSON blob and creates records about the extensions and plugins.

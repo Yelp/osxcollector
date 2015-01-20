@@ -5,6 +5,7 @@
 import os
 
 import yaml
+
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.exceptions import MissingConfigError
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # LookupHashesFilter uses VirusTotal to lookup the values in 'sha2' and add 'osxcollector_vthash' key.

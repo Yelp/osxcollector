@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # SortHistoryFilter creates a clean sorted Firefox browser history and tags lines with {'osxcollector_browser_history': 'firefox'}

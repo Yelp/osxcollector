@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # FindExtensionsFilter reads the Firefox JSON blobs and creates records about the extensions and plugins.
