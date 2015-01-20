@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import testify as T
+
 from osxcollector.output_filters.shadowserver. \
     lookup_hashes import LookupHashesFilter
 from tests.output_filters.run_filter_test import RunFilterTest

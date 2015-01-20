@@ -5,6 +5,7 @@ from StringIO import StringIO
 import simplejson
 import testify as T
 from mock import patch
+
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 

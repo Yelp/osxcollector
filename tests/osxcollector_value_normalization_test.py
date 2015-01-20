@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 
 import testify as T
+
 from osxcollector import osxcollector
 
 

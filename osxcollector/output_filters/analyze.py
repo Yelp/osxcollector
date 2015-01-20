@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 #
 # The AnalyzeFilter is a handy little tool that ties together many filters to attempt to
@@ -29,6 +28,7 @@ from argparse import ArgumentParser
 from numbers import Number
 
 import simplejson
+
 from osxcollector.output_filters.base_filters.chain import ChainFilter
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter

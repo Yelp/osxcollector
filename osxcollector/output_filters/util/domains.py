@@ -5,6 +5,7 @@
 import re
 
 import tldextract
+
 from osxcollector.output_filters.exceptions import BadDomainError
 
 

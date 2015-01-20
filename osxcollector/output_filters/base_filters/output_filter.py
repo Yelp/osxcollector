@@ -8,6 +8,7 @@
 import sys
 
 import simplejson
+
 from osxcollector.output_filters.util.error_messages import write_exception
 
 

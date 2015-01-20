@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import testify as T
 from mock import patch
+
 from osxcollector.output_filters.exceptions import MissingConfigError
 from osxcollector.output_filters.util.blacklist import Blacklist
 from osxcollector.output_filters.util.blacklist import create_blacklist

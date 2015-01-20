@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import testify as T
+
 from osxcollector.output_filters.related_files import RelatedFilesFilter
 from tests.output_filters.run_filter_test import assert_equal_sorted
 from tests.output_filters.run_filter_test import RunFilterTest

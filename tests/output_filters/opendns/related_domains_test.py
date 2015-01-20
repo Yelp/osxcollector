@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import testify as T
+
 from osxcollector.output_filters.opendns. \
     related_domains import RelatedDomainsFilter
 from tests.output_filters.run_filter_test import RunFilterTest

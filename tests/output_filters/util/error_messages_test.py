@@ -3,6 +3,7 @@ from StringIO import StringIO
 
 import testify as T
 from mock import patch
+
 from osxcollector.output_filters.exceptions import BadDomainError
 from osxcollector.output_filters.util.error_messages import write_error_message
 from osxcollector.output_filters.util.error_messages import write_exception

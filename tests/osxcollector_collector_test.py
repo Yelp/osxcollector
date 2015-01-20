@@ -3,6 +3,7 @@ import contextlib
 
 import mock
 import testify as T
+
 from osxcollector.osxcollector import Collector
 from osxcollector.osxcollector import HomeDir
 from osxcollector.osxcollector import Logger

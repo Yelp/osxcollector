@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import testify as T
+
 from osxcollector.output_filters.exceptions import BadDomainError
 from osxcollector.output_filters.util.domains import clean_domain
 from osxcollector.output_filters.util.domains import expand_domain

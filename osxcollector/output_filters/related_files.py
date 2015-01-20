@@ -5,6 +5,7 @@
 import os.path
 
 import simplejson
+
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
