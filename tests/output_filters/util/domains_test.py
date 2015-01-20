@@ -45,6 +45,9 @@ class ExpandDomainTest(T.TestCase):
     def test_complex_subdomain(self):
         self._test_expand_domain('www.foo.bar.whiz.example.com', ['example.com', 'www.foo.bar.whiz.example.com'])
 
+    def test_unicode_subdomain(self):
+        self._test_expand_domain('www.jobbörse.com', ['www.jobbörse.com', 'jobbörse.com'])
+
     def _test_expand_domain(self, initial_domain, expected):
         expanded = list(expand_domain(initial_domain))
         T.assert_equal(sorted(expanded), sorted(expected))
