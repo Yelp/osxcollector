@@ -74,6 +74,12 @@ class RunFilterTest(T.TestCase):
                 del output_blob[added_key]
             assert_equal_sorted(input_blob, output_blob)
 
+    def load_reports(self, filename):
+        with open(filename, 'r') as fp:
+            file_contents = fp.read()
+            reports = simplejson.loads(file_contents)
+        return reports
+
 
 def assert_equal_sorted(a, b):
     """A version of T.assert_equal that ignores the ordering of lists or sets.
