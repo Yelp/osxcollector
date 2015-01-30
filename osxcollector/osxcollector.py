@@ -863,7 +863,12 @@ class Collector(object):
             ('safari', self._collect_safari),
             ('accounts', self._collect_accounts),
             ('mail', self._collect_mail),
+            ('full_hash', self._collect_full_hash)
         ]
+
+        # If no section_list was specified, collect everything but the 'full_hash' section
+        if not section_list:
+            section_list = [s[0] for s in sections[:-1]]
 
         for section_name, collection_method in sections:
             with Logger.Extra('osxcollector_section', section_name):
@@ -954,7 +959,13 @@ class Collector(object):
             Logger.log_warning('Directory not found {0}'.format(dir_path))
             return
 
-        for root, _, file_names in os.walk(dir_path):
+        walker = os.walk(dir_path)
+        while True:
+            try:
+                root, _, file_names = next(walker)
+            except StopIteration:
+                break
+
             for file_name in file_names:
                 try:
                     file_path = pathjoin(root, file_name)
@@ -1157,6 +1168,10 @@ class Collector(object):
         """
         self._log_user_quarantines()
         self._log_xprotect()
+
+    def _collect_full_hash(self):
+        """Hash everything on the drive"""
+        self._log_file_info_for_directory(ROOT_PATH)
 
     @_foreach_homedir
     def _collect_downloads(self, homedir):
