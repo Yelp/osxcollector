@@ -57,6 +57,7 @@ The JSON output of the collector, along with some helpful files like system logs
   * `safari`
   * `accounts`
   * `mail`
+  * `full_hash`
 
   ```shell
   $ sudo osxcollector.py -s 'startup' -s 'downloads'
@@ -243,6 +244,12 @@ Hashes files in the mail app directories:
 Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.
 
 Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
+
+#### `full_hash` section
+Hashes all the files on disk. All of 'em. This does not run by default. It must be triggered with:
+```shell
+$ sudo osxcollector.py -s full_hash
+```
 
 #### Timestamps
 Simply greping a few minutes before and after a timestamp works great:
