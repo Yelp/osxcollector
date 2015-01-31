@@ -485,7 +485,7 @@ class CodeSignChecker(object):
         """
 
         # file_path as NSString
-        file_path = Foundation.NSString.stringWithUTF8String_(file_path.encode(encoding='utf-8', errors='ignore'))
+        file_path = Foundation.NSString.stringWithUTF8String_(file_path)
 
         # file_path with spaces escaped
         file_path = file_path.stringByAddingPercentEscapesUsingEncoding_(Foundation.NSUTF8StringEncoding).encode('utf-8')
