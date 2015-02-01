@@ -105,6 +105,7 @@ Runs only a portion of the full collection. Can be specified more than once. The
 <li><code>safari</code></li>
 <li><code>accounts</code></li>
 <li><code>mail</code></li>
+<li><code>full_hash</code></li>
 </ul>
 
 <div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -s <span class="pl-s1"><span class="pl-pds">'</span>startup<span class="pl-pds">'</span></span> -s <span class="pl-s1"><span class="pl-pds">'</span>downloads<span class="pl-pds">'</span></span></pre></div>
@@ -157,6 +158,8 @@ Enables verbose output and python breakpoints. If something is wrong with OSXCol
 <code>sha1</code>: SHA1 hash of the file contents.</li>
 <li>
 <code>sha2</code>: SHA2 hash of the file contents.</li>
+<li>
+<code>signature_chain</code>: The common names of the certs in the file's signing chain</li>
 </ul>
 
 <p>For records representing downloaded files:</p>
@@ -388,6 +391,14 @@ profile:</p>
 <p>Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.</p>
 
 <p>Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.</p>
+
+<h4>
+<a id="full_hash-section" class="anchor" href="#full_hash-section" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<code>full_hash</code> section</h4>
+
+<p>Hashes all the files on disk. All of 'em. This does not run by default. It must be triggered with:</p>
+
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -s full_hash</pre></div>
 
 <h4>
 <a id="timestamps-1" class="anchor" href="#timestamps-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Timestamps</h4>
@@ -746,9 +757,9 @@ lookups hashes with the ShadowServer bin-test API. This is sort of the opposite 
 <h4>
 <a id="development-tips" class="anchor" href="#development-tips" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development Tips</h4>
 
-<p>The functionality of OSXCollector is stored in a single file: <code>osxcollector.py</code>.</p>
+<p>The functionality of OSXCollector is stored in a single file: <code>osxcollector.py</code>. The collector should run on a naked install of OS X without any additional packages or dependencies.</p>
 
-<p>Ensure that all of the osxcollector tests pass before editing the source code. You can run the tests using: <code>make test</code></p>
+<p>Ensure that all of the OSXCollector tests pass before editing the source code. You can run the tests using: <code>make test</code></p>
 
 <p>After making changes to the source code, run <code>make test</code> again to verify that your changes did not break any of the tests.</p>
 
@@ -756,6 +767,27 @@ lookups hashes with the ShadowServer bin-test API. This is sort of the opposite 
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p>This work is licensed under the GNU General Public License and a derivation of <a href="https://github.com/jipegit/OSXAuditor">https://github.com/jipegit/OSXAuditor</a></p>
+
+<h2>
+<a id="resources" class="anchor" href="#resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>Resources</h2>
+
+<p>Want to learn more about OS X forensics?</p>
+
+<ul>
+<li>
+<a href="http://www.mac4n6.com/">Sarah Edward's mac4n6.com</a> - The best presentations on Mac forensics.</li>
+</ul>
+
+<p>A couple of other interesting tools:</p>
+
+<ul>
+<li>
+<a href="https://github.com/synack/knockknock">KnockKnock</a> - KnockKnock is a command line python script that displays persistent OS X binaries that are set to execute automatically at each boot.</li>
+<li>
+<a href="https://github.com/google/grr">Grr</a> - Google Rapid Response: remote live forensics for incident response</li>
+<li>
+<a href="https://github.com/facebook/osquery">osquery</a> - SQL powered operating system instrumentation, monitoring, and analytics</li>
+</ul>
       </section>
     </div>
 
