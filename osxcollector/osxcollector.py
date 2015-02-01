@@ -484,6 +484,9 @@ class CodeSignChecker(object):
             A SecStaticCodeRef wrapped with a CFTypeWrapper
         """
 
+        if isinstance(file_path, unicode):
+            file_path = file_path.encode(encoding='utf-8', errors='ignore')
+
         # file_path as NSString
         file_path = Foundation.NSString.stringWithUTF8String_(file_path)
 
