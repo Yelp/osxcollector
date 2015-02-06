@@ -64,7 +64,6 @@ def debugbreak():
 HomeDir = namedtuple('HomeDir', ['user_name', 'path'])
 """A simple tuple for storing info about a user"""
 
-
 def _get_homedirs():
     """Return a list of HomeDir objects
 
@@ -884,6 +883,16 @@ class Collector(object):
                     debugbreak()
                     Logger.log_exception(section_e, message='failed section')
 
+    def _is_fde_enabled(self):
+        """Gathers the Full Disc Encryption status of the system."""
+
+        fde_status = os.popen('fdesetup status').read()
+
+        if "On" in fde_status:
+            return True
+        else:
+            return False
+
     def _foreach_homedir(func):
         """A decorator to ensure a method is called for each user's homedir.
 
@@ -1123,12 +1132,14 @@ class Collector(object):
 
         # Basic OS info
         sysname, nodename, release, version, machine = os.uname()
+        fde = self._is_fde_enabled()
         record = {
             'sysname': sysname,
             'nodename': nodename,
             'release': release,
             'version': version,
-            'machine': machine
+            'machine': machine,
+            'fde': fde
         }
         Logger.log_dict(record)
 
