@@ -883,7 +883,7 @@ class Collector(object):
                     debugbreak()
                     Logger.log_exception(section_e, message='failed section')
 
-    def _is_fde_enabled():
+    def _is_fde_enabled(self):
         """Gathers the Full Disc Encryption status of the system."""
 
         fde_status = os.popen('fdesetup status').read()
@@ -1132,7 +1132,7 @@ class Collector(object):
 
         # Basic OS info
         sysname, nodename, release, version, machine = os.uname()
-        fde = _is_fde_enabled()
+        fde = self._is_fde_enabled()
         record = {
             'sysname': sysname,
             'nodename': nodename,
