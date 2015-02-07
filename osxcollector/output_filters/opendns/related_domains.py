@@ -106,9 +106,9 @@ class RelatedDomainsFilter(OutputFilter):
         return related_domains
 
     def _cooccurrences_to_domains(self, cooccurrence_info):
-        domains = []
+        domains = set()
 
-        for cooccurence in cooccurrence_info:
+        for domain, cooccurence in cooccurrence_info.iteritems():
             for occur_domain in cooccurence.get('pfs2', []):
                 for elem in expand_domain(occur_domain[0]):
                     domains.add(elem)
@@ -116,9 +116,9 @@ class RelatedDomainsFilter(OutputFilter):
         return domains
 
     def _rr_history_to_domains(self, rr_history_info):
-        domains = []
+        domains = set()
 
-        for rr_history in rr_history_info:
+        for ip, rr_history in rr_history_info.iteritems():
             for rr_domain in rr_history.get('rrs', []):
                 for elem in expand_domain(rr_domain['rr']):
                     domains.add(elem)
