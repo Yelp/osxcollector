@@ -283,7 +283,7 @@ To setup a virtualenv for the first time use:
 $ sudo pip install virtualenv
 $ virtualenv --system-site-packages venv_osxcollector
 $ source ./venv_osxcollector/bin/activate
-$ sudo pip install -r ./requirements-dev.txt
+$ pip install -r ./requirements-dev.txt
 ```
 
 #### Filter Configuration
