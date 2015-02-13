@@ -346,7 +346,8 @@ If you want to find blacklisted domains, you will have to use the find_domains f
 $ cat RiddlerBelize.json | \
     python -m osxcollector.output_filters.find_domains | \
     python -m osxcollector.output_filters.find_blacklisted | \
-    jq 'select(has("osxcollector_blacklist")) | select(.osxcollector_blacklist | keys[] | contains("domains"))'
+    jq 'select(has("osxcollector_blacklist")) | \
+    select(.osxcollector_blacklist | keys[] | contains("domains"))'
 ```
 
 ##### RelatedFilesFilter
