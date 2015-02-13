@@ -299,14 +299,14 @@ $ emacs osxcollector.yaml
 ```
 
 #### Basic Filters
-Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds and fancy APIs.
+Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds or fancy APIs.
 
 ##### FindDomainsFilter
 `osxcollector.output_filters.find_domains.FindDomainsFilter` attempts to find domain names in OSXCollector output. The domains are added to the line with the key `osxcollector_domains`.
 
 FindDomainsFilter isn't too useful on it's own but it's super powerful when chained with filters like `FindBlacklistedFilter` and or `osxcollector.output_filters.virustotal.lookup_domains.LookupDomainsFilter`.
 
-Run it as:
+Running this will add the domains found by osxcollector to the output:
 ```shell
 $ cat RomeoCredible.json | \
     python -m osxcollector.output_filters.find_domains
@@ -314,7 +314,8 @@ $ cat RomeoCredible.json | \
 
 To see lines where domains have been added try:
 ```shell
-$ jq 'select(has("osxcollector_domains"))'
+$ cat RomeoCredible.json | \
+    python -m osxcollector.output_filters.find_domains | jq 'select(has("osxcollector_domains"))'
 ```
 
 ##### FindBlacklistedFilter
@@ -329,7 +330,7 @@ Configuration Keys:
 * `blacklist_is_regex`: [REQUIRED] should the values in the blacklist file be treated as regex
 * `blacklist_is_domains`: [OPTIONAL] interpret values as domains and do some smart regex and subdomain stuff with them.
 
-Run it as:
+Running this will tag blacklisted items in the output:
 ```shell
 $ cat RiddlerBelize.json | \
     python -m osxcollector.output_filters.find_blacklisted
@@ -337,12 +338,15 @@ $ cat RiddlerBelize.json | \
 
 To see lines matching a blacklist try:
 ```shell
-$ jq 'select(has("osxcollector_blacklist"))'
+$ cat RiddlerBelize.json | \
+    python -m osxcollector.output_filters.find_blacklisted | jq 'select(has("osxcollector_blacklist"))'
 ```
-To see lines matching a specific blacklist named `domains` try:
+If you want to find blacklisted domains, you will have to use the find_domains filter to pull the domains out first. To see lines matching a specific blacklist named `domains` try:
 ```shell
-$ jq 'select(has("osxcollector_blacklist")) |
-      select(.osxcollector_blacklist | keys[] | contains("domains"))'
+$ cat RiddlerBelize.json | \
+    python -m osxcollector.output_filters.find_domains | \
+    python -m osxcollector.output_filters.find_blacklisted | \
+    jq 'select(has("osxcollector_blacklist")) | select(.osxcollector_blacklist | keys[] | contains("domains"))'
 ```
 
 ##### RelatedFilesFilter
@@ -365,7 +369,7 @@ $ jq 'select(has("osxcollector_related")) |
 ##### ChromeHistoryFilter
 `osxcollector.output_filters.chrome.sort_history.SortHistoryFilter` builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains _more_ info. The `core_transition` and `page_transition` keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.
 
-Run it as:
+Running this will output json with the tags added by the filter:
 ```shell
 $ cat PrinceCrazy.json | \
     python -m osxcollector.output_filters.chrome.sort_history
@@ -373,7 +377,9 @@ $ cat PrinceCrazy.json | \
 
 To see Chrome browser history:
 ```shell
-$ jq 'select(.osxcollector_browser_history=="chrome")'
+$ cat PrinceCrazy.json | \
+    python -m osxcollector.output_filters.chrome.sort_history | \
+    jq 'select(.osxcollector_browser_history=="chrome")'
 ```
 
 This is great mixed with a grep in a certain time window, like maybe the 5 minutes before that hinky download happened.
@@ -389,7 +395,9 @@ $ cat CousingLobe.json | \
 
 To see Firefox browser history:
 ```shell
-$ jq 'select(.osxcollector_browser_history=="firefox")'
+$ cat CousingLobe.json | \
+    python -m osxcollector.output_filters.firefox.sort_history |\
+    jq 'select(.osxcollector_browser_history=="firefox")'
 ```
 
 ##### ChromeExtensionsFilter
@@ -403,7 +411,9 @@ $ cat MotherlyWolf.json | \
 
 To see Chrome extensions:
 ```shell
-$ jq 'select(.osxcollector_section=="chrome" and
+$ cat MotherlyWolf.json | \
+    python -m osxcollector.output_filters.chrome.find_extensions | \
+    jq 'select(.osxcollector_section=="chrome" and
              .osxcollector_subsection=="extensions")'
 ```
 
@@ -418,7 +428,9 @@ $ cat FlawlessPelican.json | \
 
 To see Firefox extensions:
 ```shell
-$ jq 'select(.osxcollector_section=="firefox" and
+$ cat FlawlessPelican.json | \
+    python -m osxcollector.output_filters.firefox.find_extensions | \
+    jq 'select(.osxcollector_section=="firefox" and
              .osxcollector_subsection=="extensions")'
 ```
 
