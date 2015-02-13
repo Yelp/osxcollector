@@ -397,7 +397,7 @@ $ cat CousingLobe.json | \
 To see Firefox browser history:
 ```shell
 $ cat CousingLobe.json | \
-    python -m osxcollector.output_filters.firefox.sort_history |\
+    python -m osxcollector.output_filters.firefox.sort_history | \
     jq 'select(.osxcollector_browser_history=="firefox")'
 ```
 
