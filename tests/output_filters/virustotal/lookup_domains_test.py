@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import mock
-
-from osxcollector.output_filters.virustotal.api import VirusTotalApi
 from osxcollector.output_filters.virustotal. \
     lookup_domains import LookupDomainsFilter
 from tests.output_filters.run_filter_test import RunFilterTest
@@ -19,27 +16,23 @@ class LookupDomainsFilterTest(RunFilterTest):
 
     def test_benign_domains(self):
         input_blobs = [
-            {'osxcollector_domains': ['www.example.com'], 'dingo': 'bingo', 'apple': [3, 14]},
-            {'osxcollector_domains': ['www.example.co.uk'], 'bingo': 'bongo', 'orange': 'banana'}
+            {'osxcollector_domains': ['good.example.com'], 'dingo': 'bingo', 'apple': [3, 14]},
+            {'osxcollector_domains': ['good.example.co.uk'], 'bingo': 'bongo', 'orange': 'banana'}
         ]
 
-        reports = self.load_reports('./tests/output_filters/virustotal/data/benign_domain_reports.json')
-        with mock.patch.object(VirusTotalApi, 'get_domain_reports', autospec=True, return_value=reports) \
-                as mock_get_domain_reports:
-            self.run_test(LookupDomainsFilter, input_blobs=input_blobs, expected_output_blobs=input_blobs)
-            mock_get_domain_reports.assert_called_with(mock.ANY, ['www.example.co.uk', 'www.example.com'])
+        self.run_test(LookupDomainsFilter, input_blobs=input_blobs, expected_output_blobs=input_blobs)
 
     def test_suspicious_domains(self):
         input_blobs = [
-            {'osxcollector_domains': ['www.example.com'], 'dingo': 'bingo', 'apple': [3, 14]},
-            {'osxcollector_domains': ['www.example.co.uk'], 'bingo': 'bongo', 'orange': 'banana'}
+            {'osxcollector_domains': ['evil.example.com'], 'dingo': 'bingo', 'apple': [3, 14]},
+            {'osxcollector_domains': ['evil.example.co.uk'], 'bingo': 'bongo', 'orange': 'banana'}
         ]
         output_blobs = [
             {
-                'osxcollector_domains': ['www.example.com'],
+                'osxcollector_domains': ['evil.example.com'],
                 'osxcollector_vtdomain': [
                     {
-                        'domain': 'www.example.com',
+                        'domain': 'evil.example.com',
                         'response_code': 1,
                         'detections': {
                             'undetected_referrer_samples': 0,
@@ -55,10 +48,10 @@ class LookupDomainsFilterTest(RunFilterTest):
                 'dingo': 'bingo',
                 'apple': [3, 14]},
             {
-                'osxcollector_domains': ['www.example.co.uk'],
+                'osxcollector_domains': ['evil.example.co.uk'],
                 'osxcollector_vtdomain': [
                     {
-                        'domain': 'www.example.co.uk',
+                        'domain': 'evil.example.co.uk',
                         'response_code': 1,
                         'detections': {
                             'undetected_referrer_samples': 0,
@@ -73,9 +66,4 @@ class LookupDomainsFilterTest(RunFilterTest):
                 'bingo': 'bongo',
                 'orange': 'banana'}
         ]
-        reports = self.load_reports('./tests/output_filters/virustotal/data/suspicious_domain_reports.json')
-
-        with mock.patch.object(VirusTotalApi, 'get_domain_reports', autospec=True, return_value=reports) \
-                as mock_get_domain_reports:
-            self.run_test(LookupDomainsFilter, input_blobs=input_blobs, expected_output_blobs=output_blobs)
-            mock_get_domain_reports.assert_called_with(mock.ANY, ['www.example.co.uk', 'www.example.com'])
+        self.run_test(LookupDomainsFilter, input_blobs=input_blobs, expected_output_blobs=output_blobs)

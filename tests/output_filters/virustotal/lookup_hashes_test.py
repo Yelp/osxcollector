@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import mock
-
-from osxcollector.output_filters.virustotal.api import VirusTotalApi
 from osxcollector.output_filters.virustotal. \
     lookup_hashes import LookupHashesFilter
 from tests.output_filters.run_filter_test import RunFilterTest
@@ -21,15 +18,7 @@ class LookupHashesFilterTest(RunFilterTest):
             {'sha2': 'b8d99a20b148b6906977922ce2f964748c70cc36d5c5806a5c41ac9cb50f16d7', 'dingo': 'bingo', 'apple': [3, 14]},
             {'sha2': '52d3df0ed60c46f336c131bf2ca454f73bafdc4b04dfa2aea80746f5ba9e6d1c', 'bingo': 'bongo', 'orange': 'banana'}
         ]
-
-        reports = self.load_reports('./tests/output_filters/virustotal/data/benign_file_reports.json')
-        with mock.patch.object(VirusTotalApi, 'get_file_reports', autospec=True, return_value=reports) \
-                as mock_get_file_reports:
-            self.run_test(LookupHashesFilter, input_blobs=input_blobs, expected_output_blobs=input_blobs)
-            mock_get_file_reports.assert_called_with(mock.ANY, [
-                '52d3df0ed60c46f336c131bf2ca454f73bafdc4b04dfa2aea80746f5ba9e6d1c',
-                'b8d99a20b148b6906977922ce2f964748c70cc36d5c5806a5c41ac9cb50f16d7'
-            ])
+        self.run_test(LookupHashesFilter, input_blobs=input_blobs, expected_output_blobs=input_blobs)
 
     def test_suspicious_hashes(self):
         input_blobs = [
@@ -71,12 +60,4 @@ class LookupHashesFilterTest(RunFilterTest):
                 'bingo': 'bongo',
                 'orange': 'banana'}
         ]
-
-        reports = self.load_reports('./tests/output_filters/virustotal/data/suspicious_file_reports.json')
-        with mock.patch.object(VirusTotalApi, 'get_file_reports', autospec=True, return_value=reports) \
-                as mock_get_file_reports:
-            self.run_test(LookupHashesFilter, input_blobs=input_blobs, expected_output_blobs=output_blobs)
-            mock_get_file_reports.assert_called_with(mock.ANY, [
-                '6e87855371171d912dd866e8d7747bf965c80053f83259827a55826ca38a9360',
-                'b779bafdf61b74784f2d3601ed663d7476da9ad4182601b8ca54fd4fbe1aa302'
-            ])
+        self.run_test(LookupHashesFilter, input_blobs=input_blobs, expected_output_blobs=output_blobs)
