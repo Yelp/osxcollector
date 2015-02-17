@@ -25,10 +25,9 @@ class LookupHashesFilterTest(RunFilterTest):
             {'sha2': 'b779bafdf61b74784f2d3601ed663d7476da9ad4182601b8ca54fd4fbe1aa302', 'dingo': 'bingo', 'apple': [3, 14]},
             {'sha2': '6e87855371171d912dd866e8d7747bf965c80053f83259827a55826ca38a9360', 'bingo': 'bongo', 'orange': 'banana'}
         ]
-        output_blobs = [
-            {
-                'sha2': 'b779bafdf61b74784f2d3601ed663d7476da9ad4182601b8ca54fd4fbe1aa302',
-                'osxcollector_vthash': [{
+        expected_vthashes = [
+            [
+                {
                     'scan_id': 'b779bafdf61b74784f2d3601ed663d7476da9ad4182601b8ca54fd4fbe1aa302-1273894724',
                     'sha1': 'da9b79f2fd33d002033b69a9a346af4671a9e16b',
                     'sha256': 'b779bafdf61b74784f2d3601ed663d7476da9ad4182601b8ca54fd4fbe1aa302',
@@ -39,13 +38,10 @@ class LookupHashesFilterTest(RunFilterTest):
                     'total': 40,
                     'positives': 40,
                     'response_code': 1
-                }],
-                'dingo': 'bingo',
-                'apple': [3, 14]
-            },
-            {
-                'sha2': '6e87855371171d912dd866e8d7747bf965c80053f83259827a55826ca38a9360',
-                'osxcollector_vthash': [{
+                }
+            ],
+            [
+                {
                     'scan_id': '52d3df0ed60c46f336c131bf2ca454f73bafdc4b04dfa2aea80746f5ba9e6d1c-1273894724',
                     'sha1': '92e3750a9f0eef6290dd83867eff88064e9c01bb',
                     'sha256': '6e87855371171d912dd866e8d7747bf965c80053f83259827a55826ca38a9360',
@@ -56,8 +52,8 @@ class LookupHashesFilterTest(RunFilterTest):
                     'total': 40,
                     'positives': 40,
                     'response_code': 1
-                }],
-                'bingo': 'bongo',
-                'orange': 'banana'}
+                }
+            ]
         ]
-        self.run_test(LookupHashesFilter, input_blobs=input_blobs, expected_output_blobs=output_blobs)
+        output_blobs = self.run_test(LookupHashesFilter, input_blobs=input_blobs)
+        self.assert_key_added_to_blob('osxcollector_vthash', expected_vthashes, input_blobs, output_blobs)

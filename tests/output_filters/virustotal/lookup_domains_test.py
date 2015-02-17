@@ -27,43 +27,37 @@ class LookupDomainsFilterTest(RunFilterTest):
             {'osxcollector_domains': ['evil.example.com'], 'dingo': 'bingo', 'apple': [3, 14]},
             {'osxcollector_domains': ['evil.example.co.uk'], 'bingo': 'bongo', 'orange': 'banana'}
         ]
-        output_blobs = [
-            {
-                'osxcollector_domains': ['evil.example.com'],
-                'osxcollector_vtdomain': [
-                    {
-                        'domain': 'evil.example.com',
-                        'response_code': 1,
-                        'detections': {
-                            'undetected_referrer_samples': 0,
-                            'undetected_communicating_samples': 0,
-                            'detected_downloaded_samples': 5,
-                            'detected_referrer_samples': 5,
-                            'detected_communicating_samples': 5,
-                            'detected_urls': 5
-                        },
-                        'categorization': {}
-                    }
-                ],
-                'dingo': 'bingo',
-                'apple': [3, 14]},
-            {
-                'osxcollector_domains': ['evil.example.co.uk'],
-                'osxcollector_vtdomain': [
-                    {
-                        'domain': 'evil.example.co.uk',
-                        'response_code': 1,
-                        'detections': {
-                            'undetected_referrer_samples': 0,
-                            'undetected_communicating_samples': 0,
-                            'detected_downloaded_samples': 4,
-                            'detected_referrer_samples': 5,
-                            'detected_communicating_samples': 5,
-                            'detected_urls': 6
-                        },
-                        'categorization': {}
-                    }],
-                'bingo': 'bongo',
-                'orange': 'banana'}
+        expected_vtdomains = [
+            [
+                {
+                    'domain': 'evil.example.com',
+                    'response_code': 1,
+                    'detections': {
+                        'undetected_referrer_samples': 0,
+                        'undetected_communicating_samples': 0,
+                        'detected_downloaded_samples': 5,
+                        'detected_referrer_samples': 5,
+                        'detected_communicating_samples': 5,
+                        'detected_urls': 5
+                    },
+                    'categorization': {}
+                }
+            ],
+            [
+                {
+                    'domain': 'evil.example.co.uk',
+                    'response_code': 1,
+                    'detections': {
+                        'undetected_referrer_samples': 0,
+                        'undetected_communicating_samples': 0,
+                        'detected_downloaded_samples': 4,
+                        'detected_referrer_samples': 5,
+                        'detected_communicating_samples': 5,
+                        'detected_urls': 6
+                    },
+                    'categorization': {}
+                }
+            ]
         ]
-        self.run_test(LookupDomainsFilter, input_blobs=input_blobs, expected_output_blobs=output_blobs)
+        output_blobs = self.run_test(LookupDomainsFilter, input_blobs=input_blobs)
+        self.assert_key_added_to_blob('osxcollector_vtdomain', expected_vtdomains, input_blobs, output_blobs)
