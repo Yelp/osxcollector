@@ -3,11 +3,13 @@
 # RelatedFilesFilter finds files related to specific terms or file names.
 #
 import os.path
+from argparse import ArgumentParser
 
 import simplejson
 
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter
 
 
 class RelatedFilesFilter(OutputFilter):
@@ -19,7 +21,7 @@ class RelatedFilesFilter(OutputFilter):
     is discarded.
     """
 
-    def __init__(self, when, initial_terms=None):
+    def __init__(self, when=None, initial_terms=None):
         super(RelatedFilesFilter, self).__init__()
         self._all_blobs = list()
         self._terms = set()
@@ -39,7 +41,7 @@ class RelatedFilesFilter(OutputFilter):
     def filter_line(self, blob):
         self._all_blobs.append(blob)
 
-        if self._when(blob):
+        if self._when and self._when(blob):
             for key in self.FILE_NAME_KEYS:
                 val = DictUtils.get_deep(blob, key)
                 if val:
@@ -114,3 +116,16 @@ class RelatedFilesFilter(OutputFilter):
         'versions',
         'var'
     ]
+
+
+def main():
+    parser = ArgumentParser()
+    parser.add_argument('-f', '--file-term', dest='file_terms', default=[], action='append',
+                        help='[OPTIONAL] Suspicious terms to use in pivoting through file names.  May be specified more than once.')
+    args = parser.parse_args()
+
+    run_filter(RelatedFilesFilter(initial_terms=args.file_terms))
+
+
+if __name__ == "__main__":
+    main()

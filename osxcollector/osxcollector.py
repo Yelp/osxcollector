@@ -64,6 +64,7 @@ def debugbreak():
 HomeDir = namedtuple('HomeDir', ['user_name', 'path'])
 """A simple tuple for storing info about a user"""
 
+
 def _get_homedirs():
     """Return a list of HomeDir objects
 
