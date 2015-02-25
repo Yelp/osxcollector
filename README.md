@@ -358,7 +358,8 @@ This filter is great for figuring out how `evil_invoice.pdf` landed up on a mach
 Run it as:
 ```shell
 $ cat CanisAsp.json | \
-    python -m osxcollector.output_filters.related_files
+    python -m osxcollector.output_filters.related_files -f '/foo/bar/baz' \
+                                                        -f 'dingle'
 ```
 
 To see related lines try:
