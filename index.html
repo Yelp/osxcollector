@@ -457,7 +457,7 @@ $ emacs osxcollector.yaml</pre></div>
 <h4>
 <a id="basic-filters" class="anchor" href="#basic-filters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic Filters</h4>
 
-<p>Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds and fancy APIs.</p>
+<p>Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds or fancy APIs.</p>
 
 <h5>
 <a id="finddomainsfilter" class="anchor" href="#finddomainsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FindDomainsFilter</h5>
@@ -466,14 +466,15 @@ $ emacs osxcollector.yaml</pre></div>
 
 <p>FindDomainsFilter isn't too useful on it's own but it's super powerful when chained with filters like <code>FindBlacklistedFilter</code> and or <code>osxcollector.output_filters.virustotal.lookup_domains.LookupDomainsFilter</code>.</p>
 
-<p>Run it as:</p>
+<p>Running this will add the domains found by osxcollector to the output:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat RomeoCredible.json <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.find_domains</pre></div>
 
 <p>To see lines where domains have been added try:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_domains"))<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat RomeoCredible.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_domains"))<span class="pl-pds">'</span></span></pre></div>
 
 <h5>
 <a id="findblacklistedfilter" class="anchor" href="#findblacklistedfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>FindBlacklistedFilter</h5>
@@ -498,19 +499,23 @@ $ emacs osxcollector.yaml</pre></div>
 <code>blacklist_is_domains</code>: [OPTIONAL] interpret values as domains and do some smart regex and subdomain stuff with them.</li>
 </ul>
 
-<p>Run it as:</p>
+<p>Running this will tag blacklisted items in the output:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat RiddlerBelize.json <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.find_blacklisted</pre></div>
 
 <p>To see lines matching a blacklist try:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist"))<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat RiddlerBelize.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_blacklisted <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist"))<span class="pl-pds">'</span></span></pre></div>
 
-<p>To see lines matching a specific blacklist named <code>domains</code> try:</p>
+<p>If you want to find blacklisted domains, you will have to use the find_domains filter to pull the domains out first. To see lines matching a specific blacklist named <code>domains</code> try:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist")) |</span>
-<span class="pl-s1">      select(.osxcollector_blacklist | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat RiddlerBelize.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_domains <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.find_blacklisted <span class="pl-k">|</span> \
+    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist")) | \</span>
+<span class="pl-s1">    select(.osxcollector_blacklist | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
 
 <h5>
 <a id="relatedfilesfilter" class="anchor" href="#relatedfilesfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>RelatedFilesFilter</h5>
@@ -522,7 +527,8 @@ $ emacs osxcollector.yaml</pre></div>
 <p>Run it as:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat CanisAsp.json <span class="pl-k">|</span> \
-    python -m osxcollector.output_filters.related_files</pre></div>
+    python -m osxcollector.output_filters.related_files -f <span class="pl-s1"><span class="pl-pds">'</span>/foo/bar/baz<span class="pl-pds">'</span></span> \
+                                                        -f <span class="pl-s1"><span class="pl-pds">'</span>dingle<span class="pl-pds">'</span></span></pre></div>
 
 <p>To see related lines try:</p>
 
@@ -534,14 +540,16 @@ $ emacs osxcollector.yaml</pre></div>
 
 <p><code>osxcollector.output_filters.chrome.sort_history.SortHistoryFilter</code> builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains <em>more</em> info. The <code>core_transition</code> and <code>page_transition</code> keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.</p>
 
-<p>Run it as:</p>
+<p>Running this will output json with the tags added by the filter:</p>
 
 <div class="highlight highlight-shell"><pre>$ cat PrinceCrazy.json <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.chrome.sort_history</pre></div>
 
 <p>To see Chrome browser history:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="chrome")<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat PrinceCrazy.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.chrome.sort_history <span class="pl-k">|</span> \
+    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="chrome")<span class="pl-pds">'</span></span></pre></div>
 
 <p>This is great mixed with a grep in a certain time window, like maybe the 5 minutes before that hinky download happened.</p>
 
@@ -557,7 +565,9 @@ $ emacs osxcollector.yaml</pre></div>
 
 <p>To see Firefox browser history:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="firefox")<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat CousingLobe.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.firefox.sort_history <span class="pl-k">|</span> \
+    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="firefox")<span class="pl-pds">'</span></span></pre></div>
 
 <h5>
 <a id="chromeextensionsfilter" class="anchor" href="#chromeextensionsfilter" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChromeExtensionsFilter</h5>
@@ -571,7 +581,9 @@ $ emacs osxcollector.yaml</pre></div>
 
 <p>To see Chrome extensions:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="chrome" and</span>
+<div class="highlight highlight-shell"><pre>$ cat MotherlyWolf.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.chrome.find_extensions <span class="pl-k">|</span> \
+    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="chrome" and</span>
 <span class="pl-s1">             .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
 
 <h5>
@@ -586,7 +598,9 @@ $ emacs osxcollector.yaml</pre></div>
 
 <p>To see Firefox extensions:</p>
 
-<div class="highlight highlight-shell"><pre>$ jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="firefox" and</span>
+<div class="highlight highlight-shell"><pre>$ cat FlawlessPelican.json <span class="pl-k">|</span> \
+    python -m osxcollector.output_filters.firefox.find_extensions <span class="pl-k">|</span> \
+    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="firefox" and</span>
 <span class="pl-s1">             .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
 
 <h4>
