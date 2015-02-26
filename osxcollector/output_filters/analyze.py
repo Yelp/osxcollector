@@ -32,29 +32,19 @@ import simplejson
 from osxcollector.output_filters.base_filters.chain import ChainFilter
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
-from osxcollector.output_filters.chrome. \
-    find_extensions import FindExtensionsFilter as ChromeExtensionsFilter
-from osxcollector.output_filters.chrome. \
-    sort_history import SortHistoryFilter as ChromeHistoryFilter
+from osxcollector.output_filters.chrome.find_extensions import FindExtensionsFilter as ChromeExtensionsFilter
+from osxcollector.output_filters.chrome.sort_history import SortHistoryFilter as ChromeHistoryFilter
 from osxcollector.output_filters.find_blacklisted import FindBlacklistedFilter
 from osxcollector.output_filters.find_domains import FindDomainsFilter
-from osxcollector.output_filters.firefox. \
-    find_extensions import FindExtensionsFilter as FirefoxExtensionsFilter
-from osxcollector.output_filters.firefox. \
-    sort_history import SortHistoryFilter as FirefoxHistoryFilter
-from osxcollector.output_filters.opendns. \
-    lookup_domains import LookupDomainsFilter as OpenDnsLookupDomainsFilter
-from osxcollector.output_filters.opendns. \
-    related_domains import RelatedDomainsFilter as OpenDnsRelatedDomainsFilter
+from osxcollector.output_filters.firefox.find_extensions import FindExtensionsFilter as FirefoxExtensionsFilter
+from osxcollector.output_filters.firefox.sort_history import SortHistoryFilter as FirefoxHistoryFilter
+from osxcollector.output_filters.opendns.lookup_domains import LookupDomainsFilter as OpenDnsLookupDomainsFilter
+from OSXCollector.output_filters.opendns.related_domains import DEFAULT_RELATED_DOMAINS_GENERATIONS
+from osxcollector.output_filters.opendns.related_domains import RelatedDomainsFilter as OpenDnsRelatedDomainsFilter
 from osxcollector.output_filters.related_files import RelatedFilesFilter
-from osxcollector.output_filters.shadowserver. \
-    lookup_hashes import LookupHashesFilter as ShadowServerLookupHashesFilter
-from osxcollector.output_filters.virustotal. \
-    lookup_domains import LookupDomainsFilter as VtLookupDomainsFilter
-from osxcollector.output_filters.virustotal. \
-    lookup_hashes import LookupHashesFilter as VtLookupHashesFilter
-
-DEFAULT_RELATED_DOMAINS_GENERATIONS = 2
+from osxcollector.output_filters.shadowserver.lookup_hashes import LookupHashesFilter as ShadowServerLookupHashesFilter
+from osxcollector.output_filters.virustotal.lookup_domains import LookupDomainsFilter as VtLookupDomainsFilter
+from osxcollector.output_filters.virustotal.lookup_hashes import LookupHashesFilter as VtLookupHashesFilter
 
 
 class AnalyzeFilter(ChainFilter):

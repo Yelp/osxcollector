@@ -2,12 +2,17 @@
 #
 # RelatedDomains uses OpenDNS to find domains related to input domains or ips and adds 'osxcollector_related' key when it finds them.
 #
+from argparse import ArgumentParser
+
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter
 from osxcollector.output_filters.opendns.api import InvestigateApi
 from osxcollector.output_filters.util.blacklist import create_blacklist
 from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.util.domains import expand_domain
+
+
+DEFAULT_RELATED_DOMAINS_GENERATIONS = 2
 
 
 class RelatedDomainsFilter(OutputFilter):
@@ -17,7 +22,7 @@ class RelatedDomainsFilter(OutputFilter):
     A whitelist of domains to ignore is read during initialization.
     """
 
-    def __init__(self, initial_domains=None, initial_ips=None, generations=2, related_when=None):
+    def __init__(self, initial_domains=None, initial_ips=None, generations=DEFAULT_RELATED_DOMAINS_GENERATIONS, related_when=None):
         """Initializes the RelatedDomainsFilter.
 
         Args:
@@ -127,8 +132,17 @@ class RelatedDomainsFilter(OutputFilter):
 
 
 def main():
-    run_filter(RelatedDomainsFilter())
+    parser = ArgumentParser()
+    parser.add_argument('-d', '--domain', dest='domain_terms', default=[], action='append',
+                        help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
+    parser.add_argument('-i', '--ip', dest='ip_terms', default=[], action='append',
+                        help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
+    parser.add_argument('--related-domains-generations', dest='related_domains_generations', default=DEFAULT_RELATED_DOMAINS_GENERATIONS,
+                        help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
+    args = parser.parse_args()
 
+    run_filter(RelatedDomainsFilter(initial_domains=args.domain_terms,
+                                    initial_ips=args.ip_terms, generations=args.related_domains_generations))
 
 if __name__ == "__main__":
     main()

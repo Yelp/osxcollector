@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from osxcollector.output_filters.opendns. \
-    lookup_domains import LookupDomainsFilter
+from osxcollector.output_filters.opendns.lookup_domains import LookupDomainsFilter
 from tests.output_filters.run_filter_test import RunFilterTest
 
 
