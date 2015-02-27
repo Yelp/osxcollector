@@ -17,11 +17,11 @@ class InvestigateApi(object):
     Applies rate limits and issues parallel requests.
     """
 
-    BASE_URL = 'https://investigate.api.opendns.com/'
+    BASE_URL = u'https://investigate.api.opendns.com/'
 
     def __init__(self, api_key, cache_file_name=None):
         auth_header = {'Authorization': 'Bearer {0}'.format(api_key)}
-        self._requests = MultiRequest(default_headers=auth_header, max_requests=12, rate_limit=30)
+        self._requests = MultiRequest(default_headers=auth_header, max_requests=15, rate_limit=30)
 
         # Create an ApiCache if instructed to
         self._cache = ApiCache(cache_file_name) if cache_file_name else None
@@ -57,7 +57,7 @@ class InvestigateApi(object):
         Returns:
             A dict of {domain: categorization_result}
         """
-        url_path = 'domains/categorization/?showLabels'
+        url_path = u'domains/categorization/?showLabels'
         all_responses = {}
 
         if self._cache:
@@ -117,7 +117,7 @@ class InvestigateApi(object):
             A dict of {domain: security_result}
         """
         api_name = 'opendns-security'
-        fmt_url_path = 'security/name/{0}.json'
+        fmt_url_path = u'security/name/{0}.json'
         return self._multi_get(api_name, fmt_url_path, domains)
 
     def cooccurrences(self, domains):
@@ -129,7 +129,7 @@ class InvestigateApi(object):
             An enumerable of string domain names
         """
         api_name = 'opendns-cooccurrences'
-        fmt_url_path = 'recommendations/name/{0}.json'
+        fmt_url_path = u'recommendations/name/{0}.json'
         return self._multi_get(api_name, fmt_url_path, domains)
 
     def rr_history(self, ips):
@@ -141,5 +141,5 @@ class InvestigateApi(object):
             An enumerable of string domain names
         """
         api_name = 'opendns-rr_history'
-        fmt_url_path = 'dnsdb/ip/a/{0}.json'
+        fmt_url_path = u'dnsdb/ip/a/{0}.json'
         return self._multi_get(api_name, fmt_url_path, ips)

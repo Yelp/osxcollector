@@ -9,7 +9,7 @@ from osxcollector.output_filters.util.http import MultiRequest
 
 
 class ShadowServerApi(object):
-    BINTEST_URL = 'http://bin-test.shadowserver.org/api'
+    BINTEST_URL = u'http://bin-test.shadowserver.org/api'
 
     def __init__(self, cache_file_name=None):
         """Establishes basic HTTP params and loads a cache.

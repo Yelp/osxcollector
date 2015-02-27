@@ -42,13 +42,13 @@ def clean_domain(unclean_domain):
     """
     if not isinstance(unclean_domain, unicode):
         unclean_domain = unclean_domain.decode('utf-8', errors='ignore')
-    unclean_domain = unclean_domain.encode('ascii', errors='ignore')
+
     unclean_domain = re.sub(r'^[^a-zA-Z0-9]*(.*?)[^a-zA-Z0-9]*$', r'\1', unclean_domain)
 
     extracted = tldextract.extract(unclean_domain)
     if bool(extracted.domain and extracted.suffix):
         start_index = 1 if not extracted.subdomain else 0
         domain = '.'.join(extracted[start_index:]).lstrip('.')
-        return domain.encode('utf-8', errors='ignore')
+        return domain.encode('ascii', errors='ignore')
 
-    raise BadDomainError('Can not clean {0} {1}'.format(unclean_domain, repr(extracted)))
+    raise BadDomainError(u'Can not clean {0} {1}'.format(unclean_domain, repr(extracted)))

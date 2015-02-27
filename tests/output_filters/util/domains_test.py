@@ -30,6 +30,13 @@ class CleanDomainTest(T.TestCase):
     def test_unicode_mid2(self):
         self._test_clean_domain(u'stinkum.\xadexample.com', 'stinkum.example.com')
 
+    def test_punicoded(self):
+        # TODO: OSXCollector is confused by stuff that ought to be punycode... or something
+        self._test_clean_domain('hotmaıll.com', 'hotmall.com')
+
+    def test_unicode_punicoded(self):
+        self._test_clean_domain(u'hotmaıll.com', 'hotmall.com')
+
     def test_single_word(self):
         with T.assert_raises(BadDomainError):
             clean_domain('oneword')

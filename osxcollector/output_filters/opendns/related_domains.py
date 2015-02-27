@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 #
-# RelatedDomains uses OpenDNS to find domains related to input domains or IPs and adds 'osxcollector_related' key when it finds them.
-# {'osxcollector_related': {'domains': ['foo.com', 'bar.com']}}
+# RelatedDomains uses OpenDNS to find domains related to input domains or IPs.
+# Adds 'osxcollector_related' key to the output:
+# {
+#    'osxcollector_related': {
+#        'domains': {
+#            'domain_in_line.com': ['related_domain.com'],
+#            'another.com': ['1.2.3.4']
+#        }
+#     }
+# }
 #
 from argparse import ArgumentParser
 
@@ -18,9 +26,20 @@ DEFAULT_RELATED_DOMAINS_GENERATIONS = 2
 
 class RelatedDomainsFilter(OutputFilter):
 
-    """Uses OpenDNS to find domains related to input domains or ips.
+    """Uses OpenDNS to find domains related to input domains or IPs.
 
     A whitelist of domains to ignore is read during initialization.
+    Adds 'osxcollector_related' key to the output:
+    ```python
+    {
+       'osxcollector_related': {
+           'domains': {
+               'domain_in_line.com': ['related_domain.com'],
+               'another.com': ['1.2.3.4']
+           }
+        }
+    }
+    ```
     """
 
     def __init__(self, initial_domains=None, initial_ips=None, generations=DEFAULT_RELATED_DOMAINS_GENERATIONS, related_when=None):
@@ -61,33 +80,74 @@ class RelatedDomainsFilter(OutputFilter):
 
         if 'osxcollector_domains' in blob and self._related_when and self._related_when(blob):
             for domain in blob.get('osxcollector_domains'):
-                self._related_domains.add(domain)
+                self._domains_to_lookup.add(domain)
 
         return None
 
-    def _lookup_related_domains(self, domains_to_lookup, ips_to_lookup):
-        """Lookup all the related domains to the input domains.
+    def end_of_lines(self):
+        """Called after all lines have been fed to filter_output_line.
+
+        The OutputFilter performs any processing that requires the complete input to have already been fed.
+
+        Returns:
+            An enumerable of dicts
+        """
+        domains_to_related = self._perform_lookup_for_all_domains(self._domains_to_lookup, self._ips_to_lookup)
+
+        if domains_to_related:
+            for blob in self._all_blobs:
+                if 'osxcollector_domains' not in blob:
+                    continue
+                for domain in blob.get('osxcollector_domains'):
+                    add_related_domains = False
+                    if domain in domains_to_related.keys():
+                        blob.setdefault('osxcollector_related', {})
+                        blob['osxcollector_related'].setdefault('domains', {})
+                        blob['osxcollector_related']['domains'].setdefault(domain, [])
+                        blob['osxcollector_related']['domains'][domain] += domains_to_related[domain]
+                        add_related_domains = True
+
+                    # Unique the related domains
+                    if add_related_domains:
+                        blob['osxcollector_related']['domains'][domain] = list(set(blob['osxcollector_related']['domains'][domain]))
+
+        return self._all_blobs
+
+    def _filter_domains_by_whitelist(self, domains):
+        """Remove all domains that are on the whitelist.
+
+        Args:
+            domains: An enumerable of domains
+        Returns:
+            An enumerable of domains
+        """
+        return filter(lambda x: not self._whitelist.match_values(x), list(domains))
+
+    def _perform_lookup_for_all_domains(self, domains_to_lookup, ips_to_lookup):
+        """Lookup all the domains related to the input domains or IPs.
 
         Args:
             domains_to_lookup: Enumerable of domains
-            ips_to_lookup: Enumerable of ips
+            ips_to_lookup: Enumerable of IPs
         Returns:
             A dict mapping {'related_domain': ['initial_domainA', 'initial_domainB']}
         """
+        self._domains_to_lookup = self._filter_domains_by_whitelist(self._domains_to_lookup)
+
         domains_to_related = {}
 
         what_to_lookup = [(domain, True) for domain in domains_to_lookup] + [(ip, False) for ip in ips_to_lookup]
 
         for domain_or_ip, is_domain in what_to_lookup:
-            related_domains = self._lookup_nth_generation_related_domains(domain_or_ip, is_domain, self._generation_count)
-            related_domains = filter(lambda x: not self._whitelist.match_values(x), list(related_domains))
+            related_domains = self._perform_lookup_for_single_domain(domain_or_ip, is_domain, self._generation_count)
+            related_domains = self._filter_domains_by_whitelist(related_domains)
             for related_domain in related_domains:
                 domains_to_related.setdefault(related_domain, set())
                 domains_to_related[related_domain].add(domain_or_ip)
 
         return domains_to_related
 
-    def _lookup_nth_generation_related_domains(self, domain_or_ip, is_domain, generation_count):
+    def _perform_lookup_for_single_domain(self, domain_or_ip, is_domain, generation_count):
         """Given a domain or IP, lookup the Nth related domains.
 
         Args:
@@ -115,38 +175,19 @@ class RelatedDomainsFilter(OutputFilter):
 
         return domains_found
 
-    def end_of_lines(self):
-        """Called after all lines have been fed to filter_output_line.
-
-        The OutputFilter performs any processing that requires the complete input to have already been fed.
-
-        Returns:
-            An enumerable of dicts
-        """
-        domains_to_related = self._lookup_related_domains(self._domains_to_lookup, self._ips_to_lookup)
-
-        if domains_to_related:
-            blobs_with_domains = [blob for blob in self._all_blobs if 'osxcollector_domains' in blob]
-
-            for blob in blobs_with_domains:
-                add_related_domains = False
-                for domain in blob.get('osxcollector_domains'):
-                    if domain in domains_to_related.keys():
-                        blob.setdefault('osxcollector_related', {})
-                        blob['osxcollector_related'].setdefault('domains', [])
-                        blob['osxcollector_related']['domains'] += list(domains_to_related[domain])
-                        add_related_domains = True
-
-                # Unique the related domains
-                if add_related_domains:
-                    blob['osxcollector_related']['domains'] = list(set(blob['osxcollector_related']['domains']))
-
-        return self._all_blobs
-
     def _find_related_domains(self, domains, ips):
+        """Calls OpenDNS to find related domains and normalizes the responses.
+
+        Args:
+            domains: An enumerable of domains
+            ips: An enumerable of IPs
+        Returns:
+            An enumerable of domains
+        """
         related_domains = set()
 
         if domains:
+            domains = self._filter_domains_by_whitelist(domains)
             cooccurrence_info = self._investigate.cooccurrences(domains)
             cooccurrence_domains = self._cooccurrences_to_domains(cooccurrence_info)
             related_domains.update(cooccurrence_domains)
@@ -158,6 +199,13 @@ class RelatedDomainsFilter(OutputFilter):
         return related_domains
 
     def _cooccurrences_to_domains(self, cooccurrence_info):
+        """Parse the results of a call to the OpenDNS cooccurrences endpoint.
+
+        Args:
+            cooccurrence_info: Result of a call to cooccurrences
+        Returns:
+            An enumerable of domains
+        """
         domains = set()
 
         for domain, cooccurence in cooccurrence_info.iteritems():
@@ -168,6 +216,13 @@ class RelatedDomainsFilter(OutputFilter):
         return domains
 
     def _rr_history_to_domains(self, rr_history_info):
+        """Parse the results of a call to the OpenDNS rr_history endpoint.
+
+        Args:
+            rr_history_info: Result of a call to rr_history
+        Returns:
+            An enumerable of domains
+        """
         domains = set()
 
         for ip, rr_history in rr_history_info.iteritems():
