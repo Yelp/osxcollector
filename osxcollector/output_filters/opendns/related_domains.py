@@ -96,11 +96,9 @@ class RelatedDomainsFilter(OutputFilter):
 
         if domains_to_related:
             for blob in self._all_blobs:
-                if 'osxcollector_domains' not in blob:
-                    continue
-                for domain in blob.get('osxcollector_domains'):
+                for domain in blob.get('osxcollector_domains', []):
                     add_related_domains = False
-                    if domain in domains_to_related.keys():
+                    if domain in domains_to_related:
                         blob.setdefault('osxcollector_related', {})
                         blob['osxcollector_related'].setdefault('domains', {})
                         blob['osxcollector_related']['domains'].setdefault(domain, [])
