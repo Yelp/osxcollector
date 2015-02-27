@@ -43,8 +43,8 @@ virustotal:
          cache_file_name: "./tests/output_filters/data/cache.virustotal.LookupDomainsFilter.json"
 
 # No cache data is available or opendns yet
-# opendns:
+opendns:
 #     LookupDomainsFilter:
 #         cache_file_name: "./tests/output_filters/data/cache.opendns.LookupDomainsFilter.json"
-#     RelatedDomainsFilter:
-#         cache_file_name: "./tests/output_filters/data/cache.opendns.RelatedDomainsFilter.json"
+    RelatedDomainsFilter:
+        cache_file_name: "./tests/output_filters/data/cache.opendns.RelatedDomainsFilter.json"

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# RelatedDomains uses OpenDNS to find domains related to input domains or ips and adds 'osxcollector_related' key when it finds them.
+# RelatedDomains uses OpenDNS to find domains related to input domains or IPs and adds 'osxcollector_related' key when it finds them.
+# {'osxcollector_related': {'domains': ['foo.com', 'bar.com']}}
 #
 from argparse import ArgumentParser
 
@@ -40,13 +41,11 @@ class RelatedDomainsFilter(OutputFilter):
         cache_file_name = config_get_deep('opendns.RelatedDomainsFilter.cache_file_name', None)
         self._investigate = InvestigateApi(config_get_deep('api_key.opendns'), cache_file_name=cache_file_name)
 
-        self._initial_domains = set(initial_domains) if initial_domains else set()
-        self._initial_ips = set(initial_ips) if initial_ips else set()
-
-        self._related_domains = set(initial_domains) if initial_domains else set()
+        self._domains_to_lookup = set(initial_domains) if initial_domains else set()
+        self._ips_to_lookup = set(initial_ips) if initial_ips else set()
 
         self._related_when = related_when
-        self._generations = generations
+        self._generation_count = generations
 
         self._all_blobs = list()
 
@@ -66,6 +65,56 @@ class RelatedDomainsFilter(OutputFilter):
 
         return None
 
+    def _lookup_related_domains(self, domains_to_lookup, ips_to_lookup):
+        """Lookup all the related domains to the input domains.
+
+        Args:
+            domains_to_lookup: Enumerable of domains
+            ips_to_lookup: Enumerable of ips
+        Returns:
+            A dict mapping {'related_domain': ['initial_domainA', 'initial_domainB']}
+        """
+        domains_to_related = {}
+
+        what_to_lookup = [(domain, True) for domain in domains_to_lookup] + [(ip, False) for ip in ips_to_lookup]
+
+        for domain_or_ip, is_domain in what_to_lookup:
+            related_domains = self._lookup_nth_generation_related_domains(domain_or_ip, is_domain, self._generation_count)
+            related_domains = filter(lambda x: not self._whitelist.match_values(x), list(related_domains))
+            for related_domain in related_domains:
+                domains_to_related.setdefault(related_domain, set())
+                domains_to_related[related_domain].add(domain_or_ip)
+
+        return domains_to_related
+
+    def _lookup_nth_generation_related_domains(self, domain_or_ip, is_domain, generation_count):
+        """Given a domain or IP, lookup the Nth related domains.
+
+        Args:
+            domain_or_ip: A string domain name or IP
+            is_domain: A boolean of whether the previous arg is a domain or IP
+            generation_count: A count of generations to lookup
+        Returns:
+            set of related domains
+        """
+        domains_found = set([domain_or_ip]) if is_domain else set()
+        generation_results = set([domain_or_ip])
+
+        # For IPs, do one IP specific lookup then switch to domain lookups
+        if not is_domain:
+            generation_results = self._find_related_domains(None, generation_results)
+            domains_found |= generation_results
+            generation_count -= 1
+
+        while generation_count > 0:
+            if len(generation_results):
+                generation_results = self._find_related_domains(generation_results, None)
+                domains_found |= generation_results
+
+            generation_count -= 1
+
+        return domains_found
+
     def end_of_lines(self):
         """Called after all lines have been fed to filter_output_line.
 
@@ -74,26 +123,23 @@ class RelatedDomainsFilter(OutputFilter):
         Returns:
             An enumerable of dicts
         """
-        domains = self._initial_domains
-        ips = self._initial_ips
+        domains_to_related = self._lookup_related_domains(self._domains_to_lookup, self._ips_to_lookup)
 
-        generations = self._generations
-        while generations > 0:
-            domains = self._find_related_domains(domains, ips)
-            ips = None
+        if domains_to_related:
+            blobs_with_domains = [blob for blob in self._all_blobs if 'osxcollector_domains' in blob]
 
-            self._related_domains |= domains
-            generations -= 1
-
-        self._related_domains = filter(lambda x: not self._whitelist.match_values(x), list(self._related_domains))
-
-        for blob in self._all_blobs:
-            if self._related_domains and 'osxcollector_domains' in blob:
+            for blob in blobs_with_domains:
+                add_related_domains = False
                 for domain in blob.get('osxcollector_domains'):
-                    if domain in self._related_domains:
+                    if domain in domains_to_related.keys():
                         blob.setdefault('osxcollector_related', {})
                         blob['osxcollector_related'].setdefault('domains', [])
-                        blob['osxcollector_related']['domains'].append(domain)
+                        blob['osxcollector_related']['domains'] += list(domains_to_related[domain])
+                        add_related_domains = True
+
+                # Unique the related domains
+                if add_related_domains:
+                    blob['osxcollector_related']['domains'] = list(set(blob['osxcollector_related']['domains']))
 
         return self._all_blobs
 
@@ -102,7 +148,8 @@ class RelatedDomainsFilter(OutputFilter):
 
         if domains:
             cooccurrence_info = self._investigate.cooccurrences(domains)
-            related_domains.update(self._cooccurrences_to_domains(cooccurrence_info))
+            cooccurrence_domains = self._cooccurrences_to_domains(cooccurrence_info)
+            related_domains.update(cooccurrence_domains)
 
         if ips:
             rr_history_info = self._investigate.rr_history(ips)
