@@ -466,7 +466,7 @@ $ jq 'select(has("osxcollector_related")) |
 ```
 
 The results will look something like:
-```json
+```
 {
    'osxcollector_related': {
        'domains': {
