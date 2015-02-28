@@ -446,11 +446,15 @@ Using these filters as examples, it would be possible to integrate with addition
 
 Often an initial alert contains a domain or IP your analysts don't know anything about. However, by gathering the 2nd generation related domains, familiar _friends_ might appear. When you're lucky, those related domains land up being the download source for some downloads you might have overlooked.
 
+The filter will ignore domains if they are in the blacklist named `domain_whitelist`. This helps to reduce churn and false positives.
+
 Run it as:
 ```shell
 $ cat NotchCherry.json | \
     python -m osxcollector.output_filters.find_domains | \
-    python -m osxcollector.output_filters.opendns.related_domains
+    python -m osxcollector.output_filters.opendns.related_domains \
+           -d dismalhedgehog.com -d fantasticrabbit.org \
+           -i 128.128.128.28
 ```
 
 To see what it found:
@@ -459,6 +463,18 @@ $ jq 'select(has("osxcollector_related")) |
       select(.osxcollector_related |
              keys[] |
              contains("domains"))'
+```
+
+The results will look something like:
+```
+{
+   'osxcollector_related': {
+       'domains': {
+           'domain_in_line.com': ['dismalhedgehog.com'],
+           'another.com': ['128.128.128.28']
+       }
+    }
+}
 ```
 
 ##### OpenDNS LookupDomainsFilter

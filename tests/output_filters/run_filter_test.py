@@ -64,9 +64,10 @@ class RunFilterTest(T.TestCase):
             output_blobs: A list of dicts that are the output.
         """
 
-        actual_values = list(blob.get(added_key, None) for blob in output_blobs)
-        for actual, expected in zip(actual_values, expected_values):
-            assert_equal_sorted(actual, expected)
+        if expected_values:
+            actual_values = list(blob.get(added_key, None) for blob in output_blobs)
+            for actual, expected in zip(actual_values, expected_values):
+                assert_equal_sorted(actual, expected)
 
         # Minus the added key, the input should be unchanged
         for input_blob, output_blob in zip(input_blobs, output_blobs):

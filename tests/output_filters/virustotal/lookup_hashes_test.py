@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from osxcollector.output_filters.virustotal. \
-    lookup_hashes import LookupHashesFilter
+from osxcollector.output_filters.virustotal.lookup_hashes import LookupHashesFilter
 from tests.output_filters.run_filter_test import RunFilterTest
 
 

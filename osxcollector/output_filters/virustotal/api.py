@@ -8,7 +8,7 @@ from osxcollector.output_filters.util.http import MultiRequest
 
 
 class VirusTotalApi(object):
-    BASE_DOMAIN = 'https://www.virustotal.com/vtapi/v2/'
+    BASE_DOMAIN = u'https://www.virustotal.com/vtapi/v2/'
 
     def __init__(self, api_key, cache_file_name=None):
         """Establishes basic HTTP params and loads a cache.
@@ -36,7 +36,7 @@ class VirusTotalApi(object):
         all_responses, resources = self._bulk_cache_lookup(api_name, resources)
 
         resource_chunks = self._prepare_resource_chunks(resources)
-        response_chunks = self._request_reports("resource", resource_chunks, 'file/report')
+        response_chunks = self._request_reports('resource', resource_chunks, 'file/report')
 
         self._extract_response_chunks(all_responses, response_chunks, api_name)
 
@@ -54,7 +54,7 @@ class VirusTotalApi(object):
         api_name = 'virustotal-domain-reports'
         (all_responses, domains) = self._bulk_cache_lookup(api_name, domains)
 
-        responses = self._request_reports("domain", domains, 'domain/report')
+        responses = self._request_reports('domain', domains, 'domain/report')
 
         for domain, response in zip(domains, responses):
             if self._cache:
@@ -76,7 +76,7 @@ class VirusTotalApi(object):
         (all_responses, resources) = self._bulk_cache_lookup(api_name, resources)
 
         resource_chunks = self._prepare_resource_chunks(resources, '\n')
-        response_chunks = self._request_reports("resource", resource_chunks, 'url/report')
+        response_chunks = self._request_reports('resource', resource_chunks, 'url/report')
 
         self._extract_response_chunks(all_responses, response_chunks, api_name)
 
