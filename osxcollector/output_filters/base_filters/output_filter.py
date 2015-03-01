@@ -129,7 +129,7 @@ def run_filter_main(output_filter_cls):
     argument_parents = [filter_arguments] if filter_arguments else []
 
     parser = ArgumentParser(parents=argument_parents, conflict_handler='resolve')
-    parser.add_argument('--input-file', dest='input_file', default=None,
+    parser.add_argument('-i', '--input-file', dest='input_file', default=None,
                         help='[OPTIONAL] Path to OSXCollector output to read. Defaults to stdin otherwise.')
     args = parser.parse_args()
 
