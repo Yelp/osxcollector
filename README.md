@@ -240,7 +240,7 @@ Hashes files in the mail app directories:
  - `~/Library/Mail`
  - `~/Library/Mail Downloads`
 
-#### `full_hash` section
+##### `full_hash` section
 Hashes all the files on disk. All of 'em. This does not run by default. It must be triggered with:
 ```shell
 $ sudo osxcollector.py -s full_hash
