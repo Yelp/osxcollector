@@ -65,7 +65,7 @@ class RelatedFilesFilter(OutputFilter):
 
         return self._all_blobs
 
-    def get_commandline_args(self):
+    def get_argument_parser(self):
         parser = ArgumentParser()
         group = parser.add_argument_group('RelatedFilesFilter')
         group.add_argument('-f', '--file-term', dest='file_terms', default=[], action='append',

@@ -91,21 +91,34 @@ class ChainFilter(OutputFilter):
 
         return filtered_lines
 
-    def get_commandline_args(self):
+    def get_argument_parser(self):
+        """Collects the ArgumentParsers from every OutputFilter in the chain.
+
+        Returns:
+            An `argparse.ArgumentParser`
+        """
         parsers_to_chain = []
 
         cur_link = self._head_of_chain
         while cur_link:
-            arg_parser = cur_link.get_commandline_args()
+            arg_parser = cur_link.get_argument_parser()
             if arg_parser:
                 parsers_to_chain.append(arg_parser)
             cur_link = cur_link._next_link
 
-        parser = self._on_get_commandline_args()
+        parser = self._on_get_argument_parser()
         if parser:
             parsers_to_chain.append(parser)
 
         if parsers_to_chain:
             return ArgumentParser(parents=parsers_to_chain, conflict_handler='resolve')
 
+        return None
+
+    def _on_get_argument_parser(self):
+        """Returns an ArgumentParser with arguments for just this OutputFilter (not the contained chained OutputFilters).
+
+        Returns:
+            An `argparse.ArgumentParser`
+        """
         return None

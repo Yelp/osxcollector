@@ -69,22 +69,22 @@ class AnalyzeFilter(ChainFilter):
             if not no_shadowserver:
                 filter_chain.append(ShadowServerLookupHashesFilter(**kwargs))
             if not no_virustotal:
-                filter_chain.append(VtLookupHashesFilter(lookup_when=lookup_when_not_in_shadowserver, **kwargs))
+                filter_chain.append(VtLookupHashesFilter(lookup_when=AnalyzeFilter.lookup_when_not_in_shadowserver, **kwargs))
 
             # Find blacklisted stuff next. Finding blacklisted domains requires running FindDomainsFilter first.
             filter_chain.append(FindBlacklistedFilter(**kwargs))
 
             # RelatedFilesFilter and OpenDnsRelatedDomainsFilter use command line args in addition to previous filter results to find
             # lines of interest.
-            filter_chain.append(RelatedFilesFilter(when=find_related_when, **kwargs))
+            filter_chain.append(RelatedFilesFilter(when=AnalyzeFilter.find_related_when, **kwargs))
             if not no_opendns:
-                filter_chain.append(OpenDnsRelatedDomainsFilter(related_when=find_related_when, **kwargs))
+                filter_chain.append(OpenDnsRelatedDomainsFilter(related_when=AnalyzeFilter.find_related_when, **kwargs))
 
             # Lookup threat info on suspicious and related stuff
             if not no_virustotal:
-                filter_chain.append(OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver, **kwargs))
+                filter_chain.append(OpenDnsLookupDomainsFilter(lookup_when=AnalyzeFilter.lookup_when_not_in_shadowserver, **kwargs))
             if not no_opendns:
-                filter_chain.append(VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when, **kwargs))
+                filter_chain.append(VtLookupDomainsFilter(lookup_when=AnalyzeFilter.lookup_domains_in_vt_when, **kwargs))
 
             # Sort browser history for maximum pretty
             filter_chain.append(FirefoxHistoryFilter(**kwargs))
@@ -97,7 +97,12 @@ class AnalyzeFilter(ChainFilter):
 
         super(AnalyzeFilter, self).__init__(filter_chain, **kwargs)
 
-    def _on_get_commandline_args(self):
+    def _on_get_argument_parser(self):
+        """Returns an ArgumentParser with arguments for just this OutputFilter (not the contained chained OutputFilters).
+
+        Returns:
+            An `argparse.ArgumentParser`
+        """
         parser = ArgumentParser()
         group = parser.add_argument_group('AnalyzeFilter')
         group.add_argument('--readout', dest='readout', action='store_true', default=False,
@@ -108,49 +113,55 @@ class AnalyzeFilter(ChainFilter):
                            help='[OPTIONAL] Don\'t run VirusTotal filters')
         group.add_argument('--no-shadowserver', dest='no_shadowserver', action='store_true', default=False,
                            help='[OPTIONAL] Don\'t run ShadowServer filters')
+        group.add_argument('-M', '--monochrome', dest='monochrome', action='store_true', default=False,
+                           help='[OPTIONAL] Output monochrome analysis')
+        group.add_argument('--show-signature-chain', dest='show_signature_chain', action='store_true', default=False,
+                           help='[OPTIONAL] Output unsigned startup items and kexts.')
+        group.add_argument('--show-browser-ext', dest='show_browser_ext', action='store_true', default=False,
+                           help='[OPTIONAL] Output the list of installed browser extensions.')
         return parser
 
+    @staticmethod
+    def include_in_summary(blob):
+        _KEYS_FOR_SUMMARY = [
+            'osxcollector_vthash',
+            'osxcollector_vtdomain',
+            'osxcollector_opendns',
+            'osxcollector_blacklist',
+            'osxcollector_related'
+        ]
 
-def include_in_summary(blob):
-    _KEYS_FOR_SUMMARY = [
-        'osxcollector_vthash',
-        'osxcollector_vtdomain',
-        'osxcollector_opendns',
-        'osxcollector_blacklist',
-        'osxcollector_related'
-    ]
+        return any([key in blob for key in _KEYS_FOR_SUMMARY])
 
-    return any([key in blob for key in _KEYS_FOR_SUMMARY])
+    @staticmethod
+    def lookup_when_not_in_shadowserver(blob):
+        """ShadowServer whitelists blobs that can be ignored."""
+        return 'osxcollector_shadowserver' not in blob
 
+    @staticmethod
+    def lookup_domains_in_vt_when(blob):
+        """VT domain lookup is a final step and what to lookup is dependent upon what has been found so far."""
+        return AnalyzeFilter.lookup_when_not_in_shadowserver(blob) and AnalyzeFilter.include_in_summary(blob)
 
-def lookup_when_not_in_shadowserver(blob):
-    """ShadowServer whitelists blobs that can be ignored."""
-    return 'osxcollector_shadowserver' not in blob
+    @staticmethod
+    def find_related_when(blob):
+        """When to find related terms or domains.
 
+        Stuff in ShadowServer is not interesting.
+        Blacklisted file paths are worth investigating.
+        Files where the md5 could not be calculated are also interesting. Root should be able to read files.
+        Files with a bad hash in VT are obviously malware, go find related bad stuff.
 
-def lookup_domains_in_vt_when(blob):
-    """VT domain lookup is a final step and what to lookup is dependent upon what has been found so far."""
-    return lookup_when_not_in_shadowserver(blob) and include_in_summary(blob)
-
-
-def find_related_when(blob):
-    """When to find related terms or domains.
-
-    Stuff in ShadowServer is not interesting.
-    Blacklisted file paths are worth investigating.
-    Files where the md5 could not be calculated are also interesting. Root should be able to read files.
-    Files with a bad hash in VT are obviously malware, go find related bad stuff.
-
-    Args:
-        blob - a line of output from OSXCollector
-    Returns:
-        boolean
-    """
-    if 'osxcollector_shadowserver' in blob:
-        return False
-    if '' == blob.get('md5', None):
-        return True
-    return any([key in blob for key in ['osxcollector_vthash', 'osxcollector_related']])
+        Args:
+            blob - a line of output from OSXCollector
+        Returns:
+            boolean
+        """
+        if 'osxcollector_shadowserver' in blob:
+            return False
+        if '' == blob.get('md5', None):
+            return True
+        return any([key in blob for key in ['osxcollector_vthash', 'osxcollector_related']])
 
 
 class _OutputToFileFilter(OutputFilter):
@@ -254,18 +265,6 @@ class _VeryReadableOutputFilter(OutputFilter):
                 self._extensions.append(blob)
 
         return None
-
-    @classmethod
-    def get_commandline_args(cls):
-        parser = ArgumentParser()
-        group = parser.add_argument_group('_VeryReadableOutputFilter')
-        group.add_argument('-M', '--monochrome', dest='monochrome', action='store_true', default=False,
-                           help='[OPTIONAL] Output monochrome analysis')
-        group.add_argument('--show-signature-chain', dest='show_signature_chain', action='store_true', default=False,
-                           help='[OPTIONAL] Output unsigned startup items and kexts.')
-        group.add_argument('--show-browser-ext', dest='show_browser_ext', action='store_true', default=False,
-                           help='[OPTIONAL] Output the list of installed browser extensions.')
-        return parser
 
     def _write(self, msg, color=END_COLOR):
         if not self._monochrome:

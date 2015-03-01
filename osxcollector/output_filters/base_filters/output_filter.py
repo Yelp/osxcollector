@@ -2,7 +2,7 @@
 #
 # An OutputFilter transforms the output from OSXCollector. Every filter must derive from OutputFilter.
 #
-# run_filter is a default implementation of a main that reads input from stdin, feeds it to an OutputFilter, and
+# _run_filter is a default implementation of a main that reads input from stdin, feeds it to an OutputFilter, and
 # spits the output to stdout.
 #
 import sys
@@ -30,6 +30,11 @@ class OutputFilter(object):
     """
 
     def __init__(self, **kwargs):
+        """Skeleton for __init__
+
+        Args:
+            kwargs: Variable arguments are used to pass filter specific args to OutputFilters.
+        """
         pass
 
     def filter_line(self, blob):
@@ -55,8 +60,11 @@ class OutputFilter(object):
         """
         return []
 
-    def get_commandline_args(self):
-        """Return the commandline arguments for this OutputFilter.
+    def get_argument_parser(self):
+        """Describes commandline arguments for this OutputFilter.
+
+        The names of the `dest` param for the argument in the ArgumentParser must match the name of positional or
+        named arguments in `__init__`
 
         Returns:
             An `argparse.ArgumentParser`
@@ -78,7 +86,7 @@ def _unbuffered_input(read_from):
         line = read_from.readline()
 
 
-def run_filter(output_filter, input_stream=None, output_stream=None, *args, **kwargs):
+def _run_filter(output_filter, input_stream=None, output_stream=None, *args, **kwargs):
     """Feeds stdin to an instance of OutputFilter and spews to stdout.
 
     Args:
@@ -112,20 +120,23 @@ def run_filter(output_filter, input_stream=None, output_stream=None, *args, **kw
 
 
 def run_filter_main(output_filter_cls):
-    filter_arguments = output_filter_cls().get_commandline_args()
+    """A `main` method with runs an OutputFilter.
+
+    Args:
+        output_filter_cls: Class name of the OutputFilter
+    """
+    filter_arguments = output_filter_cls().get_argument_parser()
     argument_parents = [filter_arguments] if filter_arguments else []
 
     parser = ArgumentParser(parents=argument_parents, conflict_handler='resolve')
     parser.add_argument('--input-file', dest='input_file', default=None,
                         help='[OPTIONAL] Path to OSXCollector output to read. Defaults to stdin otherwise.')
-    parser.add_argument('--output-file', dest='output_file', default=None,
-                        help='[OPTIONAL] Path to write OutputFilter output. Defaults to stdout otherwise.')
     args = parser.parse_args()
 
     output_filter = output_filter_cls(**vars(args))
 
     if args.input_file:
         with(open(args.input_file, 'r')) as fp_in:
-            run_filter(output_filter, input_stream=fp_in)
+            _run_filter(output_filter, input_stream=fp_in)
     else:
-        run_filter(output_filter)
+        _run_filter(output_filter)

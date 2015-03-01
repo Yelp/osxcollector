@@ -116,13 +116,13 @@ class RelatedDomainsFilter(OutputFilter):
 
         return self._all_blobs
 
-    def get_commandline_args(self):
+    def get_argument_parser(self):
         parser = ArgumentParser()
         group = parser.add_argument_group('opendns.RelatedDomainsFilter')
         group.add_argument('-d', '--domain', dest='initial_domains', default=[], action='append',
-                           help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
+                           help='[OPTIONAL] Suspicious domains to use in pivoting.  May be specified more than once.')
         group.add_argument('-i', '--ip', dest='initial_ips', default=[], action='append',
-                           help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
+                           help='[OPTIONAL] Suspicious IP to use in pivoting.  May be specified more than once.')
         group.add_argument('--related-domains-generations', dest='generations', default=DEFAULT_RELATED_DOMAINS_GENERATIONS,
                            help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
         return parser

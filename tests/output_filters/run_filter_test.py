@@ -6,7 +6,7 @@ import simplejson
 import testify as T
 from mock import patch
 
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import _run_filter
 
 
 class RunFilterTest(T.TestCase):
@@ -39,7 +39,7 @@ class RunFilterTest(T.TestCase):
             __
         ):
             output_filter = create_filter()
-            run_filter(output_filter)
+            _run_filter(output_filter)
             output_lines = [line for line in mock_stdout.getvalue().split('\n') if len(line)]
             output_blobs = [simplejson.loads(line) for line in output_lines]
 
