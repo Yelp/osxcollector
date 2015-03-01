@@ -6,6 +6,7 @@
 # spits the output to stdout.
 #
 import sys
+from argparse import ArgumentParser
 
 import simplejson
 
@@ -27,6 +28,9 @@ class OutputFilter(object):
 
     OutputFilters use the words 'line' or 'blob' to refer to OSXCollector output.
     """
+
+    def __init__(self, **kwargs):
+        pass
 
     def filter_line(self, blob):
         """Each Line of OSXCollector output will be passed to filter_line.
@@ -51,8 +55,30 @@ class OutputFilter(object):
         """
         return []
 
+    def get_commandline_args(self):
+        """Return the commandline arguments for this OutputFilter.
 
-def run_filter(output_filter, input_stream=None, output_stream=None):
+        Returns:
+            An `argparse.ArgumentParser`
+        """
+        return None
+
+
+def _unbuffered_input(read_from):
+    """A generator to allow lines to be read before EOF is reached.
+
+    Args:
+        read_from: A stream to read from
+    Returns:
+        yields strings
+    """
+    line = read_from.readline()
+    while bool(line):
+        yield line.decode('latin-1', errors='ignore').encode('utf-8', errors='ignore')
+        line = read_from.readline()
+
+
+def run_filter(output_filter, input_stream=None, output_stream=None, *args, **kwargs):
     """Feeds stdin to an instance of OutputFilter and spews to stdout.
 
     Args:
@@ -60,19 +86,6 @@ def run_filter(output_filter, input_stream=None, output_stream=None):
         input_stream: Where to read input from.
         output_stream: Where to write output to.
     """
-    def _unbuffered_input(read_from):
-        """A generator to allow lines to be read before EOF is reached.
-
-        Args:
-            read_from: A stream to read from
-        Returns:
-            yields strings
-        """
-        line = read_from.readline()
-        while bool(line):
-            yield line.decode('latin-1', errors='ignore').encode('utf-8', errors='ignore')
-            line = read_from.readline()
-
     if not input_stream:
         input_stream = sys.stdin
     if not output_stream:
@@ -96,3 +109,23 @@ def run_filter(output_filter, input_stream=None, output_stream=None):
         output_stream.write('\n')
 
     output_stream.flush()
+
+
+def run_filter_main(output_filter_cls):
+    filter_arguments = output_filter_cls().get_commandline_args()
+    argument_parents = [filter_arguments] if filter_arguments else []
+
+    parser = ArgumentParser(parents=argument_parents, conflict_handler='resolve')
+    parser.add_argument('--input-file', dest='input_file', default=None,
+                        help='[OPTIONAL] Path to OSXCollector output to read. Defaults to stdin otherwise.')
+    parser.add_argument('--output-file', dest='output_file', default=None,
+                        help='[OPTIONAL] Path to write OutputFilter output. Defaults to stdout otherwise.')
+    args = parser.parse_args()
+
+    output_filter = output_filter_cls(**vars(args))
+
+    if args.input_file:
+        with(open(args.input_file, 'r')) as fp_in:
+            run_filter(output_filter, input_stream=fp_in)
+    else:
+        run_filter(output_filter)

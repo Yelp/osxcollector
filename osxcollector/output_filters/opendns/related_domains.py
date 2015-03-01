@@ -14,7 +14,7 @@
 from argparse import ArgumentParser
 
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.opendns.api import InvestigateApi
 from osxcollector.output_filters.util.blacklist import create_blacklist
 from osxcollector.output_filters.util.config import config_get_deep
@@ -42,7 +42,12 @@ class RelatedDomainsFilter(OutputFilter):
     ```
     """
 
-    def __init__(self, initial_domains=None, initial_ips=None, generations=DEFAULT_RELATED_DOMAINS_GENERATIONS, related_when=None):
+    def __init__(self,
+                 initial_domains=None,
+                 initial_ips=None,
+                 generations=DEFAULT_RELATED_DOMAINS_GENERATIONS,
+                 related_when=None,
+                 **kwargs):
         """Initializes the RelatedDomainsFilter.
 
         Args:
@@ -54,7 +59,7 @@ class RelatedDomainsFilter(OutputFilter):
             related_when: A boolean function to call to decide whether to add the domains from a line to
               the list of related domains.
         """
-        super(RelatedDomainsFilter, self).__init__()
+        super(RelatedDomainsFilter, self).__init__(**kwargs)
         self._whitelist = create_blacklist(config_get_deep('domain_whitelist'))
 
         cache_file_name = config_get_deep('opendns.RelatedDomainsFilter.cache_file_name', None)
@@ -110,6 +115,17 @@ class RelatedDomainsFilter(OutputFilter):
                         blob['osxcollector_related']['domains'][domain] = list(set(blob['osxcollector_related']['domains'][domain]))
 
         return self._all_blobs
+
+    def get_commandline_args(self):
+        parser = ArgumentParser()
+        group = parser.add_argument_group('opendns.RelatedDomainsFilter')
+        group.add_argument('-d', '--domain', dest='initial_domains', default=[], action='append',
+                           help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
+        group.add_argument('-i', '--ip', dest='initial_ips', default=[], action='append',
+                           help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
+        group.add_argument('--related-domains-generations', dest='generations', default=DEFAULT_RELATED_DOMAINS_GENERATIONS,
+                           help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
+        return parser
 
     def _filter_domains_by_whitelist(self, domains):
         """Remove all domains that are on the whitelist.
@@ -232,17 +248,8 @@ class RelatedDomainsFilter(OutputFilter):
 
 
 def main():
-    parser = ArgumentParser()
-    parser.add_argument('-d', '--domain', dest='domain_terms', default=[], action='append',
-                        help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
-    parser.add_argument('-i', '--ip', dest='ip_terms', default=[], action='append',
-                        help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
-    parser.add_argument('--related-domains-generations', dest='related_domains_generations', default=DEFAULT_RELATED_DOMAINS_GENERATIONS,
-                        help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
-    args = parser.parse_args()
+    run_filter_main(RelatedDomainsFilter)
 
-    run_filter(RelatedDomainsFilter(initial_domains=args.domain_terms,
-                                    initial_ips=args.ip_terms, generations=args.related_domains_generations))
 
 if __name__ == "__main__":
     main()

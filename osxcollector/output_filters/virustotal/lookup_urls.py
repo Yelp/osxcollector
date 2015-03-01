@@ -5,9 +5,8 @@
 #
 import re
 
-from osxcollector.output_filters.base_filters.output_filter import run_filter
-from osxcollector.output_filters.base_filters. \
-    threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
+from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
@@ -18,11 +17,11 @@ class LookupURLsFilter(ThreatFeedFilter):
 
     SCHEMES = re.compile('https?')
 
-    def __init__(self, lookup_when=None):
+    def __init__(self, lookup_when=None, **kwargs):
         lookup_when_url_scheme_matches = self._generate_lookup_when(lookup_when)
         super(LookupURLsFilter, self).__init__('LSQuarantineDataURLString', 'osxcollector_vturl',
                                                lookup_when=lookup_when_url_scheme_matches,
-                                               name_of_api_key='virustotal')
+                                               name_of_api_key='virustotal', **kwargs)
 
     def _generate_lookup_when(self, only_lookup_when):
         """Generates functions that checks whether the blob contains a valid URL
@@ -89,7 +88,7 @@ class LookupURLsFilter(ThreatFeedFilter):
 
 
 def main():
-    run_filter(LookupURLsFilter())
+    run_filter_main(LookupURLsFilter)
 
 
 if __name__ == "__main__":

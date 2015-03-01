@@ -31,7 +31,7 @@ import simplejson
 
 from osxcollector.output_filters.base_filters.chain import ChainFilter
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.chrome.find_extensions import FindExtensionsFilter as ChromeExtensionsFilter
 from osxcollector.output_filters.chrome.sort_history import SortHistoryFilter as ChromeHistoryFilter
 from osxcollector.output_filters.find_blacklisted import FindBlacklistedFilter
@@ -39,7 +39,6 @@ from osxcollector.output_filters.find_domains import FindDomainsFilter
 from osxcollector.output_filters.firefox.find_extensions import FindExtensionsFilter as FirefoxExtensionsFilter
 from osxcollector.output_filters.firefox.sort_history import SortHistoryFilter as FirefoxHistoryFilter
 from osxcollector.output_filters.opendns.lookup_domains import LookupDomainsFilter as OpenDnsLookupDomainsFilter
-from osxcollector.output_filters.opendns.related_domains import DEFAULT_RELATED_DOMAINS_GENERATIONS
 from osxcollector.output_filters.opendns.related_domains import RelatedDomainsFilter as OpenDnsRelatedDomainsFilter
 from osxcollector.output_filters.related_files import RelatedFilesFilter
 from osxcollector.output_filters.shadowserver.lookup_hashes import LookupHashesFilter as ShadowServerLookupHashesFilter
@@ -55,60 +54,61 @@ class AnalyzeFilter(ChainFilter):
     effect the operations of the next filter.
     """
 
-    def __init__(self,
-                 initial_file_terms=None,
-                 initial_domains=None,
-                 initial_ips=None,
-                 related_domains_generations=DEFAULT_RELATED_DOMAINS_GENERATIONS,
-                 monochrome=False,
-                 no_shadowserver=False,
-                 no_opendns=False,
-                 no_virustotal=False,
-                 show_signature_chain=False,
-                 show_browser_ext=False
-                 ):
+    def __init__(self, no_opendns=False, no_virustotal=False, no_shadowserver=False, readout=False, **kwargs):
 
         filter_chain = []
 
-        filter_chain.append(ChromeExtensionsFilter())
-        filter_chain.append(FirefoxExtensionsFilter())
+        if not readout:
+            filter_chain.append(ChromeExtensionsFilter(**kwargs))
+            filter_chain.append(FirefoxExtensionsFilter(**kwargs))
 
-        filter_chain.append(FindDomainsFilter())
+            filter_chain.append(FindDomainsFilter(**kwargs))
 
-        # Do hash related lookups first. This is done first since hash lookup is not influenced
-        # by anything but other hash lookups.
-        if not no_shadowserver:
-            filter_chain.append(ShadowServerLookupHashesFilter())
-        if not no_virustotal:
-            filter_chain.append(VtLookupHashesFilter(lookup_when=lookup_when_not_in_shadowserver))
+            # Do hash related lookups first. This is done first since hash lookup is not influenced
+            # by anything but other hash lookups.
+            if not no_shadowserver:
+                filter_chain.append(ShadowServerLookupHashesFilter(**kwargs))
+            if not no_virustotal:
+                filter_chain.append(VtLookupHashesFilter(lookup_when=lookup_when_not_in_shadowserver, **kwargs))
 
-        # Find blacklisted stuff next. Finding blacklisted domains requires running FindDomainsFilter first.
-        filter_chain.append(FindBlacklistedFilter())
+            # Find blacklisted stuff next. Finding blacklisted domains requires running FindDomainsFilter first.
+            filter_chain.append(FindBlacklistedFilter(**kwargs))
 
-        # RelatedFilesFilter and OpenDnsRelatedDomainsFilter use command line args in addition to previous filter results to find
-        # lines of interest.
-        filter_chain.append(RelatedFilesFilter(initial_terms=initial_file_terms, when=find_related_when))
-        if not no_opendns:
-            filter_chain.append(OpenDnsRelatedDomainsFilter(initial_domains=initial_domains,
-                                                            initial_ips=initial_ips, related_when=find_related_when,
-                                                            generations=related_domains_generations))
+            # RelatedFilesFilter and OpenDnsRelatedDomainsFilter use command line args in addition to previous filter results to find
+            # lines of interest.
+            filter_chain.append(RelatedFilesFilter(when=find_related_when, **kwargs))
+            if not no_opendns:
+                filter_chain.append(OpenDnsRelatedDomainsFilter(related_when=find_related_when, **kwargs))
 
-        # Lookup threat info on suspicious and related stuff
-        if not no_virustotal:
-            filter_chain.append(OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver))
-        if not no_opendns:
-            filter_chain.append(VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when))
+            # Lookup threat info on suspicious and related stuff
+            if not no_virustotal:
+                filter_chain.append(OpenDnsLookupDomainsFilter(lookup_when=lookup_when_not_in_shadowserver, **kwargs))
+            if not no_opendns:
+                filter_chain.append(VtLookupDomainsFilter(lookup_when=lookup_domains_in_vt_when, **kwargs))
 
-        # Sort browser history for maximum pretty
-        filter_chain.append(FirefoxHistoryFilter())
-        filter_chain.append(ChromeHistoryFilter())
+            # Sort browser history for maximum pretty
+            filter_chain.append(FirefoxHistoryFilter(**kwargs))
+            filter_chain.append(ChromeHistoryFilter(**kwargs))
 
-        # Summarize what has happened
-        filter_chain.append(_OutputToFileFilter())
-        filter_chain.append(_VeryReadableOutputFilter(monochrome=monochrome, show_signature_chain=show_signature_chain,
-                                                      show_browser_ext=show_browser_ext))
+            # Summarize what has happened
+            filter_chain.append(_OutputToFileFilter(**kwargs))
 
-        super(AnalyzeFilter, self).__init__(filter_chain)
+        filter_chain.append(_VeryReadableOutputFilter(**kwargs))
+
+        super(AnalyzeFilter, self).__init__(filter_chain, **kwargs)
+
+    def _on_get_commandline_args(self):
+        parser = ArgumentParser()
+        group = parser.add_argument_group('AnalyzeFilter')
+        group.add_argument('--readout', dest='readout', action='store_true', default=False,
+                           help='[OPTIONAL] Skip the analysis and just output really readable analysis')
+        group.add_argument('--no-opendns', dest='no_opendns', action='store_true', default=False,
+                           help='[OPTIONAL] Don\'t run OpenDNS filters')
+        group.add_argument('--no-virustotal', dest='no_virustotal', action='store_true', default=False,
+                           help='[OPTIONAL] Don\'t run VirusTotal filters')
+        group.add_argument('--no-shadowserver', dest='no_shadowserver', action='store_true', default=False,
+                           help='[OPTIONAL] Don\'t run ShadowServer filters')
+        return parser
 
 
 def include_in_summary(blob):
@@ -155,8 +155,8 @@ def find_related_when(blob):
 
 class _OutputToFileFilter(OutputFilter):
 
-    def __init__(self):
-        super(_OutputToFileFilter, self).__init__()
+    def __init__(self, **kwargs):
+        super(_OutputToFileFilter, self).__init__(**kwargs)
         self._all_blobs = list()
 
     def filter_line(self, blob):
@@ -195,8 +195,14 @@ class _OutputToFileFilter(OutputFilter):
 
 class _VeryReadableOutputFilter(OutputFilter):
 
-    def __init__(self, monochrome=False, show_signature_chain=False, show_browser_ext=False):
-        super(_VeryReadableOutputFilter, self).__init__()
+    END_COLOR = '\033[0m'
+    SECTION_COLOR = '\033[1m'
+    BOT_COLOR = '\033[93m\033[1m'
+    KEY_COLOR = '\033[94m'
+    VAL_COLOR = '\033[32m'
+
+    def __init__(self, monochrome=False, show_signature_chain=False, show_browser_ext=False, **kwargs):
+        super(_VeryReadableOutputFilter, self).__init__(**kwargs)
         self._vthash = []
         self._vtdomain = []
         self._opendns = []
@@ -249,11 +255,17 @@ class _VeryReadableOutputFilter(OutputFilter):
 
         return None
 
-    END_COLOR = '\033[0m'
-    SECTION_COLOR = '\033[1m'
-    BOT_COLOR = '\033[93m\033[1m'
-    KEY_COLOR = '\033[94m'
-    VAL_COLOR = '\033[32m'
+    @classmethod
+    def get_commandline_args(cls):
+        parser = ArgumentParser()
+        group = parser.add_argument_group('_VeryReadableOutputFilter')
+        group.add_argument('-M', '--monochrome', dest='monochrome', action='store_true', default=False,
+                           help='[OPTIONAL] Output monochrome analysis')
+        group.add_argument('--show-signature-chain', dest='show_signature_chain', action='store_true', default=False,
+                           help='[OPTIONAL] Output unsigned startup items and kexts.')
+        group.add_argument('--show-browser-ext', dest='show_browser_ext', action='store_true', default=False,
+                           help='[OPTIONAL] Output the list of installed browser extensions.')
+        return parser
 
     def _write(self, msg, color=END_COLOR):
         if not self._monochrome:
@@ -435,49 +447,8 @@ class _VeryReadableOutputFilter(OutputFilter):
 
 
 def main():
-    parser = ArgumentParser()
-    parser.add_argument('-f', '--file-term', dest='file_terms', default=[], action='append',
-                        help='[OPTIONAL] Suspicious terms to use in pivoting through file names.  May be specified more than once.')
-    parser.add_argument('-d', '--domain', dest='domain_terms', default=[], action='append',
-                        help='[OPTIONAL] Suspicious domains to use for pivoting.  May be specified more than once.')
-    parser.add_argument('-i', '--ip', dest='ip_terms', default=[], action='append',
-                        help='[OPTIONAL] Suspicious IP to use for pivoting.  May be specified more than once.')
-    parser.add_argument('--related-domains-generations', dest='related_domains_generations', default=DEFAULT_RELATED_DOMAINS_GENERATIONS,
-                        help='[OPTIONAL] How many generations of related domains to lookup with OpenDNS')
-    parser.add_argument('--readout', dest='readout', action='store_true', default=False,
-                        help='[OPTIONAL] Skip the analysis and just output really readable analysis')
-    parser.add_argument('-M', '--monochrome', dest='monochrome', action='store_true', default=False,
-                        help='[OPTIONAL] Output monochrome analysis')
-    parser.add_argument('--no-opendns', dest='no_opendns', action='store_true', default=False,
-                        help='[OPTIONAL] Don\'t run OpenDNS filters')
-    parser.add_argument('--no-virustotal', dest='no_virustotal', action='store_true', default=False,
-                        help='[OPTIONAL] Don\'t run VirusTotal filters')
-    parser.add_argument('--no-shadowserver', dest='no_shadowserver', action='store_true', default=False,
-                        help='[OPTIONAL] Don\'t run ShadowServer filters')
-    parser.add_argument('--show-signature-chain', dest='show_signature_chain', action='store_true', default=False,
-                        help='[OPTIONAL] Output unsigned startup items and kexts.')
-    parser.add_argument('--show-browser-ext', dest='show_browser_ext', action='store_true', default=False,
-                        help='[OPTIONAL] Output the list of installed browser extensions.')
-    parser.add_argument('--input-file', dest='input_file', default=None,
-                        help='[OPTIONAL] Path to OSXCollector output to read. Defaults to stdin otherwise.')
+    run_filter_main(AnalyzeFilter)
 
-    args = parser.parse_args()
-
-    if not args.readout:
-        output_filter = AnalyzeFilter(initial_file_terms=args.file_terms, initial_domains=args.domain_terms,
-                                      initial_ips=args.ip_terms, related_domains_generations=args.related_domains_generations,
-                                      monochrome=args.monochrome, no_opendns=args.no_opendns, no_virustotal=args.no_virustotal,
-                                      no_shadowserver=args.no_shadowserver, show_signature_chain=args.show_signature_chain,
-                                      show_browser_ext=args.show_browser_ext)
-    else:
-        output_filter = _VeryReadableOutputFilter(monochrome=args.monochrome, show_signature_chain=args.show_signature_chain,
-                                                  show_browser_ext=args.show_browser_ext)
-
-    if args.input_file:
-        with(open(args.input_file, 'r')) as fp_in:
-            run_filter(output_filter, input_stream=fp_in)
-    else:
-        run_filter(output_filter)
 
 if __name__ == "__main__":
     main()

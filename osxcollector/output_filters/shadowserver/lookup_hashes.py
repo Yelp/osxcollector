@@ -5,7 +5,7 @@
 #
 import os.path
 
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.shadowserver.api import ShadowServerApi
 from osxcollector.output_filters.util.config import config_get_deep
@@ -15,8 +15,8 @@ class LookupHashesFilter(ThreatFeedFilter):
 
     """A class to lookup hashes using ShadowServer API."""
 
-    def __init__(self, lookup_when=None):
-        super(LookupHashesFilter, self).__init__('sha1', 'osxcollector_shadowserver', lookup_when=lookup_when)
+    def __init__(self, lookup_when=None, **kwargs):
+        super(LookupHashesFilter, self).__init__('sha1', 'osxcollector_shadowserver', lookup_when=lookup_when, **kwargs)
 
     def _lookup_iocs(self, all_iocs):
         """Looks up the ShadowServer info for a set of hashes.
@@ -44,7 +44,7 @@ class LookupHashesFilter(ThreatFeedFilter):
 
 
 def main():
-    run_filter(LookupHashesFilter())
+    run_filter_main(LookupHashesFilter)
 
 
 if __name__ == "__main__":

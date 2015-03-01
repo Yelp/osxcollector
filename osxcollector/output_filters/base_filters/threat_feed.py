@@ -16,7 +16,7 @@ class ThreatFeedFilter(OutputFilter):
     It is assumed that the API uses an api_key stored in the config.
     """
 
-    def __init__(self, ioc_key, output_key, lookup_when=None, name_of_api_key=None):
+    def __init__(self, ioc_key, output_key, lookup_when=None, name_of_api_key=None, **kwargs):
         """Configure the ThreatFeedFilter.
 
         Args:
@@ -27,7 +27,7 @@ class ThreatFeedFilter(OutputFilter):
                 Use lookup_when to limit which IOCs are looked up.
             name_of_api_key: A string name of the key in the 'api_key' section of config.
         """
-        super(ThreatFeedFilter, self).__init__()
+        super(ThreatFeedFilter, self).__init__(**kwargs)
 
         if name_of_api_key:
             self._api_key = config_get_deep('api_key.{0}'.format(name_of_api_key))
