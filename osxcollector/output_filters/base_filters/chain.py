@@ -2,6 +2,8 @@
 #
 # ChainFilter is a base class that passes each line through a chain of OutputFilters.
 #
+from argparse import ArgumentParser
+
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 
 
@@ -13,7 +15,7 @@ class ChainFilter(OutputFilter):
     having to run `python -m FilterOne | python -m FilterTwo | python -m FilterThree`.
     """
 
-    def __init__(self, chain):
+    def __init__(self, chain, **kwargs):
         """Adds the property _next_link to each OutputFilter in the chain.
 
         Treating the chain as a linked list makes it easy to know which filter runs after the current filter.
@@ -22,7 +24,7 @@ class ChainFilter(OutputFilter):
         Args:
             chain: An enumerable of OutputFilters.
         """
-        super(ChainFilter, self).__init__()
+        super(ChainFilter, self).__init__(**kwargs)
 
         prev_link = None
         for cur_link in chain:
@@ -88,3 +90,35 @@ class ChainFilter(OutputFilter):
             filtered_lines.extend(final_lines)
 
         return filtered_lines
+
+    def get_argument_parser(self):
+        """Collects the ArgumentParsers from every OutputFilter in the chain.
+
+        Returns:
+            An `argparse.ArgumentParser`
+        """
+        parsers_to_chain = []
+
+        cur_link = self._head_of_chain
+        while cur_link:
+            arg_parser = cur_link.get_argument_parser()
+            if arg_parser:
+                parsers_to_chain.append(arg_parser)
+            cur_link = cur_link._next_link
+
+        parser = self._on_get_argument_parser()
+        if parser:
+            parsers_to_chain.append(parser)
+
+        if parsers_to_chain:
+            return ArgumentParser(parents=parsers_to_chain, conflict_handler='resolve')
+
+        return None
+
+    def _on_get_argument_parser(self):
+        """Returns an ArgumentParser with arguments for just this OutputFilter (not the contained chained OutputFilters).
+
+        Returns:
+            An `argparse.ArgumentParser`
+        """
+        return None

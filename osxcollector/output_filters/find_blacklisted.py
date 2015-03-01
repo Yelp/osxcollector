@@ -4,7 +4,7 @@
 # FindBlacklistedFilter adds 'osxcollector_blacklist' key to lines matching a blacklist.
 #
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.util.blacklist import create_blacklist
 from osxcollector.output_filters.util.config import config_get_deep
 
@@ -24,8 +24,8 @@ class FindBlacklistedFilter(OutputFilter):
         blacklist_is_domains - [OPTIONAL] interpret values as domains and do some smart regex and subdomain stuff with them
     """
 
-    def __init__(self):
-        super(FindBlacklistedFilter, self).__init__()
+    def __init__(self, **kwargs):
+        super(FindBlacklistedFilter, self).__init__(**kwargs)
         self._blacklists = self._init_blacklists()
 
     def _init_blacklists(self):
@@ -49,7 +49,7 @@ class FindBlacklistedFilter(OutputFilter):
 
 
 def main():
-    run_filter(FindBlacklistedFilter())
+    run_filter_main(FindBlacklistedFilter)
 
 
 if __name__ == "__main__":

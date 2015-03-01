@@ -4,7 +4,7 @@
 #
 from collections import namedtuple
 
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.opendns.api import InvestigateApi
 from osxcollector.output_filters.util.blacklist import create_blacklist
@@ -66,9 +66,9 @@ class LookupDomainsFilter(ThreatFeedFilter):
         'threat_type'
     ]
 
-    def __init__(self, lookup_when=None):
+    def __init__(self, lookup_when=None, **kwargs):
         super(LookupDomainsFilter, self).__init__('osxcollector_domains', 'osxcollector_opendns',
-                                                  lookup_when=lookup_when, name_of_api_key='opendns')
+                                                  lookup_when=lookup_when, name_of_api_key='opendns', **kwargs)
         self._whitelist = create_blacklist(config_get_deep('domain_whitelist'))
 
     def _lookup_iocs(self, all_iocs):
@@ -220,7 +220,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
 
 
 def main():
-    run_filter(LookupDomainsFilter())
+    run_filter_main(LookupDomainsFilter)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@
 import copy
 
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 
 
 class SortHistoryFilter(OutputFilter):
@@ -18,8 +18,8 @@ class SortHistoryFilter(OutputFilter):
     for some snazzy browser history stuff.
     """
 
-    def __init__(self):
-        super(SortHistoryFilter, self).__init__()
+    def __init__(self, **kwargs):
+        super(SortHistoryFilter, self).__init__(**kwargs)
 
         self._visits_table = dict()
         self._places_table = dict()
@@ -83,7 +83,7 @@ class SortHistoryFilter(OutputFilter):
 
 
 def main():
-    run_filter(SortHistoryFilter())
+    run_filter_main(SortHistoryFilter)
 
 
 if __name__ == "__main__":

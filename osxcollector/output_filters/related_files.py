@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # RelatedFilesFilter finds files related to specific terms or file names.
@@ -9,7 +10,7 @@ import simplejson
 
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 
 
 class RelatedFilesFilter(OutputFilter):
@@ -21,7 +22,7 @@ class RelatedFilesFilter(OutputFilter):
     is discarded.
     """
 
-    def __init__(self, when=None, initial_terms=None):
+    def __init__(self, when=None, file_terms=None, **kwargs):
         super(RelatedFilesFilter, self).__init__()
         self._all_blobs = list()
         self._terms = set()
@@ -29,8 +30,8 @@ class RelatedFilesFilter(OutputFilter):
 
         self._when = when
 
-        if initial_terms:
-            for val in initial_terms:
+        if file_terms:
+            for val in file_terms:
                 self._create_terms(val)
 
     def _create_terms(self, val):
@@ -63,6 +64,13 @@ class RelatedFilesFilter(OutputFilter):
                     blob['osxcollector_related']['files'].append(term)
 
         return self._all_blobs
+
+    def get_argument_parser(self):
+        parser = ArgumentParser()
+        group = parser.add_argument_group('RelatedFilesFilter')
+        group.add_argument('-f', '--file-term', dest='file_terms', default=[], action='append',
+                           help='[OPTIONAL] Suspicious terms to use in pivoting through file names.  May be specified more than once.')
+        return parser
 
     @property
     def terms(self):
@@ -119,12 +127,7 @@ class RelatedFilesFilter(OutputFilter):
 
 
 def main():
-    parser = ArgumentParser()
-    parser.add_argument('-f', '--file-term', dest='file_terms', default=[], action='append',
-                        help='[OPTIONAL] Suspicious terms to use in pivoting through file names.  May be specified more than once.')
-    args = parser.parse_args()
-
-    run_filter(RelatedFilesFilter(initial_terms=args.file_terms))
+    run_filter_main(RelatedFilesFilter)
 
 
 if __name__ == "__main__":

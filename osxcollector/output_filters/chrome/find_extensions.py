@@ -5,7 +5,7 @@
 #
 from osxcollector.osxcollector import DictUtils
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 
 
 class FindExtensionsFilter(OutputFilter):
@@ -17,8 +17,8 @@ class FindExtensionsFilter(OutputFilter):
     and then parse the heck out of the extensions.
     """
 
-    def __init__(self):
-        super(FindExtensionsFilter, self).__init__()
+    def __init__(self, **kwargs):
+        super(FindExtensionsFilter, self).__init__(**kwargs)
         self._new_lines = []
 
     def filter_line(self, blob):
@@ -48,7 +48,7 @@ class FindExtensionsFilter(OutputFilter):
 
 
 def main():
-    run_filter(FindExtensionsFilter())
+    run_filter_main(FindExtensionsFilter)
 
 
 if __name__ == "__main__":
