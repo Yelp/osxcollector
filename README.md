@@ -240,16 +240,16 @@ Hashes files in the mail app directories:
  - `~/Library/Mail`
  - `~/Library/Mail Downloads`
 
-## Basic Manual Analysis
-Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.
-
-Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
-
 #### `full_hash` section
 Hashes all the files on disk. All of 'em. This does not run by default. It must be triggered with:
 ```shell
 $ sudo osxcollector.py -s full_hash
 ```
+
+## Basic Manual Analysis
+Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.
+
+Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
 
 #### Timestamps
 Simply greping a few minutes before and after a timestamp works great:
@@ -363,8 +363,7 @@ This filter is great for figuring out how `evil_invoice.pdf` landed up on a mach
 
 To run and see related lines try:
 ```shell
-$ python -m osxcollector.output_filters.related_files -i CanisAsp.json \
-         -f '/foo/bar/baz' -f 'dingle' | \
+$ python -m osxcollector.output_filters.related_files -i CanisAsp.json -f '/foo/bar/baz' -f 'dingle' | \
     jq 'select(has("osxcollector_related")) | \
         select(.osxcollector_related | keys[] | contains("files"))'
 ```
@@ -419,8 +418,7 @@ optional arguments:
 
 To run and see Firefox browser history:
 ```shell
-$ python -m osxcollector.output_filters.firefox.sort_history \
-         -i CousingLobe.json | \
+$ python -m osxcollector.output_filters.firefox.sort_history -i CousingLobe.json | \
     jq 'select(.osxcollector_browser_history=="firefox")'
 ```
 
@@ -441,8 +439,7 @@ optional arguments:
 
 To run and see Chrome extensions:
 ```shell
-$ python -m osxcollector.output_filters.chrome.find_extensions \
-         -i MotherlyWolf.json | \
+$ python -m osxcollector.output_filters.chrome.find_extensions -i MotherlyWolf.json | \
     jq 'select(.osxcollector_section=="chrome" and
                .osxcollector_subsection=="extensions")'
 ```
@@ -464,8 +461,7 @@ optional arguments:
 
 To run and see Firefox extensions:
 ```shell
-$ python -m osxcollector.output_filters.firefox.find_extensions \
-         -i FlawlessPelican.json | \
+$ python -m osxcollector.output_filters.firefox.find_extensions -i FlawlessPelican.json | \
     jq 'select(.osxcollector_section=="firefox" and
                .osxcollector_subsection=="extensions")'
 ```
@@ -572,7 +568,7 @@ The filter uses a heuristic to determine what is _suspicious_. It can create a l
 
 Run it and see what was found:
 ```shell
-$ python -m osxcollector.output_filters.find_domains -i PipinNightstar.json | \
+$ python -m osxcollector.output_filters.find_domains -i PippinNightstar.json | \
     python -m osxcollector.output_filters.virustotal.lookup_domains | \
     jq 'select(has("osxcollector_vtdomain"))'
 ```
@@ -594,8 +590,7 @@ optional arguments:
 
 Run it and see what was found:
 ```shell
-$ python -m osxcollector.output_filters.virustotal.lookup_hashes \
-         -i FungalBuritto.json | \
+$ python -m osxcollector.output_filters.virustotal.lookup_hashes -i FungalBuritto.json | \
     jq 'select(has("osxcollector_vthash"))'
 ```
 
@@ -616,8 +611,7 @@ optional arguments:
 
 Run it and see what was found:
 ```shell
-$ python -m osxcollector.output_filters.virustotal.lookup_urls \
-         -i WutheringGreens.json | \
+$ python -m osxcollector.output_filters.virustotal.lookup_urls -i WutheringLows.json | \
     jq 'select(has("osxcollector_vturl"))'
 ```
 
@@ -646,8 +640,7 @@ lookups hashes with the ShadowServer bin-test API. This is sort of the opposite 
 
 Run it and see what was found:
 ```shell
-$ python -m osxcollector.output_filters.shadowserver.lookup_hashes \
-         -i ArkashKobiashi.json | \
+$ python -m osxcollector.output_filters.shadowserver.lookup_hashes -i ArkashKobiashi.json | \
     jq 'select(has("osxcollector_shadowserver"))'
 ```
 
