@@ -3,10 +3,12 @@
 #
 # LookupHashesFilter uses VirusTotal to lookup the values in 'sha2' and add 'osxcollector_vthash' key.
 #
+from threat_intel.virustotal import VirusTotalApi
+
 from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.util.config import config_get_deep
-from osxcollector.output_filters.virustotal.api import VirusTotalApi
+#from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
 class LookupHashesFilter(ThreatFeedFilter):
@@ -18,7 +20,7 @@ class LookupHashesFilter(ThreatFeedFilter):
                                                  'osxcollector_vthash', lookup_when=lookup_when,
                                                  name_of_api_key='virustotal', **kwargs)
 
-    def _lookup_iocs(self, all_iocs):
+    def _lookup_iocs(self, all_iocs, resource_per_req=25):
         """Caches the VirusTotal info for a set of hashes.
 
         Args:
@@ -29,7 +31,7 @@ class LookupHashesFilter(ThreatFeedFilter):
         threat_info = {}
 
         cache_file_name = config_get_deep('virustotal.LookupHashesFilter.cache_file_name', None)
-        vt = VirusTotalApi(self._api_key, cache_file_name=cache_file_name)
+        vt = VirusTotalApi(self._api_key, resource_per_req, cache_file_name=cache_file_name)
         reports = vt.get_file_reports(all_iocs)
 
         for hash_val in reports.keys():
