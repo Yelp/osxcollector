@@ -8,7 +8,6 @@ from threat_intel.shadowserver import ShadowServerApi
 
 from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
-#from osxcollector.output_filters.shadowserver.api import ShadowServerApi
 from osxcollector.output_filters.util.config import config_get_deep
 
 

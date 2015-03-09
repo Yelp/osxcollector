@@ -10,7 +10,6 @@ from threat_intel import VirusTotalApi
 from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.util.config import config_get_deep
-#from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
 class LookupURLsFilter(ThreatFeedFilter):

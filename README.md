@@ -15,11 +15,7 @@ Armed with the forensic collection, an analyst can answer the question like:
 Yelp automates the analysis of most OSXCollector runs converting OSXCollector output into an easily readable and actionable summary of _just the suspicious stuff_.
 
 ## Performing Collection
-`osxcollector.py` is a single Python file that runs with very few dependencies on a standard OSX machine. This makes it really easy to run collection on any machine. Just run:
-
-```shell
-$ pip install -r requirements.txt
-```
+`osxcollector.py` is a single Python file that runs without any dependencies on a standard OSX machine. This makes it really easy to run collection on any machine - no fussing with brew, pip, config files, or environment variables. Just copy the single file onto the machine and run it.
 
 And then copy the single file onto the machine. You are ready to run it!
 
