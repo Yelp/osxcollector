@@ -20,7 +20,3 @@ class BadDomainError(OutputFilterError):
     pass
 
 
-class InvalidRequestError(OutputFilterError):
-
-    """Raised by MultiRequest when it can't figure out how to make a request."""
-    pass
