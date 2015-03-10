@@ -11,10 +11,6 @@ from osxcollector.output_filters.base_filters.output_filter import _run_filter
 
 class RunFilterTest(T.TestCase):
 
-    @T.setup_teardown
-    def never_write_api_cache(self):
-        with patch('osxcollector.output_filters.util.api_cache.ApiCache._write_cache_to_file'):
-            yield
 
     def run_test(self, create_filter, input_blobs=None, expected_output_blobs=None):
         """Mocks out stdin, stdout, and config then runs input lines through an OutputFilter.
