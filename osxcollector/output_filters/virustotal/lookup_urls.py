@@ -5,10 +5,11 @@
 #
 import re
 
+from threat_intel import VirusTotalApi
+
 from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.util.config import config_get_deep
-from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
 class LookupURLsFilter(ThreatFeedFilter):
@@ -31,7 +32,7 @@ class LookupURLsFilter(ThreatFeedFilter):
             return self.SCHEMES.match(blob['LSQuarantineDataURLString']) and (not only_lookup_when or only_lookup_when(blob))
         return check_url_scheme
 
-    def _lookup_iocs(self, all_iocs):
+    def _lookup_iocs(self, all_iocs, resource_per_req=25):
         """Caches the VirusTotal info for a set of URLs.
 
         Args:
@@ -42,7 +43,7 @@ class LookupURLsFilter(ThreatFeedFilter):
         threat_info = {}
 
         cache_file_name = config_get_deep('virustotal.LookupURLsFilter.cache_file_name', None)
-        vt = VirusTotalApi(self._api_key, cache_file_name=cache_file_name)
+        vt = VirusTotalApi(self._api_key, resource_per_req, cache_file_name=cache_file_name)
         reports = vt.get_url_reports(all_iocs)
 
         for url in reports.keys():

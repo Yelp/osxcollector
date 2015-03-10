@@ -17,6 +17,7 @@ Yelp automates the analysis of most OSXCollector runs converting OSXCollector ou
 ## Performing Collection
 `osxcollector.py` is a single Python file that runs without any dependencies on a standard OSX machine. This makes it really easy to run collection on any machine - no fussing with brew, pip, config files, or environment variables. Just copy the single file onto the machine and run it.
 
+
 `sudo osxcollector.py` is all it takes.
 
 ```shell

@@ -13,9 +13,10 @@
 #
 from argparse import ArgumentParser
 
+from threat_intel.opendns import InvestigateApi
+
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
 from osxcollector.output_filters.base_filters.output_filter import run_filter_main
-from osxcollector.output_filters.opendns.api import InvestigateApi
 from osxcollector.output_filters.util.blacklist import create_blacklist
 from osxcollector.output_filters.util.config import config_get_deep
 from osxcollector.output_filters.util.domains import expand_domain

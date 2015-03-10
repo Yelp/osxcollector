@@ -3,11 +3,12 @@
 #
 # LookupDomainsFilter uses VirusTotal to lookup the values in 'osxcollector_domains' and add 'osxcollector_vtdomain' key.
 #
+from threat_intel.virustotal import VirusTotalApi
+
 from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from osxcollector.output_filters.util.blacklist import create_blacklist
 from osxcollector.output_filters.util.config import config_get_deep
-from osxcollector.output_filters.virustotal.api import VirusTotalApi
 
 
 class LookupDomainsFilter(ThreatFeedFilter):
@@ -19,7 +20,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
                                                   lookup_when=lookup_when, name_of_api_key='virustotal', **kwargs)
         self._whitelist = create_blacklist(config_get_deep('domain_whitelist'))
 
-    def _lookup_iocs(self, all_iocs):
+    def _lookup_iocs(self, all_iocs, resource_per_req=25):
         """Caches the VirusTotal info for a set of domains.
 
         Domains on a whitelist will be ignored.
@@ -32,7 +33,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
         threat_info = {}
 
         cache_file_name = config_get_deep('virustotal.LookupDomainsFilter.cache_file_name', None)
-        vt = VirusTotalApi(self._api_key, cache_file_name=cache_file_name)
+        vt = VirusTotalApi(self._api_key, resource_per_req, cache_file_name=cache_file_name)
 
         iocs = filter(lambda x: not self._whitelist.match_values(x), all_iocs)
         reports = vt.get_domain_reports(iocs)
