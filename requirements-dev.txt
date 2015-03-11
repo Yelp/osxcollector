@@ -6,4 +6,4 @@ simplejson==3.6.5
 testify==0.6.0
 tldextract==1.5.1
 tox==1.8.1
-threat_intel==0.0.4
+threat_intel==0.0.6
