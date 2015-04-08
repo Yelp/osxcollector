@@ -43,7 +43,7 @@ import Foundation
 import objc
 from xattr import getxattr
 
-__version__ = '1.4'
+__version__ = '1.5'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
