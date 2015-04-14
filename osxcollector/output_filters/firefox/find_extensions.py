@@ -22,7 +22,7 @@ class FindExtensionsFilter(OutputFilter):
         self._new_lines = []
 
     def filter_line(self, blob):
-        if 'firefox' != blob.get('osxcollector_section') and 'json_files' != blob.get('osxcollector_subsection'):
+        if 'firefox' != blob.get('osxcollector_section') or 'json_files' != blob.get('osxcollector_subsection'):
             return blob
 
         if blob.get('osxcollector_json_file') not in ['addons.json', 'extensions.json']:
@@ -42,6 +42,8 @@ class FindExtensionsFilter(OutputFilter):
                 extension['osxcollector_username'] = blob['osxcollector_username']
 
             self._new_lines.append(extension)
+
+        return None
 
     def end_of_lines(self):
         return self._new_lines
