@@ -22,7 +22,7 @@ class FindExtensionsFilter(OutputFilter):
         self._new_lines = []
 
     def filter_line(self, blob):
-        if 'chrome' != blob.get('osxcollector_section') and 'preferences' != blob.get('osxcollector_subsection'):
+        if 'chrome' != blob.get('osxcollector_section') or 'preferences' != blob.get('osxcollector_subsection'):
             return blob
 
         extensions_blob = DictUtils.get_deep(blob, 'contents.extensions.settings', {})
@@ -42,6 +42,8 @@ class FindExtensionsFilter(OutputFilter):
                 extension['osxcollector_username'] = blob['osxcollector_username']
 
             self._new_lines.append(extension)
+
+        return None
 
     def end_of_lines(self):
         return self._new_lines
