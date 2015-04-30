@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/Yelp/osxcollector.png?label=ready&title=Ready)](https://waffle.io/Yelp/osxcollector)
 [![Build Status](https://travis-ci.org/Yelp/osxcollector.svg)](https://travis-ci.org/Yelp/osxcollector)
 
 # OSXCollector Manual
