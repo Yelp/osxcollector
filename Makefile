@@ -6,7 +6,12 @@ all:
 test:
 	tox
 
-clean:
-	rm -rf build/ dist/ osxcollector.egg-info/ .tox/
+venv:
+	tox -evenv
 
-.PHONY: all test test-osxcollector clean
+clean:
+	rm -rf build/ dist/ osxcollector.egg-info/ .tox/ venv-osxcollector/
+	find . -name '*.pyc' -delete
+	find . -name '__pycache__' -delete	
+
+.PHONY: all test venv clean

@@ -161,17 +161,17 @@ class NormalizeValueTestCase(T.TestCase):
     def test_normalize_unicode(self):
         u = '\u20AC'
         val = osxcollector._normalize_val(u)
-        T.assert_true(isinstance(val, unicode))
+        T.assert_truthy(isinstance(val, unicode))
 
     def test_normalize_unicode_error(self):
         s = 'Was\x9f'
         val = osxcollector._normalize_val(s)
-        T.assert_false(isinstance(val, unicode))
+        T.assert_falsey(isinstance(val, unicode))
 
     def test_normalize_buffer_to_unicode(self):
         b = buffer("this is buffer")
         val = osxcollector._normalize_val(b)
-        T.assert_true(isinstance(val, unicode))
+        T.assert_truthy(isinstance(val, unicode))
 
     def test_normalize_datetime(self):
         """Tests whether timestamps are resolved to datetime string representation,

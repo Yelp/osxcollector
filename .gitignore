@@ -5,3 +5,4 @@
 .idea/
 config.yaml
 osxcollector.yaml
+.coverage
