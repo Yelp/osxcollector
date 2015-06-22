@@ -192,6 +192,7 @@ Collects following information from Google Chrome web browser:
  - History
  - Archived History
  - Cookies
+ - Extension
  - Login Data
  - Top Sites
  - Web Data
