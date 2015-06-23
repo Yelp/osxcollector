@@ -192,7 +192,7 @@ Collects following information from Google Chrome web browser:
  - History
  - Archived History
  - Cookies
- - Extension
+ - Extensions
  - Login Data
  - Top Sites
  - Web Data
@@ -210,7 +210,7 @@ Collects information from the different SQLite databases in a Firefox profile:
  - Signons
  - Permissions
  - Addons
- - Extension
+ - Extensions
  - Content Preferences
  - Health Report
  - Webapps Store
