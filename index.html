@@ -86,7 +86,7 @@ Output <span class="pl-k">in</span> IncontinentSealord-2014_12_21-08_49_39.tar.g
 <p><code>-p ROOTPATH</code>/<code>--path=ROOTPATH</code>:
 Sets the path to the root of the filesystem to run collection on. The default value is <code>/</code>. This is great for running collection on the image of a disk.</p>
 
-<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -p <span class="pl-s1"><span class="pl-pds">'</span>/mnt/powned<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -p <span class="pl-s"><span class="pl-pds">'</span>/mnt/powned<span class="pl-pds">'</span></span></pre></div>
 </li>
 <li>
 <p><code>-s SECTION</code>/<code>--section=SECTION</code>:
@@ -108,7 +108,7 @@ Runs only a portion of the full collection. Can be specified more than once. The
 <li><code>full_hash</code></li>
 </ul>
 
-<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -s <span class="pl-s1"><span class="pl-pds">'</span>startup<span class="pl-pds">'</span></span> -s <span class="pl-s1"><span class="pl-pds">'</span>downloads<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ sudo osxcollector.py -s <span class="pl-s"><span class="pl-pds">'</span>startup<span class="pl-pds">'</span></span> -s <span class="pl-s"><span class="pl-pds">'</span>downloads<span class="pl-pds">'</span></span></pre></div>
 </li>
 <li>
 <p><code>-d</code>/<code>--debug</code>:
@@ -405,19 +405,19 @@ profile:</p>
 
 <p>Simply greping a few minutes before and after a timestamp works great:</p>
 
-<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> grep <span class="pl-s1"><span class="pl-pds">'</span>2014-01-01 11:3[2-8]<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> grep <span class="pl-s"><span class="pl-pds">'</span>2014-01-01 11:3[2-8]<span class="pl-pds">'</span></span></pre></div>
 
 <h4>
 <a id="browser-history" class="anchor" href="#browser-history" aria-hidden="true"><span class="octicon octicon-link"></span></a>Browser History</h4>
 
 <p>It's in there. A tool like <a href="http://stedolan.github.io/jq/">jq</a> can be very helpful to do some fancy output:</p>
 
-<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> grep <span class="pl-s1"><span class="pl-pds">'</span>2014-01-01 11:3[2-8]<span class="pl-pds">'</span></span> <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("url"))|.url<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> grep <span class="pl-s"><span class="pl-pds">'</span>2014-01-01 11:3[2-8]<span class="pl-pds">'</span></span> <span class="pl-k">|</span> jq <span class="pl-s"><span class="pl-pds">'</span>select(has("url"))|.url<span class="pl-pds">'</span></span></pre></div>
 
 <h4>
 <a id="a-single-user" class="anchor" href="#a-single-user" aria-hidden="true"><span class="octicon octicon-link"></span></a>A Single User</h4>
 
-<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_username=="ivanlei")|.<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ cat INCIDENT32.json <span class="pl-k">|</span> jq <span class="pl-s"><span class="pl-pds">'</span>select(.osxcollector_username=="ivanlei")|.<span class="pl-pds">'</span></span></pre></div>
 
 <h2>
 <a id="automated-analysis" class="anchor" href="#automated-analysis" aria-hidden="true"><span class="octicon octicon-link"></span></a>Automated Analysis</h2>
@@ -435,7 +435,7 @@ profile:</p>
 
 <div class="highlight highlight-shell"><pre>$ sudo pip install virtualenv
 $ virtualenv --system-site-packages venv_osxcollector
-$ <span class="pl-s3">source</span> ./venv_osxcollector/bin/activate
+$ <span class="pl-c1">source</span> ./venv_osxcollector/bin/activate
 $ pip install -r ./requirements-dev.txt</pre></div>
 
 <h4>
@@ -469,7 +469,7 @@ $ emacs osxcollector.yaml</pre></div>
 <p>To run and see lines where domains have been added try:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.find_domains -i RomeoCredible.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_domains"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_domains"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -477,9 +477,9 @@ $ emacs osxcollector.yaml</pre></div>
 usage: find_domains.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -509,8 +509,8 @@ optional arguments:
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.find_domains -i RiddlerBelize.json <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.find_blacklisted <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_blacklist")) | \</span>
-<span class="pl-s1">        select(.osxcollector_blacklist | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_blacklist")) | \</span>
+<span class="pl-s">        select(.osxcollector_blacklist | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -518,9 +518,9 @@ optional arguments:
 usage: find_blacklisted.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -532,9 +532,9 @@ optional arguments:
 
 <p>To run and see related lines try:</p>
 
-<div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.related_files -i CanisAsp.json -f <span class="pl-s1"><span class="pl-pds">'</span>/foo/bar/baz<span class="pl-pds">'</span></span> -f <span class="pl-s1"><span class="pl-pds">'</span>dingle<span class="pl-pds">'</span></span> <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_related")) | \</span>
-<span class="pl-s1">        select(.osxcollector_related | keys[] | contains("files"))<span class="pl-pds">'</span></span></pre></div>
+<div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.related_files -i CanisAsp.json -f <span class="pl-s"><span class="pl-pds">'</span>/foo/bar/baz<span class="pl-pds">'</span></span> -f <span class="pl-s"><span class="pl-pds">'</span>dingle<span class="pl-pds">'</span></span> <span class="pl-k">|</span> \
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_related")) | \</span>
+<span class="pl-s">        select(.osxcollector_related | keys[] | contains("files"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -542,9 +542,9 @@ optional arguments:
 usage: related_files.py [-h] [-f FILE_TERMS] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.
 
 RelatedFilesFilter:
@@ -560,13 +560,13 @@ RelatedFilesFilter:
 <p>To run and see Chrome browser history:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.chrome.sort_history -i SirCray.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="chrome")<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="chrome")<span class="pl-pds">'</span></span></pre></div>
 
 <p>This is great mixed with a grep in a certain time window, like maybe the 5 minutes before that hinky download happened.</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.chrome.sort_history -i SirCray.json <span class="pl-k">|</span> \
-    jq -c <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="chrome")<span class="pl-pds">'</span></span> <span class="pl-k">|</span> \
-    egrep <span class="pl-s1"><span class="pl-pds">'</span>2015-02-02 20:3[2-6]<span class="pl-pds">'</span></span></pre></div>
+    jq -c <span class="pl-s"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="chrome")<span class="pl-pds">'</span></span> <span class="pl-k">|</span> \
+    egrep <span class="pl-s"><span class="pl-pds">'</span>2015-02-02 20:3[2-6]<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -574,9 +574,9 @@ RelatedFilesFilter:
 usage: sort_history.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -587,7 +587,7 @@ optional arguments:
 <p>To run and see Firefox browser history:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.firefox.sort_history -i CousingLobe.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="firefox")<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(.osxcollector_browser_history=="firefox")<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -595,9 +595,9 @@ optional arguments:
 usage: sort_history.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -608,8 +608,8 @@ optional arguments:
 <p>To run and see Chrome extensions:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.chrome.find_extensions -i MotherlyWolf.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="chrome" and</span>
-<span class="pl-s1">               .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(.osxcollector_section=="chrome" and</span>
+<span class="pl-s">               .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -617,9 +617,9 @@ optional arguments:
 usage: find_extensions.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -630,8 +630,8 @@ optional arguments:
 <p>To run and see Firefox extensions:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.firefox.find_extensions -i FlawlessPelican.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(.osxcollector_section=="firefox" and</span>
-<span class="pl-s1">               .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(.osxcollector_section=="firefox" and</span>
+<span class="pl-s">               .osxcollector_subsection=="extensions")<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -639,9 +639,9 @@ optional arguments:
 usage: find_extensions.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h4>
@@ -666,8 +666,8 @@ optional arguments:
     python -m osxcollector.output_filters.opendns.related_domains \
            -d dismalhedgehog.com -d fantasticrabbit.org \
            -i 128.128.128.28 <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_related")) |</span>
-<span class="pl-s1">        select(.osxcollector_related | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_related")) |</span>
+<span class="pl-s">        select(.osxcollector_related | keys[] | contains("domains"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>The results will look something like:</p>
 
@@ -689,9 +689,9 @@ usage: related_domains.py [-h] [-d INITIAL_DOMAINS] [-i INITIAL_IPS]
                           [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.
 
 opendns.RelatedDomainsFilter:
@@ -716,7 +716,7 @@ opendns.RelatedDomainsFilter:
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.find_domains -i GladElegant.json <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.opendns.lookup_domains <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_opendns"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_opendns"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -724,9 +724,9 @@ opendns.RelatedDomainsFilter:
 usage: lookup_domains.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -740,7 +740,7 @@ optional arguments:
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.find_domains -i PippinNightstar.json <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.virustotal.lookup_domains <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vtdomain"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_vtdomain"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -748,9 +748,9 @@ optional arguments:
 usage: lookup_domains.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -761,7 +761,7 @@ optional arguments:
 <p>Run it and see what was found:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.virustotal.lookup_hashes -i FungalBuritto.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vthash"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_vthash"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -769,9 +769,9 @@ optional arguments:
 usage: lookup_hashes.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h5>
@@ -782,7 +782,7 @@ optional arguments:
 <p>Run it and see what was found:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.virustotal.lookup_urls -i WutheringLows.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_vturl"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_vturl"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage</p>
 
@@ -790,9 +790,9 @@ optional arguments:
 usage: lookup_urls.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h6>
@@ -812,7 +812,7 @@ lookups hashes with the ShadowServer bin-test API. This is sort of the opposite 
 <p>Run it and see what was found:</p>
 
 <div class="highlight highlight-shell"><pre>$ python -m osxcollector.output_filters.shadowserver.lookup_hashes -i ArkashKobiashi.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(has("osxcollector_shadowserver"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(has("osxcollector_shadowserver"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>Usage:</p>
 
@@ -820,9 +820,9 @@ lookups hashes with the ShadowServer bin-test API. This is sort of the opposite 
 usage: lookup_hashes.py [-h] [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.</pre></div>
 
 <h4>
@@ -845,12 +845,12 @@ optional arguments:
     python -m osxcollector.output_filters.chrome_history <span class="pl-k">|</span> \
     python -m osxcollector.output_filters.firefox_history <span class="pl-k">|</span> \
     tee analyze_SlickApocalypse.json <span class="pl-k">|</span> \
-    jq <span class="pl-s1"><span class="pl-pds">'</span>select(false == has("osxcollector_shadowserver")) |</span>
-<span class="pl-s1">        select(has("osxcollector_vthash") or</span>
-<span class="pl-s1">               has("osxcollector_vtdomain") or</span>
-<span class="pl-s1">               has("osxcollector_opendns") or</span>
-<span class="pl-s1">               has("osxcollector_blacklist") or</span>
-<span class="pl-s1">               has("osxcollector_related"))<span class="pl-pds">'</span></span></pre></div>
+    jq <span class="pl-s"><span class="pl-pds">'</span>select(false == has("osxcollector_shadowserver")) |</span>
+<span class="pl-s">        select(has("osxcollector_vthash") or</span>
+<span class="pl-s">               has("osxcollector_vtdomain") or</span>
+<span class="pl-s">               has("osxcollector_opendns") or</span>
+<span class="pl-s">               has("osxcollector_blacklist") or</span>
+<span class="pl-s">               has("osxcollector_related"))<span class="pl-pds">'</span></span></pre></div>
 
 <p>and then letting a wise-cracking analyst explain the results to you. The <em>Very Readable Output Bot</em> even suggests hashes and domains to add to blacklists.</p>
 
@@ -870,9 +870,9 @@ usage: analyze.py [-f FILE_TERMS] [-d INITIAL_DOMAINS] [-i INITIAL_IPS]
                   [--input-file INPUT_FILE]
 
 optional arguments:
-  -h, --help            show this <span class="pl-s3">help</span> message and <span class="pl-s3">exit</span>
+  -h, --help            show this <span class="pl-c1">help</span> message and <span class="pl-c1">exit</span>
   --input-file INPUT_FILE
-                        [OPTIONAL] Path to OSXCollector output to <span class="pl-s3">read</span>.
+                        [OPTIONAL] Path to OSXCollector output to <span class="pl-c1">read</span>.
                         Defaults to stdin otherwise.
 
 RelatedFilesFilter:
@@ -917,7 +917,7 @@ AnalyzeFilter:
 
 <p>To run this suit of tests, <code>cd</code> into <code>osxcollector</code> and enter:</p>
 
-<div class="highlight highlight-shell"><pre>$ make <span class="pl-s3">test</span></pre></div>
+<div class="highlight highlight-shell"><pre>$ make <span class="pl-c1">test</span></pre></div>
 
 <h4>
 <a id="development-tips" class="anchor" href="#development-tips" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development Tips</h4>
@@ -960,7 +960,7 @@ AnalyzeFilter:
     <div id="footer_wrap" class="outer">
       <footer class="inner">
         <p class="copyright">Osxcollector maintained by <a href="https://github.com/Yelp">Yelp</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
 
