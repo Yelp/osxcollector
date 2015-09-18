@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import testify as T
 
-from osxcollector.output_filters.base_filters. \
-    threat_feed import ThreatFeedFilter
+from osxcollector.output_filters.base_filters.threat_feed import ThreatFeedFilter
 from tests.output_filters.run_filter_test import RunFilterTest
 
 

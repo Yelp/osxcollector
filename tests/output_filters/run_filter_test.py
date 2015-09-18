@@ -6,15 +6,11 @@ import simplejson
 import testify as T
 from mock import patch
 
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import _run_filter
 
 
 class RunFilterTest(T.TestCase):
 
-    @T.setup_teardown
-    def never_write_api_cache(self):
-        with patch('osxcollector.output_filters.util.api_cache.ApiCache._write_cache_to_file'):
-            yield
 
     def run_test(self, create_filter, input_blobs=None, expected_output_blobs=None):
         """Mocks out stdin, stdout, and config then runs input lines through an OutputFilter.
@@ -39,7 +35,7 @@ class RunFilterTest(T.TestCase):
             __
         ):
             output_filter = create_filter()
-            run_filter(output_filter)
+            _run_filter(output_filter)
             output_lines = [line for line in mock_stdout.getvalue().split('\n') if len(line)]
             output_blobs = [simplejson.loads(line) for line in output_lines]
 
@@ -64,15 +60,22 @@ class RunFilterTest(T.TestCase):
             output_blobs: A list of dicts that are the output.
         """
 
-        actual_values = list(blob.get(added_key, None) for blob in output_blobs)
-        for actual, expected in zip(actual_values, expected_values):
-            assert_equal_sorted(actual, expected)
+        if expected_values:
+            actual_values = list(blob.get(added_key, None) for blob in output_blobs)
+            for actual, expected in zip(actual_values, expected_values):
+                assert_equal_sorted(actual, expected)
 
         # Minus the added key, the input should be unchanged
         for input_blob, output_blob in zip(input_blobs, output_blobs):
             if added_key in output_blob:
                 del output_blob[added_key]
             assert_equal_sorted(input_blob, output_blob)
+
+    def load_reports(self, filename):
+        with open(filename, 'r') as fp:
+            file_contents = fp.read()
+            reports = simplejson.loads(file_contents)
+        return reports
 
 
 def assert_equal_sorted(a, b):

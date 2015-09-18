@@ -43,7 +43,7 @@ import Foundation
 import objc
 from xattr import getxattr
 
-__version__ = '1.4'
+__version__ = '1.5'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
@@ -63,6 +63,7 @@ def debugbreak():
 
 HomeDir = namedtuple('HomeDir', ['user_name', 'path'])
 """A simple tuple for storing info about a user"""
+
 
 def _get_homedirs():
     """Return a list of HomeDir objects

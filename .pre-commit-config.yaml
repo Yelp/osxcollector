@@ -1,8 +1,10 @@
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: 5fe82b3a37983b3270b7afa2ed80b90b158f3a7c
+    sha: 6077f2fefb542fa4ffd3e2f305d1986645110645
     hooks:
     -   id: autopep8-wrapper
-        args: ['-i', '--ignore=E501']
+        args:
+        - -i
+        - --ignore=E501
     -   id: check-json
     -   id: check-yaml
     -   id: end-of-file-fixer
@@ -11,6 +13,6 @@
     -   id: requirements-txt-fixer
     -   id: flake8
 -   repo: git://github.com/asottile/reorder_python_imports
-    sha: a46fdf085aaa9afc4ab68015f903ac6c824a5b42
+    sha: 3d86483455ab5bd06cc1069fdd5ac57be5463f10
     hooks:
     -   id: reorder-python-imports

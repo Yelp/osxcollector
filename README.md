@@ -1,3 +1,5 @@
+[![Stories in Ready](https://badge.waffle.io/Yelp/osxcollector.png?label=ready&title=Ready)](https://waffle.io/Yelp/osxcollector)
+[![Stories in In Progress](https://badge.waffle.io/Yelp/osxcollector.png?label=in%20progress&title=In%20Progress)](https://waffle.io/Yelp/osxcollector)
 [![Build Status](https://travis-ci.org/Yelp/osxcollector.svg)](https://travis-ci.org/Yelp/osxcollector)
 
 # OSXCollector Manual
@@ -16,6 +18,7 @@ Yelp automates the analysis of most OSXCollector runs converting OSXCollector ou
 
 ## Performing Collection
 `osxcollector.py` is a single Python file that runs without any dependencies on a standard OSX machine. This makes it really easy to run collection on any machine - no fussing with brew, pip, config files, or environment variables. Just copy the single file onto the machine and run it.
+
 
 `sudo osxcollector.py` is all it takes.
 
@@ -189,6 +192,7 @@ Collects following information from Google Chrome web browser:
  - History
  - Archived History
  - Cookies
+ - Extensions
  - Login Data
  - Top Sites
  - Web Data
@@ -206,7 +210,7 @@ Collects information from the different SQLite databases in a Firefox profile:
  - Signons
  - Permissions
  - Addons
- - Extension
+ - Extensions
  - Content Preferences
  - Health Report
  - Webapps Store
@@ -240,16 +244,16 @@ Hashes files in the mail app directories:
  - `~/Library/Mail`
  - `~/Library/Mail Downloads`
 
-## Basic Manual Analysis
-Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.
-
-Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
-
-#### `full_hash` section
+##### `full_hash` section
 Hashes all the files on disk. All of 'em. This does not run by default. It must be triggered with:
 ```shell
 $ sudo osxcollector.py -s full_hash
 ```
+
+## Basic Manual Analysis
+Forensic analysis is a bit of art and a bit of science. Every analyst will see a bit of a different story when reading the output from OSXCollector. That's part of what makes analysis fun.
+
+Generally, collection is performed on a target machine because something is hinky: anti-virus found a file it doesn't like, deep packet inspect observed a callout, endpoint monitoring noticed a new startup item. The details of this initial alert - a file path, a timestamp, a hash, a domain, an IP, etc. - that's enough to get going.
 
 #### Timestamps
 Simply greping a few minutes before and after a timestamp works great:
@@ -299,22 +303,29 @@ $ emacs osxcollector.yaml
 ```
 
 #### Basic Filters
-Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds and fancy APIs.
+Using combinations of these basic filters, an analyst can figure out a lot of what happened without expensive tools, without threat feeds or fancy APIs.
 
 ##### FindDomainsFilter
 `osxcollector.output_filters.find_domains.FindDomainsFilter` attempts to find domain names in OSXCollector output. The domains are added to the line with the key `osxcollector_domains`.
 
 FindDomainsFilter isn't too useful on it's own but it's super powerful when chained with filters like `FindBlacklistedFilter` and or `osxcollector.output_filters.virustotal.lookup_domains.LookupDomainsFilter`.
 
-Run it as:
+To run and see lines where domains have been added try:
 ```shell
-$ cat RomeoCredible.json | \
-    python -m osxcollector.output_filters.find_domains
+$ python -m osxcollector.output_filters.find_domains -i RomeoCredible.json | \
+    jq 'select(has("osxcollector_domains"))'
 ```
 
-To see lines where domains have been added try:
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_domains"))'
+$ python -m osxcollector.output_filters.find_domains -h
+usage: find_domains.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ##### FindBlacklistedFilter
@@ -329,20 +340,24 @@ Configuration Keys:
 * `blacklist_is_regex`: [REQUIRED] should the values in the blacklist file be treated as regex
 * `blacklist_is_domains`: [OPTIONAL] interpret values as domains and do some smart regex and subdomain stuff with them.
 
-Run it as:
+If you want to find blacklisted domains, you will have to use the find_domains filter to pull the domains out first. To see lines matching a specific blacklist named `domains` try:
 ```shell
-$ cat RiddlerBelize.json | \
-    python -m osxcollector.output_filters.find_blacklisted
+$ python -m osxcollector.output_filters.find_domains -i RiddlerBelize.json | \
+    python -m osxcollector.output_filters.find_blacklisted | \
+    jq 'select(has("osxcollector_blacklist")) | \
+        select(.osxcollector_blacklist | keys[] | contains("domains"))'
 ```
 
-To see lines matching a blacklist try:
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_blacklist"))'
-```
-To see lines matching a specific blacklist named `domains` try:
-```shell
-$ jq 'select(has("osxcollector_blacklist")) |
-      select(.osxcollector_blacklist | keys[] | contains("domains"))'
+$ python -m osxcollector.output_filters.find_blacklisted -h
+usage: find_blacklisted.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ##### RelatedFilesFilter
@@ -350,76 +365,121 @@ $ jq 'select(has("osxcollector_blacklist")) |
 
 This filter is great for figuring out how `evil_invoice.pdf` landed up on a machine. It'll find browser history, quarantines, email messages, etc. related to a file.
 
-Run it as:
+To run and see related lines try:
 ```shell
-$ cat CanisAsp.json | \
-    python -m osxcollector.output_filters.related_files
+$ python -m osxcollector.output_filters.related_files -i CanisAsp.json -f '/foo/bar/baz' -f 'dingle' | \
+    jq 'select(has("osxcollector_related")) | \
+        select(.osxcollector_related | keys[] | contains("files"))'
 ```
 
-To see related lines try:
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_related")) |
-      select(.osxcollector_related | keys[] | contains("files"))'
+$ python -m osxcollector.output_filters.related_files -h
+usage: related_files.py [-h] [-f FILE_TERMS] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
+
+RelatedFilesFilter:
+  -f FILE_TERMS, --file-term FILE_TERMS
+                        [OPTIONAL] Suspicious terms to use in pivoting through
+                        file names. May be specified more than once.
 ```
 
 ##### ChromeHistoryFilter
 `osxcollector.output_filters.chrome.sort_history.SortHistoryFilter` builds a really nice Chrome browser history sorted in descending time order. This output is comparable to looking at the history tab in the browser but actually contains _more_ info. The `core_transition` and `page_transition` keys explain whether the user got to the page by clicking a link, through a redirect, a hidden iframe, etc.
 
-Run it as:
+To run and see Chrome browser history:
 ```shell
-$ cat PrinceCrazy.json | \
-    python -m osxcollector.output_filters.chrome.sort_history
-```
-
-To see Chrome browser history:
-```shell
-$ jq 'select(.osxcollector_browser_history=="chrome")'
+$ python -m osxcollector.output_filters.chrome.sort_history -i SirCray.json | \
+    jq 'select(.osxcollector_browser_history=="chrome")'
 ```
 
 This is great mixed with a grep in a certain time window, like maybe the 5 minutes before that hinky download happened.
+```shell
+$ python -m osxcollector.output_filters.chrome.sort_history -i SirCray.json | \
+    jq -c 'select(.osxcollector_browser_history=="chrome")' | \
+    egrep '2015-02-02 20:3[2-6]'
+```
+
+Usage:
+```shell
+$ python -m osxcollector.output_filters.chrome.sort_history -h
+usage: sort_history.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
+```
 
 ##### FirefoxHistoryFilter
 `osxcollector.output_filters.firefox.sort_history.SortHistoryFilter` builds a really nice Firefox browser history sorted in descending time order. It's a lot like the `ChromeHistoryFilter`.
 
-Run it as:
+To run and see Firefox browser history:
 ```shell
-$ cat CousingLobe.json | \
-    python -m osxcollector.output_filters.firefox.sort_history
+$ python -m osxcollector.output_filters.firefox.sort_history -i CousingLobe.json | \
+    jq 'select(.osxcollector_browser_history=="firefox")'
 ```
 
-To see Firefox browser history:
+Usage:
 ```shell
-$ jq 'select(.osxcollector_browser_history=="firefox")'
+$ python -m osxcollector.output_filters.firefox.sort_history -h
+usage: sort_history.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ##### ChromeExtensionsFilter
 `osxcollector.output_filters.chrome.find_extensions.FindExtensionsFilter` looks for extensions in the Chrome JSON files.
 
-Run it as:
+To run and see Chrome extensions:
 ```shell
-$ cat MotherlyWolf.json | \
-    python -m osxcollector.output_filters.chrome.find_extensions
+$ python -m osxcollector.output_filters.chrome.find_extensions -i MotherlyWolf.json | \
+    jq 'select(.osxcollector_section=="chrome" and
+               .osxcollector_subsection=="extensions")'
 ```
 
-To see Chrome extensions:
+Usage:
 ```shell
-$ jq 'select(.osxcollector_section=="chrome" and
-             .osxcollector_subsection=="extensions")'
+$ python -m osxcollector.output_filters.chrome.find_extensions -h
+usage: find_extensions.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ##### FirefoxExtensionsFilter
 `osxcollector.output_filters.firefox.find_extensions.FindExtensionsFilter` looks for extensions in the Firefox JSON files.
 
-Run it as:
+To run and see Firefox extensions:
 ```shell
-$ cat FlawlessPelican.json | \
-    python -m osxcollector.output_filters.firefox.find_extensions
+$ python -m osxcollector.output_filters.firefox.find_extensions -i FlawlessPelican.json | \
+    jq 'select(.osxcollector_section=="firefox" and
+               .osxcollector_subsection=="extensions")'
 ```
 
-To see Firefox extensions:
+Usage:
 ```shell
-$ jq 'select(.osxcollector_section=="firefox" and
-             .osxcollector_subsection=="extensions")'
+$ python -m osxcollector.output_filters.firefox.find_extensions -h
+usage: find_extensions.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 #### Threat API Filters
@@ -432,19 +492,53 @@ Using these filters as examples, it would be possible to integrate with addition
 
 Often an initial alert contains a domain or IP your analysts don't know anything about. However, by gathering the 2nd generation related domains, familiar _friends_ might appear. When you're lucky, those related domains land up being the download source for some downloads you might have overlooked.
 
-Run it as:
+The filter will ignore domains if they are in the blacklist named `domain_whitelist`. This helps to reduce churn and false positives.
+
+Run it as and see what it found:
 ```shell
-$ cat NotchCherry.json | \
-    python -m osxcollector.output_filters.find_domains | \
-    python -m osxcollector.output_filters.opendns.related_domains
+$ python -m osxcollector.output_filters.find_domains -i NotchCherry.json | \
+    python -m osxcollector.output_filters.opendns.related_domains \
+           -d dismalhedgehog.com -d fantasticrabbit.org \
+           -i 128.128.128.28 | \
+    jq 'select(has("osxcollector_related")) |
+        select(.osxcollector_related | keys[] | contains("domains"))'
 ```
 
-To see what it found:
+The results will look something like:
+```
+{
+   'osxcollector_related': {
+       'domains': {
+           'domain_in_line.com': ['dismalhedgehog.com'],
+           'another.com': ['128.128.128.28']
+       }
+    }
+}
+```
+
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_related")) |
-      select(.osxcollector_related |
-             keys[] |
-             contains("domains"))'
+$ python -m osxcollector.output_filters.opendns.related_domains -h
+usage: related_domains.py [-h] [-d INITIAL_DOMAINS] [-i INITIAL_IPS]
+                          [--related-domains-generations GENERATIONS]
+                          [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
+
+opendns.RelatedDomainsFilter:
+  -d INITIAL_DOMAINS, --domain INITIAL_DOMAINS
+                        [OPTIONAL] Suspicious domains to use in pivoting. May
+                        be specified more than once.
+  -i INITIAL_IPS, --ip INITIAL_IPS
+                        [OPTIONAL] Suspicious IP to use in pivoting. May be
+                        specified more than once.
+  --related-domains-generations GENERATIONS
+                        [OPTIONAL] How many generations of related domains to
+                        lookup with OpenDNS
 ```
 
 ##### OpenDNS LookupDomainsFilter
@@ -452,16 +546,23 @@ $ jq 'select(has("osxcollector_related")) |
 
 The filter uses a heuristic to determine what is _suspicious_. It can create false positives but usually a download from a domain marked as _suspicious_ is a good lead.
 
-Run it as:
+Run it and see what was found:
 ```shell
-$ cat GladElegant.json | \
-    python -m osxcollector.output_filters.find_domains | \
-    python -m osxcollector.output_filters.opendns.lookup_domains
+$ python -m osxcollector.output_filters.find_domains -i GladElegant.json | \
+    python -m osxcollector.output_filters.opendns.lookup_domains | \
+    jq 'select(has("osxcollector_opendns"))'
 ```
 
-To see what it found:
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_opendns"))'
+$ python -m osxcollector.output_filters.opendns.lookup_domains -h
+usage: lookup_domains.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ##### VirusTotal LookupDomainsFilter
@@ -469,68 +570,94 @@ $ jq 'select(has("osxcollector_opendns"))'
 
 The filter uses a heuristic to determine what is _suspicious_. It can create a lot of false positives but also provides good leads.
 
-Run it as:
+Run it and see what was found:
 ```shell
-$ cat PippinNightstar.json | \
-    python -m osxcollector.output_filters.find_domains | \
-    python -m osxcollector.output_filters.virustotal.lookup_domains
+$ python -m osxcollector.output_filters.find_domains -i PippinNightstar.json | \
+    python -m osxcollector.output_filters.virustotal.lookup_domains | \
+    jq 'select(has("osxcollector_vtdomain"))'
 ```
 
-To see what it found:
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_vtdomain"))'
+$ python -m osxcollector.output_filters.virustotal.lookup_domains -h
+usage: lookup_domains.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ##### VirusTotal LookupHashesFilter
 `osxcollector.output_filters.virustotal.lookup_hashes.LookupHashesFilter` lookups hashes with the VirusTotal API. This basically finds anything VirusTotal knows about which is a huge time saver. There's pretty much no false positives here, but there's also no chance of detecting unknown stuff.
 
-Run it as:
-```
-$ cat PippinNightstar.json | \
-    python -m osxcollector.output_filters.virustotal.lookup_hashes
+Run it and see what was found:
+```shell
+$ python -m osxcollector.output_filters.virustotal.lookup_hashes -i FungalBuritto.json | \
+    jq 'select(has("osxcollector_vthash"))'
 ```
 
-To see what it found:
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_vthash"))'
+$ python -m osxcollector.output_filters.virustotal.lookup_hashes -h
+usage: lookup_hashes.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ##### VirusTotal LookupURLsFilter
 `osxcollector.output_filters.virustotal.lookup_hashes.LookupURLsFilter` lookups URLs with the VirusTotal API. As this only looks up the reports, it may not find the reports for some unknown URLs.
 
-Run it as:
-```
-$ cat PippinNightstar.json | \
-    python -m osxcollector.output_filters.virustotal.lookup_urls
+Run it and see what was found:
+```shell
+$ python -m osxcollector.output_filters.virustotal.lookup_urls -i WutheringLows.json | \
+    jq 'select(has("osxcollector_vturl"))'
 ```
 
-To see what it found:
+Usage
 ```shell
-$ jq 'select(has("osxcollector_vturl"))'
+$ python -m osxcollector.output_filters.virustotal.lookup_urls -h
+usage: lookup_urls.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 ###### Maximum resources per request
 Both VirusTotal LookupHashesFilter and LookupURLsFilter can save time by including in a single API request the reports for the multiple resources (hashes or URLs).
-As the number of the maximum resources in a request depends on whether you are using a Public or Private API key it is configurable in `osxcollector.yaml` file
-in `virustotal` section:
-```
+As the number of the maximum resources in a request depends on whether you are using a Public or Private API key it is configurable in `osxcollector.yaml` file in `virustotal` section:
+```yaml
 resources_per_req: 4
 ```
-
 
 ##### ShadowServer LookupHashesFilter
 `osxcollector.output_filters.shadowserver.lookup_hashes.LookupHashesFilter`
 lookups hashes with the ShadowServer bin-test API. This is sort of the opposite of a VirusTotal lookup and returns results when it sees the hashes of known good files. This helps raise confidence that a file is not malicious.
 
-Run it as:
-```
-$ cat ArkashKobiashi.json | \
-    python -m osxcollector.output_filters.shadowserver.lookup_hashes
+Run it and see what was found:
+```shell
+$ python -m osxcollector.output_filters.shadowserver.lookup_hashes -i ArkashKobiashi.json | \
+    jq 'select(has("osxcollector_shadowserver"))'
 ```
 
-To see what it found:
+Usage:
 ```shell
-$ jq 'select(has("osxcollector_shadowserver"))'
+$ python -m osxcollector.output_filters.shadowserver.lookup_hashes -h
+usage: lookup_hashes.py [-h] [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
 ```
 
 #### AnalyzeFilter - The One Filter to Rule Them All
@@ -538,8 +665,7 @@ $ jq 'select(has("osxcollector_shadowserver"))'
 
 Then _Very Readable Output Bot_ takes over and prints out an easy-to-digest, human-readable, nearly-English summary of what it found. It's basically equivalent to running:
 ```shell
-$ cat SlickApocalypse.json | \
-    python -m osxcollector.output_filters.chrome.find_extensions.FindExtensionsFilter | \
+$ python -m osxcollector.output_filters.chrome.find_extensions.FindExtensionsFilter -i SlickApocalypse.json | \
     python -m osxcollector.output_filters.firefox.find_extensions.FindExtensionsFilter | \
     python -m osxcollector.output_filters.find_domains | \
     python -m osxcollector.output_filters.shadowserver.lookup_hashes | \
@@ -562,6 +688,55 @@ $ cat SlickApocalypse.json | \
 and then letting a wise-cracking analyst explain the results to you. The _Very Readable Output Bot_ even suggests hashes and domains to add to blacklists.
 
 This thing is the real deal and our analysts don't even look at OSXCollector output until after they've run the `AnalyzeFilter`.
+
+Run it as:
+```shell
+$ python -m osxcollector.output_filters.analyze -i FullMonty.json
+```
+
+Usage:
+```shell
+$ python -m osxcollector.output_filters.analyze -h
+usage: analyze.py [-f FILE_TERMS] [-d INITIAL_DOMAINS] [-i INITIAL_IPS]
+                  [--related-domains-generations GENERATIONS] [-h] [--readout]
+                  [--no-opendns] [--no-virustotal] [--no-shadowserver] [-M]
+                  [--show-signature-chain] [--show-browser-ext]
+                  [--input-file INPUT_FILE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --input-file INPUT_FILE
+                        [OPTIONAL] Path to OSXCollector output to read.
+                        Defaults to stdin otherwise.
+
+RelatedFilesFilter:
+  -f FILE_TERMS, --file-term FILE_TERMS
+                        [OPTIONAL] Suspicious terms to use in pivoting through
+                        file names. May be specified more than once.
+
+opendns.RelatedDomainsFilter:
+  -d INITIAL_DOMAINS, --domain INITIAL_DOMAINS
+                        [OPTIONAL] Suspicious domains to use in pivoting. May
+                        be specified more than once.
+  -i INITIAL_IPS, --ip INITIAL_IPS
+                        [OPTIONAL] Suspicious IP to use in pivoting. May be
+                        specified more than once.
+  --related-domains-generations GENERATIONS
+                        [OPTIONAL] How many generations of related domains to
+                        lookup with OpenDNS
+
+AnalyzeFilter:
+  --readout             [OPTIONAL] Skip the analysis and just output really
+                        readable analysis
+  --no-opendns          [OPTIONAL] Don\'t run OpenDNS filters
+  --no-virustotal       [OPTIONAL] Don\'t run VirusTotal filters
+  --no-shadowserver     [OPTIONAL] Don\'t run ShadowServer filters
+  -M, --monochrome      [OPTIONAL] Output monochrome analysis
+  --show-signature-chain
+                        [OPTIONAL] Output unsigned startup items and kexts.
+  --show-browser-ext    [OPTIONAL] Output the list of installed browser
+                        extensions.
+```
 
 ## Contributing to OSXCollector
 We encourage you to extend the functionality of OSXCollector to suit your needs.

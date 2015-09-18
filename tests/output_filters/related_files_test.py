@@ -19,21 +19,21 @@ class RelatedFilesFilterTest(RunFilterTest):
     def teardown_outputfilter(self):
         self._output_filter = None
 
-    def _run_test(self, input_blobs=None, when=when_anytime, initial_terms=None, expected_terms=None,
+    def _run_test(self, input_blobs=None, when=when_anytime, file_terms=None, expected_terms=None,
                   expected_usernames=None, expected_is_related=None):
         """Created a RelateFilesFilter, calls run_test, and performs additional filter specific validation.
 
         Args:
             input_blob: An enumerable of dicts
             when: A callable when to init the RelatedFilesFilter with
-            initial_terms: An enumerable of strings to init the RelatedFilesFilter with
+            file_terms: An enumerable of strings to init the RelatedFilesFilter with
             expected_terms: The expected final value of RelatedFilesFilter.terms
             expected_usernames: The expected final value of RelatedFilesFilter.usernames
             expected_is_related: An enumerable of the expected value of 'osxcollector_related' for each output_blob
         """
 
         def create_related_files_filter():
-            self._output_filter = RelatedFilesFilter(when=when, initial_terms=initial_terms)
+            self._output_filter = RelatedFilesFilter(when=when, file_terms=file_terms)
             return self._output_filter
 
         output_blobs = self.run_test(create_related_files_filter, input_blobs=input_blobs)
@@ -51,32 +51,32 @@ class CreateTermsTest(RelatedFilesFilterTest):
     """Focuses on testing that terms are properly created."""
 
     def test_single_term(self):
-        initial_terms = ['one_word']
+        file_terms = ['one_word']
         expected = ['one_word']
-        self._run_test(initial_terms=initial_terms, expected_terms=expected)
+        self._run_test(file_terms=file_terms, expected_terms=expected)
 
     def test_multi_terms(self):
-        initial_terms = ['one_word', 'pants', 'face']
+        file_terms = ['one_word', 'pants', 'face']
         expected = ['one_word', 'pants', 'face']
-        self._run_test(initial_terms=initial_terms, expected_terms=expected)
+        self._run_test(file_terms=file_terms, expected_terms=expected)
 
     def test_split_terms(self):
-        initial_terms = ['/ivanlei/source/osxcollector']
+        file_terms = ['/ivanlei/source/osxcollector']
         expected = ['ivanlei', 'source', 'osxcollector']
-        self._run_test(initial_terms=initial_terms, expected_terms=expected)
+        self._run_test(file_terms=file_terms, expected_terms=expected)
 
     def test_whitelist_terms(self):
-        initial_terms = ['/Users/ivanlei/source/osxcollector', '/Users/ivanlei/virtual_envs/osxcollector/bin/python']
+        file_terms = ['/Users/ivanlei/source/osxcollector', '/Users/ivanlei/virtual_envs/osxcollector/bin/python']
         expected = ['ivanlei', 'source', 'osxcollector', 'virtual_envs']
-        self._run_test(initial_terms=initial_terms, expected_terms=expected)
+        self._run_test(file_terms=file_terms, expected_terms=expected)
 
     def test_whitelist_username_terms(self):
-        initial_terms = ['/Users/ivanlei/source/osxcollector', '/Users/ivanlei/virtual_envs/osxcollector/bin/python']
+        file_terms = ['/Users/ivanlei/source/osxcollector', '/Users/ivanlei/virtual_envs/osxcollector/bin/python']
         expected = ['source', 'osxcollector', 'virtual_envs']
         blob = {'osxcollector_username': 'ivanlei'}
         expected_usernames = ['ivanlei']
 
-        self._run_test(input_blobs=[blob], initial_terms=initial_terms, expected_terms=expected, expected_usernames=expected_usernames)
+        self._run_test(input_blobs=[blob], file_terms=file_terms, expected_terms=expected, expected_usernames=expected_usernames)
 
 
 class FindUserNamesTest(RelatedFilesFilterTest):
@@ -110,8 +110,8 @@ class RelatedFilesFilterTest(RelatedFilesFilterTest):
         expected_is_related = [
             {'files': ['magic_value']}
         ]
-        initial_terms = ['magic_value']
-        self._run_test(input_blobs=input_blobs, initial_terms=initial_terms, expected_is_related=expected_is_related)
+        file_terms = ['magic_value']
+        self._run_test(input_blobs=input_blobs, file_terms=file_terms, expected_is_related=expected_is_related)
 
     def test_multi_term(self):
         input_blobs = [
@@ -124,8 +124,8 @@ class RelatedFilesFilterTest(RelatedFilesFilterTest):
             {'files': ['value']},
             {'files': ['magic', 'value']}
         ]
-        initial_terms = ['magic', 'value']
-        self._run_test(input_blobs=input_blobs, initial_terms=initial_terms, expected_is_related=expected_is_related)
+        file_terms = ['magic', 'value']
+        self._run_test(input_blobs=input_blobs, file_terms=file_terms, expected_is_related=expected_is_related)
 
     def test_split_term(self):
         input_blobs = [
@@ -138,8 +138,8 @@ class RelatedFilesFilterTest(RelatedFilesFilterTest):
             {'files': ['value']},
             {'files': ['magic', 'value']}
         ]
-        initial_terms = ['magic/value']
-        self._run_test(input_blobs=input_blobs, initial_terms=initial_terms, expected_is_related=expected_is_related)
+        file_terms = ['magic/value']
+        self._run_test(input_blobs=input_blobs, file_terms=file_terms, expected_is_related=expected_is_related)
 
     def test_discover_term(self):
         input_blobs = [

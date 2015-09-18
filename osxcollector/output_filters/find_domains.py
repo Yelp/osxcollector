@@ -8,7 +8,7 @@ from urllib import unquote_plus
 from urlparse import urlsplit
 
 from osxcollector.output_filters.base_filters.output_filter import OutputFilter
-from osxcollector.output_filters.base_filters.output_filter import run_filter
+from osxcollector.output_filters.base_filters.output_filter import run_filter_main
 from osxcollector.output_filters.exceptions import BadDomainError
 from osxcollector.output_filters.util.domains import clean_domain
 from osxcollector.output_filters.util.domains import expand_domain
@@ -23,8 +23,8 @@ class FindDomainsFilter(OutputFilter):
     threat feeds.
     """
 
-    def __init__(self):
-        super(FindDomainsFilter, self).__init__()
+    def __init__(self, **kwargs):
+        super(FindDomainsFilter, self).__init__(**kwargs)
         self._domains = set()
 
     def filter_line(self, blob):
@@ -99,7 +99,7 @@ class FindDomainsFilter(OutputFilter):
 
 
 def main():
-    run_filter(FindDomainsFilter())
+    run_filter_main(FindDomainsFilter)
 
 
 if __name__ == "__main__":
