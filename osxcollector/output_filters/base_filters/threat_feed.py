@@ -101,18 +101,18 @@ class ThreatFeedFilter(OutputFilter):
         Returns:
             An enumerable of dicts
         """
-        self.ioc_set = sorted(list(self.ioc_set))
-
-        all_threat_info = self._lookup_iocs(self.ioc_set)
-        self._add_threat_info_to_blobs(all_threat_info)
+        if self.ioc_set:
+            self._add_threat_info_to_blobs()
         return self._blobs_with_iocs
 
-    def _add_threat_info_to_blobs(self, all_threat_info):
+    def _add_threat_info_to_blobs(self):
         """Adds threat info to blobs.
 
         Args:
             all_threat_info: A dict of the form {ioc_value: threat_info}
         """
+        self.ioc_set = sorted(list(self.ioc_set))
+        all_threat_info = self._lookup_iocs(self.ioc_set)
         for blob in self._blobs_with_iocs:
             ioc_list = blob[self._ioc_key]
             if isinstance(ioc_list, basestring):
