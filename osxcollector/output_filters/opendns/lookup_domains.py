@@ -129,13 +129,7 @@ class LookupDomainsFilter(ThreatFeedFilter):
         content_categories = category_info['content_categories']
         security_categories = category_info['security_categories']
 
-        if -1 == status:
-            return True
-        elif len(security_categories):
-            return True
-        elif any([cat in self.SUSPICIOUS_CATEGORIES for cat in content_categories]):
-            return True
-        return False
+        return -1 == status or len(security_categories) or any([cat in self.SUSPICIOUS_CATEGORIES for cat in content_categories])
 
     def _should_get_security_info(self, domain, category_info):
         """Figure out whether the info on the domain is interesting enough to gather more data.
@@ -152,11 +146,8 @@ class LookupDomainsFilter(ThreatFeedFilter):
         content_categories = category_info['content_categories']
         security_categories = category_info['security_categories']
 
-        if self._is_category_info_suspicious(category_info):
-            return True
-        elif 0 == status and 0 == len(content_categories) and 0 == len(security_categories):
-            return True
-        return False
+        return self._is_category_info_suspicious(category_info) or (0 == status and 0 == len(content_categories)
+                                                                    and 0 == len(security_categories))
 
     def _is_security_info_suspicious(self, security_info):
         """Analyzes info from OpenDNS and makes a boolean determination of suspicious or not.
