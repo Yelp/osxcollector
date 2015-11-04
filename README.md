@@ -285,9 +285,8 @@ Unlike `osxcollector.py` filters have dependencies that aren't already installed
 To setup a virtualenv for the first time use:
 ```shell
 $ sudo pip install virtualenv
-$ virtualenv --system-site-packages venv_osxcollector
-$ source ./venv_osxcollector/bin/activate
-$ pip install -r ./requirements-dev.txt
+$ make venv
+$ source virtualenv_run/bin/activate
 ```
 
 #### Filter Configuration
