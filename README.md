@@ -761,6 +761,22 @@ After making changes to the source code, run `make test` again to verify that yo
 ## License
 This work is licensed under the GNU General Public License and a derivation of [https://github.com/jipegit/OSXAuditor](https://github.com/jipegit/OSXAuditor)
 
+## Blog post
+
+* [OSXCollector: Forensic Collection and Automated Analysis for OS X](http://engineeringblog.yelp.com/2015/01/osxcollector-forensic-collection-and-automated-analysis-for-os-x.html) by Ivan Leichtling
+
+## Presentations
+
+* [OSXCollector: Automated forensic evidence collection & analysis for OS X](https://www.youtube.com/watch?v=l-lhyPcSd6I) by Kuba Sendor @ BruCON 0x07
+* [Squashing Rotten Apples: Automated forensics & analysis for Mac OS X with OSXCollector](https://www.youtube.com/watch?v=XeeCO8moyeE) by Kuba Sendor @ BSides Manchester 2015
+* [OSXCollector](http://macbrained.org/recap-august15-yelp/) by Ivan Leichtling @ Macbrained's August Meet-Up
+* [OSXCollector - Automated Forensic Evidence Collection & Analysis for OS X](https://www.youtube.com/watch?v=Yqny1rMTfyY) by Ivan Leichtling @ OpenNSM
+* [OSXCollector - Automated Forensic Evidence Collection & Analysis for OS X](https://www.youtube.com/watch?v=DfANq2ncaKU) by Ivan Leichtling @ Duo Tech Talk ([blog post](https://www.duosecurity.com/blog/duo-tech-talk-osxcollector-automated-forensic-evidence-collection-and-analysis-for-os-x))
+
+## External Presentations
+
+* [OSX Archaeology: Becoming Indiana Jones with OSXCollector and Strata](https://www.youtube.com/watch?v=9wvhOoXl2Os) by Chris Henderson & Justin Larson @ SAINTCon 2015
+
 ## Resources
 Want to learn more about OS X forensics?
 * [Sarah Edward's mac4n6.com](http://www.mac4n6.com/) - The best presentations on Mac forensics.
