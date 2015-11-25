@@ -284,7 +284,7 @@ Unlike `osxcollector.py` filters have dependencies that aren't already installed
 
 To setup a virtualenv for the first time use:
 ```shell
-$ sudo pip install virtualenv
+$ sudo pip install tox virtualenv
 $ make venv
 $ source virtualenv_run/bin/activate
 ```
