@@ -31,7 +31,7 @@ class FindExtensionsFilter(OutputFilter):
             extension = {
                 'osxcollector_section': 'chrome',
                 'osxcollector_subsection': 'extensions',
-                'osxcollector_incident_id': 'osxcollector_incident_id',
+                'osxcollector_incident_id': blob['osxcollector_incident_id'],
                 'state': setting.get('state'),
                 'was_installed_by_default': setting.get('was_installed_by_default'),
                 'name': DictUtils.get_deep(setting, 'manifest.name'),

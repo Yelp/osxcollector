@@ -33,7 +33,7 @@ class FindExtensionsFilter(OutputFilter):
             extension = {
                 'osxcollector_section': 'firefox',
                 'osxcollector_subsection': 'extensions',
-                'osxcollector_incident_id': 'osxcollector_incident_id',
+                'osxcollector_incident_id': blob['osxcollector_incident_id'],
                 'name': DictUtils.get_deep(addon, 'defaultLocale.name', addon.get('name')),
                 'description': DictUtils.get_deep(addon, 'defaultLocale.description', addon.get('description')),
                 'path': addon.get('id')
