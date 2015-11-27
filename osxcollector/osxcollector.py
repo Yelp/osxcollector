@@ -43,7 +43,7 @@ import Foundation
 import objc
 from xattr import getxattr
 
-__version__ = '1.5'
+__version__ = '1.6'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
@@ -1346,6 +1346,7 @@ class Collector(object):
         plists = [
             ('downloads', 'Downloads.plist', 'DownloadHistory'),
             ('history', 'History.plist', 'WebHistoryDates'),
+            ('extensions', 'Extensions/Extensions.plist', 'Installed Extensions'),
         ]
 
         for subsection_name, plist_name, key_to_log in plists:
@@ -1363,6 +1364,11 @@ class Collector(object):
                 dir_path = pathjoin(profile_path, dir_name)
                 for db in listdir(dir_path):
                     self._log_sqlite_db(pathjoin(dir_path, db))
+
+        # collect file info for each extension
+        with Logger.Extra('osxcollector_subsection', 'extension_files'):
+            dir_path = pathjoin(profile_path, 'Extensions')
+            self._log_file_info_for_directory(dir_path)
 
     @_foreach_homedir
     def _collect_chrome(self, homedir):

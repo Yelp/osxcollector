@@ -222,11 +222,12 @@ http://kb.mozillazine.org/Profile_folder_-_Firefox
 
 ##### `safari` section
 
-Collects information from the different plist and SQLite databases in a Safari
+Collects information from the different plists and SQLite databases in a Safari
 profile:
 
  - Downloads
  - History
+ - Extensions
  - Databases
  - Local Storage
 
