@@ -380,6 +380,16 @@ def _normalize_val(val, key=None):
         return repr(val)
 
 
+def _decode_error_description(error):
+    """Decodes error description retrieved from the native NSError format.
+
+    Args:
+        error (NSError): object representing error in native Objective-C format
+    """
+    cfstring = Foundation.CFErrorCopyDescription(error)
+    return cfstring.encode('utf-8', 'ignore')
+
+
 class CodeSignChecker(object):
 
     """Call `CodeSignChecker.get_signature_chain` to get the signing chain for a binary.
@@ -928,10 +938,20 @@ class Collector(object):
             return default
 
         try:
-            plist_nsdata, error_message = Foundation.NSData.dataWithContentsOfFile_options_error_(
+            plist_nsdata, error = Foundation.NSData.dataWithContentsOfFile_options_error_(
                 plist_path, Foundation.NSUncachedRead, None)
-            plist_dictionary, _, _ = Foundation.NSPropertyListSerialization.propertyListFromData_mutabilityOption_format_errorDescription_(
+            if error:
+                error_description = _decode_error_description(error)
+                Logger.log_error('Unable to read plist: [{0}]. plist_path[{1}]'.format(error_description, plist_path))
+                return default
+
+            plist_dictionary, _, error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
                 plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
+            if error:
+                error_description = _decode_error_description(error)
+                Logger.log_error('Unable to parse plist: [{0}]. plist_path[{1}]'.format(error_description, plist_path))
+                return default
+
             plist = _normalize_val(plist_dictionary)
 
             # If the output of _read_plist is not a dict or list, things aren't going to work properly. Log an informative error.
