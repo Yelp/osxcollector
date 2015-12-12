@@ -935,6 +935,7 @@ class Collector(object):
             default = {}
 
         if not os.path.isfile(plist_path):
+            Logger.log_warning('plist file not found. plist_path[{0}]'.format(plist_path))
             return default
 
         try:
@@ -943,6 +944,9 @@ class Collector(object):
             if error:
                 error_description = _decode_error_description(error)
                 Logger.log_error('Unable to read plist: [{0}]. plist_path[{1}]'.format(error_description, plist_path))
+                return default
+            if 0 == plist_nsdata.length():
+                Logger.log_warning('Empty plist. plist_path[{0}]'.format(plist_path))
                 return default
 
             plist_dictionary, _, error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
