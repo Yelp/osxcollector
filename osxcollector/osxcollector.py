@@ -935,6 +935,7 @@ class Collector(object):
             default = {}
 
         if not os.path.isfile(plist_path):
+            Logger.log_warning('plist file not found. plist_path[{0}]'.format(plist_path))
             return default
 
         try:

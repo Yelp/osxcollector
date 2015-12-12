@@ -173,22 +173,16 @@ class CollectorTestCase(T.TestCase):
             for recent in recents:
                 self.mock_log_dict.assert_any_call(recent)
 
-    def test_read_plist_non_existing(self):
-        plist = self.collector._read_plist('tests/data/plists/non_existing.plist')
-        T.assert_equals({}, plist)
-        self.mock_log_dict.assert_not_called()
-
     def assert_log(self, plist_path, expected_log):
         plist = self.collector._read_plist(plist_path)
         T.assert_equals({}, plist)
         self.mock_log_dict.assert_called_once_with(expected_log)
 
-    def test_read_plist_invalid_format(self):
-        plist_path = 'tests/data/plists/invalid_format.plist'
-        error = 'Unable to parse plist: [The data couldn\xe2\x80\x99t be read because it isn\xe2\x80\x99t in the correct format.].' \
-            + ' plist_path[{0}]'.format(plist_path)
+    def test_read_plist_file_not_found(self):
+        plist_path = 'tests/data/plists/non_existing.plist'
+        warning = 'plist file not found. plist_path[{0}]'.format(plist_path)
         expected_log = {
-            'osxcollector_error': error
+            'osxcollector_warn': warning
         }
         self.assert_log(plist_path, expected_log)
 
@@ -197,5 +191,14 @@ class CollectorTestCase(T.TestCase):
         warning = 'Empty plist. plist_path[{0}]'.format(plist_path)
         expected_log = {
             'osxcollector_warn': warning
+        }
+        self.assert_log(plist_path, expected_log)
+
+    def test_read_plist_invalid_format(self):
+        plist_path = 'tests/data/plists/invalid_format.plist'
+        error = 'Unable to parse plist: [The data couldn\xe2\x80\x99t be read because it isn\xe2\x80\x99t in the correct format.].' \
+            + ' plist_path[{0}]'.format(plist_path)
+        expected_log = {
+            'osxcollector_error': error
         }
         self.assert_log(plist_path, expected_log)
