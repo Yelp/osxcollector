@@ -3,7 +3,5 @@
 *.egg-info/
 .DS_Store
 .idea/
-config.yaml
-osxcollector.yaml
 virtualenv_run/
 .coverage
