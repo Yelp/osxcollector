@@ -274,6 +274,8 @@ def _get_extended_attr(file_path, attr):
             return [xattr_val]
     except KeyError:
         pass  # ignore missing key in xattr
+    except IOError:
+        pass  # ignore not found attribute
     return None
 
 
