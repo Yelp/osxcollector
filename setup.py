@@ -10,4 +10,7 @@ setup(
     author_email="opensource@yelp.com",
     description="A tool for answering \"How'd that malware get there?\"",
     packages=["osxcollector"],
+    entry_points={
+        'console_scripts': ['osxcollector=osxcollector.osxcollector:main']
+    },
 )
