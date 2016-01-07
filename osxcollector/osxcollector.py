@@ -412,6 +412,11 @@ class CodeSignChecker(object):
     kSecCSDefaultFlags = 0x0
     kSecCSDoNotValidateResources = 0x4
     kSecCSSigningInformation = 0x2
+    kSecCSStrictValidate = 0x16
+    #  kSecCSStrictValidate | kSecCSCheckAllArchitectures
+    kSecCSStrictValidate_kSecCSCheckAllArchitectures = 0x17
+    #  kSecCSStrictValidate | kSecCSCheckAllArchitectures | kSecCSCheckNestedCode
+    kSecCSStrictValidate_kSecCSCheckAllArchitectures_kSecCSCheckNestedCode = 0x1f
     kSecCodeInfoCertificates = 'certificates'
 
     class CodeSignCheckerError(Exception):
@@ -528,8 +533,14 @@ class CodeSignChecker(object):
         Raises:
             SystemCallError when the code is not secure
         """
+        if strict is True:
+            # strict checking
+            sigCheckFlags = cls.kSecCSStrictValidate_kSecCSCheckAllArchitectures_kSecCSCheckNestedCode
+        else:
+            # no-strict checking
+            sigCheckFlags = cls.kSecCSDoNotValidateResources
 
-        result = cls.SEC_DLL.SecStaticCodeCheckValidityWithErrors(static_code, cls.kSecCSDoNotValidateResources, None, None)
+        result = cls.SEC_DLL.SecStaticCodeCheckValidityWithErrors(static_code, sigCheckFlags, None, None)
         if cls.errSecSuccess != result:
             raise cls.SystemCallError('SecStaticCodeCheckValidityWithErrors', result)
 
@@ -1600,6 +1611,7 @@ def main():
 
     global DEBUG_MODE
     global ROOT_PATH
+    global strict
 
     euid = os.geteuid()
     egid = os.getegid()
@@ -1614,7 +1626,11 @@ def main():
                         help='[OPTIONAL] Just run the named section.  May be specified more than once.')
     parser.add_argument('-d', '--debug', action='store_true', default=False,
                         help='[OPTIONAL] Enable verbose output and python breakpoints.')
+    parser.add_argument('-t', '--strict', dest='strict', default=False, action='store_true',
+                        help='[OPTIONAL] Enable strict codesign checking of applications and binaries')
     args = parser.parse_args()
+
+    strict = args.strict
 
     DEBUG_MODE = args.debug
     ROOT_PATH = args.rootpath
