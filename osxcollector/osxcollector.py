@@ -297,7 +297,6 @@ def _get_file_info(file_path, log_xattr=False):
     ctime = ''
     extra_data_check = ''
     extra_data_found = False
-    
 
     if os.path.isfile(file_path):
         mtime = _datetime_to_string(datetime.fromtimestamp(os.path.getmtime(file_path)))
@@ -308,16 +307,16 @@ def _get_file_info(file_path, log_xattr=False):
         except CodeSignChecker.CodeSignCheckerError:
             signature_chain = []
 
-        #check for extradata
+        # check for extradata
         try:
             extra_data_result = str(kyphosis(file_path, False).extra_data)
             if extra_data_result == "{}":
                 extra_data_check = ''
             else:
-            	extra_data_check = base64.b64encode(extra_data_result)
+                extra_data_check = base64.b64encode(extra_data_result)
                 extra_data_found = True
         except:
-            extra_data_check = '' 
+            extra_data_check = ''
 
         file_info = {
             'md5': md5_hash,
@@ -1628,6 +1627,7 @@ class LogFileArchiver(object):
             debugbreak()
             Logger.log_exception(compress_directory_e)
 
+
 class kyphosis():
 
     def __init__(self, someFile, writeFile=False):
@@ -1638,7 +1638,7 @@ class kyphosis():
                                "\xcf\xfa\xed\xfe",  # x86
                                "\xce\xfa\xed\xfe"   # x86_64
                                ]
-        #check if macho
+        # check if macho
         self.dataoff = 0
         self.datasize = 0
         self.beginOffset = 0
@@ -1699,7 +1699,6 @@ class kyphosis():
         self.bin.seek(self.beginOffset, 0)
         self.empty_space = self.bin.read(self.endOffset - self.beginOffset)
         if self.empty_space != len(self.empty_space) * "\x00":
-            #print "Found extra data in the Fat file slack space for " + self.someFile
             self.extra_data_found = True
             self.extra_data[self.count] = self.empty_space
             if self.writeFile is True:
@@ -1752,7 +1751,6 @@ class kyphosis():
     def check_macho_size(self):
         with open(self.someFile, 'r') as f:
             if os.stat(self.someFile).st_size > self.last_entry:
-                #print "Found extra data at the end of file.. " + self.someFile
                 f.seek(self.last_entry, 0)
                 extra_data_end = f.read()
                 self.extra_data_found = True
