@@ -49,18 +49,58 @@ The JSON output of the collector, along with some helpful files like system logs
   ```
 
 * `-s SECTION`/`--section=SECTION`:
-  Runs only a portion of the full collection. Can be specified more than once. The full list of sections is:
+  Runs only a portion of the full collection. Can be specified more than once. The full list of sections and subsections is:
   * `version`
   * `system_info`
   * `kext`
   * `startup`
+    * `launch_agents`
+    * `scripting_additions`
+    * `startup_items`
+    * `login_items`
   * `applications`
+    * `applications`
+    * `install_history`
   * `quarantines`
   * `downloads`
+    * `downloads`
+    * `email_downloads`
+    * `old_email_downloads`
   * `chrome`
+    * `history`
+    * `archived_history`
+    * `cookies`
+    * `login_data`
+    * `top_sites`
+    * `web_data`
+    * `databases`
+    * `local_storage`
+    * `preferences`
   * `firefox`
+    * `cookies`
+    * `downloads`
+    * `formhistory`
+    * `history`
+    * `signons`
+    * `permissions`
+    * `addons`
+    * `extension`
+    * `content_prefs`
+    * `health_report`
+    * `webapps_store`
+    * `json_files`
   * `safari`
+    * `downloads`
+    * `history`
+    * `extensions`
+    * `databases`
+    * `localstorage`
+    * `extension_files`
   * `accounts`
+    * `system_admins`
+    * `system_users`
+    * `social_accounts`
+    * `recent_items`
   * `mail`
   * `full_hash`
 
