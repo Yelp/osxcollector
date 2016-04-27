@@ -108,6 +108,14 @@ The JSON output of the collector, along with some helpful files like system logs
   $ sudo osxcollector.py -s 'startup' -s 'downloads'
   ```
 
+* `-c`/`--ignore-cookies`:
+  Do not dump cookies value.
+  Maybe useful as they sometimes contain sensitive information (e.g. session id).
+
+* `-l`/`--ignore-local-storage`:
+  Do not dump the values stored in web browsers' local storage.
+  Maybe useful as they sometimes contain sensitive information.
+
 * `-d`/`--debug`:
   Enables verbose output and python breakpoints. If something is wrong with OSXCollector, try this.
 
