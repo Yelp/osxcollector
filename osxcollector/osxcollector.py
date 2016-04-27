@@ -46,7 +46,7 @@ import macholib.MachO
 import objc
 from xattr import getxattr
 
-__version__ = '1.7'
+__version__ = '1.8'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
