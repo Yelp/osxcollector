@@ -1836,13 +1836,13 @@ def main():
                         help='[OPTIONAL] Enable verbose output and python breakpoints.')
     parser.add_argument('-t', '--strict', dest='strict', default=False, action='store_true',
                         help='[OPTIONAL] Enable strict codesign checking of applications and binaries')
-    parser.add_argument('-c', '--ignore-cookies', dest='ignore_cookies_value',
+    parser.add_argument('-c', '--collect-cookies', dest='collect_cookies_value',
                         default=False, action='store_true',
-                        help='[OPTIONAL] Do not dump cookies value')
-    parser.add_argument('-l', '--ignore-local-storage',
-                        dest='ignore_local_storage_value', default=False,
+                        help='[OPTIONAL] Collect cookies\' value')
+    parser.add_argument('-l', '--collect-local-storage',
+                        dest='collect_local_storage_value', default=False,
                         action='store_true',
-                        help='[OPTIONAL] Do not dump the values stored in web'
+                        help='[OPTIONAL] Collect the values stored in web'
                         ' browsers\' local storage')
     args = parser.parse_args()
 
@@ -1856,12 +1856,12 @@ def main():
         return
 
     # Ignore cookies value
-    if args.ignore_cookies_value:
+    if not args.collect_cookies_value:
         firefox_ignored_sqlite_keys['cookies'] = {'moz_cookies': ['value']}
         chrome_ignored_sqlite_keys['cookies'] = {'cookies': ['value']}
 
     # Ignore local storage value
-    if args.ignore_local_storage_value:
+    if not args.collect_local_storage_value:
         safari_ignored_sqlite_keys['localstorage'] = {'ItemTable': ['value']}
         chrome_ignored_sqlite_keys['local_storage'] = {'ItemTable': ['value']}
 
