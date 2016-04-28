@@ -19,8 +19,7 @@ Armed with the forensic collection, an analyst can answer the question like:
 Yelp automates the analysis of most OSXCollector runs converting its output into an easily readable and actionable summary of _just the suspicious stuff_. Check out [OSXCollector Output Filters project](https://github.com/Yelp/osxcollector_output_filters) to learn how to make the most of the automated OSXCollector output analysis.
 
 ## Performing Collection
-`osxcollector.py` is a single Python file that runs without any dependencies on a standard OSX machine. This makes it really easy to run collection on any machine - no fussing with brew, pip, config files, or environment variables. Just copy the single file onto the machine and run it.
-
+[`osxcollector.py`](https://raw.githubusercontent.com/Yelp/osxcollector/master/osxcollector/osxcollector.py) is a single Python file that runs without any dependencies on a standard OSX machine. This makes it really easy to run collection on any machine - no fussing with brew, pip, config files, or environment variables. Just copy the single file onto the machine and run it:
 
 `sudo osxcollector.py` is all it takes.
 
@@ -28,6 +27,12 @@ Yelp automates the analysis of most OSXCollector runs converting its output into
 $ sudo osxcollector.py
 Wrote 35394 lines.
 Output in osxcollect-2014_12_21-08_49_39.tar.gz
+```
+
+If you have just cloned the GitHub repository, `osxcollector.py` is inside `osxcollector/` directory, so you need to run it as:
+
+```shell
+$ sudo osxcollector/osxcollector.py
 ```
 
 The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for hand-off to an analyst.
