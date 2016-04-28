@@ -18,11 +18,13 @@
 #  Non-fatal errors are only written to stderr when the --debug flag is passed to the script.
 #  They can also be found in the JSON output as lines with a key 'osxcollector_warn'
 #
+import base64
 import calendar
 import ctypes
 import ctypes.util
 import os
 import shutil
+import struct
 import sys
 from argparse import ArgumentParser
 from collections import namedtuple
@@ -38,16 +40,13 @@ from numbers import Number
 from sqlite3 import connect
 from sqlite3 import OperationalError
 from traceback import extract_tb
-import macholib.MachO
-import struct
-import base64
-
 
 import Foundation
+import macholib.MachO
 import objc
 from xattr import getxattr
 
-__version__ = '1.7'
+__version__ = '1.8'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
@@ -1294,12 +1293,13 @@ class Collector(object):
             Logger.log_exception(
                 log_json_e, message='failed _log_json_file dir_path[{0}] file_name[{1}]'.format(dir_path, file_name))
 
-    def _log_sqlite_table(self, table_name, cursor):
+    def _log_sqlite_table(self, table_name, cursor, ignore_keys):
         """Dump a SQLite table
 
         Args:
             table_name: The name of the table to dump
             cursor: sqlite3 cursor object
+            ignore_keys: A list of the keys (column names) to ignore when logging the table.
         """
         with Logger.Extra('osxcollector_table_name', table_name):
 
@@ -1315,14 +1315,13 @@ class Collector(object):
 
                 # Splat out each record
                 for row in rows:
-                    record = dict([(key, _normalize_val(val, key)) for key, val in zip(column_descriptions, row)])
+                    record = dict([(key, _normalize_val(val, key)) for key, val in zip(column_descriptions, row) if key not in ignore_keys])
                     Logger.log_dict(record)
 
             except Exception as per_table_e:
                 Logger.log_exception(per_table_e, message='failed _log_sqlite_table')
 
-    def _raw_log_sqlite_db(self, sqlite_db_path):
-
+    def _raw_log_sqlite_db(self, sqlite_db_path, ignore):
         with connect(sqlite_db_path) as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT * from sqlite_master WHERE type = "table"')
@@ -1330,13 +1329,16 @@ class Collector(object):
             table_names = [table[2] for table in tables]
 
             for table_name in table_names:
-                self._log_sqlite_table(table_name, cursor)
+                ignore_keys = ignore.get(table_name, [])
+                self._log_sqlite_table(table_name, cursor, ignore_keys)
 
-    def _log_sqlite_db(self, sqlite_db_path):
+    def _log_sqlite_db(self, sqlite_db_path, ignore={}):
         """Dump a SQLite database file as JSON.
 
         Args:
-            sqlite_db_path: The path to the SqlLite file
+            sqlite_db_path: The path to the SQLite file
+            ignore (optional): The dictionary associating table names
+                and keys to ignore when dumping the database
         """
         if not os.path.isfile(sqlite_db_path):
             Logger.log_warning('File not found {0}'.format(sqlite_db_path))
@@ -1346,28 +1348,75 @@ class Collector(object):
 
             # Connect and get all table names
             try:
-                self._raw_log_sqlite_db(sqlite_db_path)
+                self._raw_log_sqlite_db(sqlite_db_path, ignore)
 
             except Exception as connection_e:
                 if isinstance(connection_e, OperationalError) and -1 != connection_e.message.find('locked'):
                     shutil.copyfile(sqlite_db_path, "{0}.tmp".format(sqlite_db_path))
-                    self._raw_log_sqlite_db("{0}.tmp".format(sqlite_db_path))
+                    self._raw_log_sqlite_db("{0}.tmp".format(sqlite_db_path), ignore)
                     os.remove("{0}.tmp".format(sqlite_db_path))
 
                     Logger.log_warning('{0} was locked. Copied to {0}.tmp & analyzed.'.format(sqlite_db_path))
                 else:
                     Logger.log_exception(connection_e, message='failed _log_sqlite_db')
 
+    def _log_sqlite_dbs_for_subsections(
+            self, sqlite_dbs, profile_path, ignored_sqlite_keys):
+        """Dumps SQLite databases for each subsection.
+
+        Args:
+            sqlite_dbs: The list of tuples containing subsection name
+                and related SQLite database filename
+            profile_path: The path to a browser profile to which
+                the SQLite database filenames are relative to
+            ignored_sqlite_keys: The dictionary containing the mapping
+                between the subsection, the SQLite table name and
+                the key name, which value should not be dumped
+        """
+        for subsection_name, db_name in sqlite_dbs:
+            with Logger.Extra('osxcollector_subsection', subsection_name):
+                ignore = ignored_sqlite_keys.get(subsection_name, {})
+                sqlite_db_path = pathjoin(profile_path, db_name)
+                self._log_sqlite_db(sqlite_db_path, ignore)
+
+    def _log_directories_of_dbs(
+            self, directories_of_dbs, profile_path, ignored_sqlite_keys,
+            ignore_db_path=lambda sqlite_db_path: False):
+        """Dumps SQLite databases for each subsection.
+
+        Args:
+            directories_of_dbs: The list of tuples containing
+                subsection name and related subdirectory for which all
+                of the SQLite databases will be dumped
+            profile_path: The path to a browser profile to which
+                the subdirectories are relative to
+            ignored_sqlite_keys: The dictionary containing the mapping
+                between the subsection, the SQLite table name and
+                the key name, which value should not be dumped
+            ignore_db_path (optional): The function which takes
+                the SQLite database path and returns True if
+                the database file should not be dumped
+        """
+        for subsection_name, dir_name in directories_of_dbs:
+            with Logger.Extra('osxcollector_subsection', subsection_name):
+                ignore = ignored_sqlite_keys.get(subsection_name, {})
+                dir_path = pathjoin(profile_path, dir_name)
+                for db in listdir(dir_path):
+                    sqlite_db_path = pathjoin(dir_path, db)
+                    if not ignore_db_path(sqlite_db_path):
+                        self._log_sqlite_db(sqlite_db_path, ignore)
+
     @_foreach_homedir
     def _collect_firefox(self, homedir):
         """Log the different SQLite databases in a Firefox profile"""
-        # Most useful See http://kb.mozillazine.org/Profile_folder_-_Firefox
+        global firefox_ignored_sqlite_keys
 
         all_profiles_path = pathjoin(homedir.path, 'Library/Application Support/Firefox/Profiles')
         if not os.path.isdir(all_profiles_path):
             Logger.log_warning('Directory not found {0}'.format(all_profiles_path))
             return
 
+        # Most useful. See: http://kb.mozillazine.org/Profile_folder_-_Firefox
         for profile_name in listdir(all_profiles_path):
             profile_path = pathjoin(all_profiles_path, profile_name)
 
@@ -1385,9 +1434,8 @@ class Collector(object):
                 ('webapps_store', 'webappsstore.sqlite'),
             ]
 
-            for subsection_name, db_name in sqlite_dbs:
-                with Logger.Extra('osxcollector_subsection', subsection_name):
-                    self._log_sqlite_db(pathjoin(profile_path, db_name))
+            self._log_sqlite_dbs_for_subsections(
+                sqlite_dbs, profile_path, firefox_ignored_sqlite_keys)
 
             with Logger.Extra('osxcollector_subsection', 'json_files'):
                 self._collect_json_files(profile_path)
@@ -1395,6 +1443,7 @@ class Collector(object):
     @_foreach_homedir
     def _collect_safari(self, homedir):
         """Log the different plist and SQLite databases in a Safari profile"""
+        global safari_ignored_sqlite_keys
 
         profile_path = pathjoin(homedir.path, 'Library/Safari')
         if not os.path.isdir(profile_path):
@@ -1417,11 +1466,8 @@ class Collector(object):
             ('databases', 'Databases'),
             ('localstorage', 'LocalStorage')
         ]
-        for subsection_name, dir_name in directories_of_dbs:
-            with Logger.Extra('osxcollector_subsection', subsection_name):
-                dir_path = pathjoin(profile_path, dir_name)
-                for db in listdir(dir_path):
-                    self._log_sqlite_db(pathjoin(dir_path, db))
+        self._log_directories_of_dbs(
+            directories_of_dbs, profile_path, safari_ignored_sqlite_keys)
 
         # collect file info for each extension
         with Logger.Extra('osxcollector_subsection', 'extension_files'):
@@ -1431,6 +1477,7 @@ class Collector(object):
     @_foreach_homedir
     def _collect_chrome(self, homedir):
         """Log the different files in a Chrome profile"""
+        global chrome_ignored_sqlite_keys
 
         chrome_path = pathjoin(homedir.path, 'Library/Application Support/Google/Chrome/Default')
         if not os.path.isdir(chrome_path):
@@ -1445,22 +1492,22 @@ class Collector(object):
             ('top_sites', 'Top Sites'),
             ('web_data', 'Web Data')
         ]
-        for subsection_name, db_name in sqlite_dbs:
-            with Logger.Extra('osxcollector_subsection', subsection_name):
-                self._log_sqlite_db(pathjoin(chrome_path, db_name))
+        self._log_sqlite_dbs_for_subsections(
+            sqlite_dbs, chrome_path, chrome_ignored_sqlite_keys)
 
         directories_of_dbs = [
             ('databases', 'databases'),
             ('local_storage', 'Local Storage')
         ]
-        for subsection_name, dir_name in directories_of_dbs:
-            with Logger.Extra('osxcollector_subsection', subsection_name):
-                dir_path = pathjoin(chrome_path, dir_name)
-                for db in listdir(dir_path):
-                    db_path = pathjoin(dir_path, db)
-                    # Files ending in '-journal' are encrypted
-                    if not db_path.endswith('-journal') and not os.path.isdir(db_path):
-                        self._log_sqlite_db(db_path)
+
+        def ignore_db_path(sqlite_db_path):
+            # Files ending in '-journal' are encrypted
+            return sqlite_db_path.endswith('-journal') or os.path.isdir(
+                sqlite_db_path)
+
+        self._log_directories_of_dbs(
+            directories_of_dbs, chrome_path, chrome_ignored_sqlite_keys,
+            ignore_db_path)
 
         with Logger.Extra('osxcollector_subsection', 'preferences'):
             self._log_json_file(chrome_path, 'preferences')
@@ -1767,6 +1814,13 @@ def main():
     global ROOT_PATH
     global strict
 
+    global firefox_ignored_sqlite_keys
+    global safari_ignored_sqlite_keys
+    global chrome_ignored_sqlite_keys
+    firefox_ignored_sqlite_keys = {}
+    safari_ignored_sqlite_keys = {}
+    chrome_ignored_sqlite_keys = {}
+
     euid = os.geteuid()
     egid = os.getegid()
 
@@ -1782,6 +1836,14 @@ def main():
                         help='[OPTIONAL] Enable verbose output and python breakpoints.')
     parser.add_argument('-t', '--strict', dest='strict', default=False, action='store_true',
                         help='[OPTIONAL] Enable strict codesign checking of applications and binaries')
+    parser.add_argument('-c', '--collect-cookies', dest='collect_cookies_value',
+                        default=False, action='store_true',
+                        help='[OPTIONAL] Collect cookies\' value')
+    parser.add_argument('-l', '--collect-local-storage',
+                        dest='collect_local_storage_value', default=False,
+                        action='store_true',
+                        help='[OPTIONAL] Collect the values stored in web'
+                        ' browsers\' local storage')
     args = parser.parse_args()
 
     strict = args.strict
@@ -1792,6 +1854,16 @@ def main():
     if ROOT_PATH == '/' and (euid != 0 and egid != 0):
         Logger.log_error('Must run as root!\n')
         return
+
+    # Ignore cookies value
+    if not args.collect_cookies_value:
+        firefox_ignored_sqlite_keys['cookies'] = {'moz_cookies': ['value']}
+        chrome_ignored_sqlite_keys['cookies'] = {'cookies': ['value']}
+
+    # Ignore local storage value
+    if not args.collect_local_storage_value:
+        safari_ignored_sqlite_keys['localstorage'] = {'ItemTable': ['value']}
+        chrome_ignored_sqlite_keys['local_storage'] = {'ItemTable': ['value']}
 
     # Create an incident ID
     prefix = args.incident_prefix

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import contextlib
 
-import mock
 import testify as T
+from mock import call
+from mock import MagicMock
+from mock import patch
 
+import osxcollector.osxcollector
 from osxcollector.osxcollector import Collector
 from osxcollector.osxcollector import HomeDir
 from osxcollector.osxcollector import Logger
@@ -21,9 +24,9 @@ class CollectorTestCase(T.TestCase):
             'sha2': '11'
         }
         with contextlib.nested(
-            mock.patch.object(Logger, 'log_dict'),
-            mock.patch('osxcollector.osxcollector._get_homedirs', autospec=True, return_value=homedirs),
-            mock.patch('osxcollector.osxcollector._get_file_info', autospec=True, return_value=self.expected_file_info)
+            patch.object(Logger, 'log_dict'),
+            patch('osxcollector.osxcollector._get_homedirs', autospec=True, return_value=homedirs),
+            patch('osxcollector.osxcollector._get_file_info', autospec=True, return_value=self.expected_file_info)
         ) as (self.mock_log_dict, self.mock_get_homedirs, self.mock_get_file_info):
             self.collector = Collector()
             yield
@@ -97,9 +100,9 @@ class CollectorTestCase(T.TestCase):
             'Provides': ['test_service']
         }
         with contextlib.nested(
-            mock.patch('os.path.isdir', autospec=True, return_value=True),
-            mock.patch('osxcollector.osxcollector.listdir', autospec=True, return_value=list_of_files_in_dir),
-            mock.patch.object(Collector, '_read_plist', autospec=True, return_value=plist)
+            patch('os.path.isdir', autospec=True, return_value=True),
+            patch('osxcollector.osxcollector.listdir', autospec=True, return_value=list_of_files_in_dir),
+            patch.object(Collector, '_read_plist', autospec=True, return_value=plist)
         ):
             self.collector._log_startup_items('test_dir')
             self.mock_log_dict.assert_called_with(self.expected_file_info)
@@ -114,7 +117,7 @@ class CollectorTestCase(T.TestCase):
                 'CustomListItems': [login_item]
             }
         }
-        with mock.patch.object(Collector, '_read_plist', autospec=True, return_value=plist) as mock_read_plist:
+        with patch.object(Collector, '_read_plist', autospec=True, return_value=plist) as mock_read_plist:
             self.collector._log_user_login_items()
 
             mock_read_plist.assert_called_with(self.collector, plist_path)
@@ -166,7 +169,7 @@ class CollectorTestCase(T.TestCase):
             {'host_name': 'Financial District', 'host_url': 'afp://sfo/fidi'},
             {'host_name': 'North Beach', 'host_url': 'afp://sfo/nobe'}
         ]
-        with mock.patch.object(Collector, '_read_plist', autospec=True, return_value=plist) as mock_read_plist:
+        with patch.object(Collector, '_read_plist', autospec=True, return_value=plist) as mock_read_plist:
             self.collector._collect_accounts_recent_items()
 
             mock_read_plist.assert_called_with(self.collector, plist_path)
@@ -202,3 +205,104 @@ class CollectorTestCase(T.TestCase):
             'osxcollector_error': error
         }
         self.assert_log(plist_path, expected_log)
+
+    def _mock_sqlite_connection(self):
+        # context manager mock based on http://stackoverflow.com/a/3268310
+        self.connect_mock = MagicMock()
+        osxcollector.osxcollector.connect = self.connect_mock
+        context_manager_mock = self.connect_mock.return_value
+        self.conn_mock = context_manager_mock.__enter__.return_value
+
+        self.cursor_mock = self.conn_mock.cursor.return_value
+        tables = [
+            ('boom', 'duh', 'fruits'),
+            ('duff', 'poom', 'veggies'),
+        ]
+        rows_fruits = [
+            ('apple', 'green'),
+            ('banana', 'yellow'),
+            ('cherry', 'red'),
+        ]
+        rows_veggies = [
+            ('carrot', 'orange'),
+            ('radish', 'red'),
+        ]
+        self.cursor_mock.fetchall.side_effect = [
+            tables, rows_fruits, rows_veggies]
+        self.cursor_mock.description = [['name'], ['color']]
+
+    def test_log_sqlite_db(self):
+        self._mock_sqlite_connection()
+
+        with patch('os.path.isfile', return_value=True) as isfile_mock:
+            self.collector._log_sqlite_db(
+                '/Users/test/sqlite/db/panama_papers')
+
+        isfile_mock.assert_called_once_with(
+            '/Users/test/sqlite/db/panama_papers')
+        self.connect_mock.assert_called_once_with(
+            '/Users/test/sqlite/db/panama_papers')
+        T.assert_truthy(self.conn_mock.cursor.called)
+
+        expected_execute_calls = [
+            call('SELECT * from sqlite_master WHERE type = "table"'),
+            call('SELECT * from fruits'),
+            call('SELECT * from veggies'),
+        ]
+        T.assert_equals(
+            expected_execute_calls, self.cursor_mock.execute.call_args_list)
+
+        expected_log_dict_calls = [
+            call({
+                'name': 'apple',
+                'color': 'green',
+            }),
+            call({
+                'name': 'banana',
+                'color': 'yellow',
+            }),
+            call({
+                'name': 'cherry',
+                'color': 'red',
+            }),
+            call({
+                'name': 'carrot',
+                'color': 'orange',
+            }),
+            call({
+                'name': 'radish',
+                'color': 'red',
+            }),
+        ]
+        T.assert_equals(
+            expected_log_dict_calls, self.mock_log_dict.call_args_list)
+
+    def test_log_sqlite_db_ignore(self):
+        self._mock_sqlite_connection()
+
+        with patch('os.path.isfile', return_value=True):
+            self.collector._log_sqlite_db(
+                '/Users/test/sqlite/db/cayman_airways',
+                ignore={'fruits': ['color']})
+
+        expected_log_dict_calls = [
+            call({
+                'name': 'apple',
+            }),
+            call({
+                'name': 'banana',
+            }),
+            call({
+                'name': 'cherry',
+            }),
+            call({
+                'name': 'carrot',
+                'color': 'orange',
+            }),
+            call({
+                'name': 'radish',
+                'color': 'red',
+            }),
+        ]
+        T.assert_equals(
+            expected_log_dict_calls, self.mock_log_dict.call_args_list)
