@@ -35,6 +35,13 @@ If you have just cloned the GitHub repository, `osxcollector.py` is inside `osxc
 $ sudo osxcollector/osxcollector.py
 ```
 
+**IMPORTANT:** please make sure that `python` command on your Mac OS X machine uses the default Python interpreter shipped with the system and is not overridden, e.g. by the Python version installed through brew. OSXCollector relies on a couple of native Python bindings for OS X libraries, which might be not available in other Python versions than the one originally installed on your system.
+Alternatively, you can run `osxcollector.py` explicitly specifying the Python version you would like to use:
+
+```shell
+$ sudo /usr/bin/python2.7 osxcollector/osxcollector.py
+```
+
 The JSON output of the collector, along with some helpful files like system logs, has been bundled into a .tar.gz for hand-off to an analyst.
 
 `osxcollector.py` also has a lot of useful options to change how collection works:
