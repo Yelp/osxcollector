@@ -537,8 +537,9 @@ class CodeSignChecker(object):
         static_code = ctypes.c_void_p(0)
 
         # create static code from path and check
-        result = cls.SEC_DLL.SecStaticCodeCreateWithPath(ctypes.c_void_p(objc.pyobjc_id(path)),
-                                                         cls.kSecCSDefaultFlags, ctypes.byref(static_code))
+        result = cls.SEC_DLL.SecStaticCodeCreateWithPath(
+            ctypes.c_void_p(objc.pyobjc_id(path)), cls.kSecCSDefaultFlags,
+            ctypes.byref(static_code))
         if cls.errSecSuccess != result:
             raise cls.SystemCallError('SecStaticCodeCreateWithPath', result)
 
@@ -1826,24 +1827,35 @@ def main():
 
     parser = ArgumentParser()
     parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
-    parser.add_argument('-i', '--id', dest='incident_prefix', default='osxcollect',
-                        help='[OPTIONAL] An identifier which will be added as a prefix to the output file name.')
-    parser.add_argument('-p', '--path', dest='rootpath', default='/',
-                        help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The running system will be audited by default.')
-    parser.add_argument('-s', '--section', dest='section_list', default=[], action='append',
-                        help='[OPTIONAL] Just run the named section.  May be specified more than once.')
-    parser.add_argument('-d', '--debug', action='store_true', default=False,
-                        help='[OPTIONAL] Enable verbose output and python breakpoints.')
-    parser.add_argument('-t', '--strict', dest='strict', default=False, action='store_true',
-                        help='[OPTIONAL] Enable strict codesign checking of applications and binaries')
-    parser.add_argument('-c', '--collect-cookies', dest='collect_cookies_value',
-                        default=False, action='store_true',
-                        help='[OPTIONAL] Collect cookies\' value')
-    parser.add_argument('-l', '--collect-local-storage',
-                        dest='collect_local_storage_value', default=False,
-                        action='store_true',
-                        help='[OPTIONAL] Collect the values stored in web'
-                        ' browsers\' local storage')
+    parser.add_argument(
+        '-i', '--id', dest='incident_prefix', default='osxcollect',
+        help='[OPTIONAL] An identifier which will be added as a prefix to the '
+        'output file name.')
+    parser.add_argument(
+        '-p', '--path', dest='rootpath', default='/',
+        help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The'
+        ' running system will be audited by default.')
+    parser.add_argument(
+        '-s', '--section', dest='section_list', default=[], action='append',
+        help='[OPTIONAL] Just run the named section.  May be specified more '
+        'than once.')
+    parser.add_argument(
+        '-d', '--debug', action='store_true', default=False,
+        help='[OPTIONAL] Enable verbose output and python breakpoints.')
+    parser.add_argument(
+        '-t', '--strict', dest='strict', default=False, action='store_true',
+        help='[OPTIONAL] Enable strict codesign checking of applications and '
+        'binaries')
+    parser.add_argument(
+        '-c', '--collect-cookies', dest='collect_cookies_value',
+        default=False, action='store_true',
+        help='[OPTIONAL] Collect cookies\' value')
+    parser.add_argument(
+        '-l', '--collect-local-storage',
+        dest='collect_local_storage_value', default=False,
+        action='store_true',
+        help='[OPTIONAL] Collect the values stored in web browsers\' '
+        'local storage')
     args = parser.parse_args()
 
     strict = args.strict
