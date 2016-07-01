@@ -46,7 +46,7 @@ import macholib.MachO
 import objc
 from xattr import getxattr
 
-__version__ = '1.8'
+__version__ = '1.9'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
@@ -1362,7 +1362,7 @@ class Collector(object):
                     Logger.log_exception(connection_e, message='failed _log_sqlite_db')
 
     def _log_sqlite_dbs_for_subsections(
-            self, sqlite_dbs, profile_path, ignored_sqlite_keys):
+            self, sqlite_dbs, profile_path, ignored_sqlite_keys={}):
         """Dumps SQLite databases for each subsection.
 
         Args:
@@ -1462,6 +1462,12 @@ class Collector(object):
                 plist_path = pathjoin(profile_path, plist_name)
                 plist = self._read_plist(plist_path)
                 self._log_items_in_plist(plist, key_to_log)
+
+        # collect history from SQLite database in History.db
+        sqlite_dbs = [
+            ('history', 'History.db'),
+        ]
+        self._log_sqlite_dbs_for_subsections(sqlite_dbs, profile_path)
 
         directories_of_dbs = [
             ('databases', 'Databases'),
