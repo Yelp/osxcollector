@@ -1,9 +1,15 @@
-# This forces OS X builds on travis
 language: objective-c
-
 os: osx
-
 install:
-    - sudo pip install tox
-
+- sudo pip install tox
 script: make test
+deploy:
+  provider: pypi
+  user: yelplabs
+  password:
+    secure: kzFpHUdNR8/5Mb8j0WE7MoGjnrsdY+OaD/WJYLJR0t8m0bbI23iKvWoti5BaWc0xbwjyck+DMIRkgaLrFjqTg/Cv0vgRw4hexIPw70tbQ67R8iJ1H2uIFiFeLZHLthedMkJ28eVDQCWuL51aFGbXxphtbPvPmir+lFWDMkdRC/Y=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: Yelp/osxcollector
+    branch: pypi-autodeploy
