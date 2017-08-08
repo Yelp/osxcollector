@@ -1486,10 +1486,16 @@ class Collector(object):
         """Log the different files in a Chrome profile"""
         global chrome_ignored_sqlite_keys
 
-        chrome_path = pathjoin(homedir.path, 'Library/Application Support/Google/Chrome/Default')
+        chrome_path = pathjoin(homedir.path, 'Library/Application Support/Google/Chrome')
         if not os.path.isdir(chrome_path):
             Logger.log_warning('Directory not found {0}'.format(chrome_path))
             return
+
+        profile_paths = []
+        for subdir in os.listdir(chrome_path):
+            if os.path.isdir(os.path.join(chrome_path, subdir)):
+                if os.path.isfile("{0}/{1}/History".format(chrome_path, subdir)):
+                    profile_paths.append(pathjoin(chrome_path, subdir))
 
         sqlite_dbs = [
             ('history', 'History'),
@@ -1499,8 +1505,10 @@ class Collector(object):
             ('top_sites', 'Top Sites'),
             ('web_data', 'Web Data')
         ]
-        self._log_sqlite_dbs_for_subsections(
-            sqlite_dbs, chrome_path, chrome_ignored_sqlite_keys)
+
+        for profile_path in profile_paths:
+            self._log_sqlite_dbs_for_subsections(
+                sqlite_dbs, profile_path, chrome_ignored_sqlite_keys)
 
         directories_of_dbs = [
             ('databases', 'databases'),
@@ -1512,12 +1520,14 @@ class Collector(object):
             return sqlite_db_path.endswith('-journal') or os.path.isdir(
                 sqlite_db_path)
 
-        self._log_directories_of_dbs(
-            directories_of_dbs, chrome_path, chrome_ignored_sqlite_keys,
-            ignore_db_path)
+        for profile_path in profile_paths:
+            self._log_directories_of_dbs(
+                directories_of_dbs, profile_path, chrome_ignored_sqlite_keys,
+                ignore_db_path)
 
-        with Logger.Extra('osxcollector_subsection', 'preferences'):
-            self._log_json_file(chrome_path, 'preferences')
+        for profile_path in profile_paths:
+            with Logger.Extra('osxcollector_subsection', 'preferences'):
+                self._log_json_file(profile_path, 'preferences')
 
     def _collect_kext(self):
         """Log the Kernel extensions"""
