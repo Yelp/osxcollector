@@ -1491,11 +1491,7 @@ class Collector(object):
             Logger.log_warning('Directory not found {0}'.format(chrome_path))
             return
 
-        profile_paths = []
-        for subdir in os.listdir(chrome_path):
-            if os.path.isdir(os.path.join(chrome_path, subdir)):
-                if os.path.isfile("{0}/{1}/History".format(chrome_path, subdir)):
-                    profile_paths.append(pathjoin(chrome_path, subdir))
+        profile_paths = [pathjoin(chrome_path, subdir) for subdir in os.listdir(chrome_path) if os.path.isdir(os.path.join(chrome_path, subdir)) and os.path.isfile("{0}/{1}/History".format(chrome_path, subdir))]
 
         sqlite_dbs = [
             ('history', 'History'),
@@ -1505,10 +1501,6 @@ class Collector(object):
             ('top_sites', 'Top Sites'),
             ('web_data', 'Web Data')
         ]
-
-        for profile_path in profile_paths:
-            self._log_sqlite_dbs_for_subsections(
-                sqlite_dbs, profile_path, chrome_ignored_sqlite_keys)
 
         directories_of_dbs = [
             ('databases', 'databases'),
@@ -1524,8 +1516,8 @@ class Collector(object):
             self._log_directories_of_dbs(
                 directories_of_dbs, profile_path, chrome_ignored_sqlite_keys,
                 ignore_db_path)
-
-        for profile_path in profile_paths:
+            self._log_sqlite_dbs_for_subsections(
+                sqlite_dbs, profile_path, chrome_ignored_sqlite_keys)
             with Logger.Extra('osxcollector_subsection', 'preferences'):
                 self._log_json_file(profile_path, 'preferences')
 
