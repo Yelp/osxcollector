@@ -6,4 +6,3 @@ pre-commit==0.8.2
 pyflakes==0.9.1
 testify==0.7.2
 tox==2.0.2
-xattr==0.7.8
