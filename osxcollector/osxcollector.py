@@ -355,10 +355,11 @@ def _normalize_val(val, key=None):
     :returns: A string
     """
     # If the key hints this is a timestamp, try to use some popular formats
-    if key and any([-1 != key.lower().find(hint) for hint in ['time', 'utc', 'date', 'accessed']]):
+    if key and any([-1 != key.lower().find(hint) for hint in ['time', 'utc', 'date', 'accessed']]) and not 'times' in key.lower():
         ts = _value_to_datetime(val)
-        if ts:
-            return _datetime_to_string(ts)
+        if not ts:
+            ts = datetime.fromtimestamp(0)
+        return _datetime_to_string(ts)
 
     try:
         if isinstance(val, basestring):
