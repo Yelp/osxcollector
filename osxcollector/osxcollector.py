@@ -355,8 +355,11 @@ def _normalize_val(val, key=None):
     :returns: A string
     """
     # If the key hints this is a timestamp, try to use some popular formats
-    if key and any([-1 != key.lower().find(hint) for hint in ['time', 'utc', 'date', 'accessed']]):
+    if key and any([hint in key.lower() for hint in ['time', 'utc', 'date', 'accessed']]):
         ts = _value_to_datetime(val)
+        # Known timestamp keys with values not conforming to heuristics are mapped to a default timestamp
+        if not ts and key in ['last_access_time', 'expires_utc', 'date_created', 'end_time']:
+            ts = datetime.fromtimestamp(1)
         if ts:
             return _datetime_to_string(ts)
 
