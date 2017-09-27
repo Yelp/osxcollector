@@ -881,6 +881,8 @@ class Logger(object):
         def __exit__(self, type, value, traceback):
             del Logger.Extra.extras[self.key]
 
+PATH_ENVIRONMENT_NAME = "PATH"
+
 
 class Collector(object):
 
@@ -913,6 +915,7 @@ class Collector(object):
             ('safari', self._collect_safari),
             ('accounts', self._collect_accounts),
             ('mail', self._collect_mail),
+            ('executables', self._collect_binary_names_in_path)
             ('full_hash', self._collect_full_hash)
         ]
 
@@ -1204,6 +1207,22 @@ class Collector(object):
             'fde': fde
         }
         Logger.log_dict(record)
+
+    def _collect_binary_names_in_path(self):
+        """Collect the names of executable binaries in the PATH environment"""
+        exe_files = []
+
+        def is_exe(fpath):
+            return os.path.isfile(fpath) and os.path.exists(fpath) and os.access(fpath, os.X_OK)
+
+        if PATH_ENVIRONMENT_NAME in os.environ:
+            for bin_dir in os.environ[PATH_ENVIRONMENT_NAME].split(":"):
+                for root_dir, dirs, files in os.walk(bin_dir):
+                    for the_file in files:
+                        file_path = os.path.join(root_dir, the_file)
+                        if is_exe(file_path):
+                            exe_files.append(file_path)
+        Logger.log_dict({"executable_files": exe_files})
 
     def _collect_startup(self):
         """Log the different LauchAgents and LaunchDaemons"""
