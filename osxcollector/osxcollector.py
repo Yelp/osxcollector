@@ -1216,7 +1216,7 @@ class Collector(object):
             return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
         if PATH_ENVIRONMENT_NAME in os.environ:
-            for bin_dir in os.environ[PATH_ENVIRONMENT_NAME].split(":"):
+            for bin_dir in os.environ[PATH_ENVIRONMENT_NAME].split(os.pathsep):
                 for root_dir, dirs, files in os.walk(bin_dir):
                     for the_file in files:
                         file_path = os.path.join(root_dir, the_file)
