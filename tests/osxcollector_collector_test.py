@@ -94,6 +94,27 @@ class CollectorTestCase(T.TestCase):
         self.collector._log_packages_in_dir('tests/data/packages/')
         self.mock_log_dict.assert_called_with(expected)
 
+    def test_collect_binary_names_in_path(self):
+        expected = ['/usr/bin/ls', '/usr/bin/pwd']
+
+        with patch(
+            'os.walk', autospec=True,
+            return_value=[
+                ['/usr', ('test',), ('bin/ls', 'bin/pwd', 'bin/tmp',)]
+            ]
+        ), patch(
+            'os.path.isfile', autospec=True,
+            side_effect=[True, True, False, True, True, False]
+        ), patch(
+            'os.access', autospec=True,
+            side_effect=[True, True, True, True, True, True]
+        ), patch.dict(
+            'os.environ', {'PATH': '/usr/bin'}
+        ):
+            self.collector._collect_binary_names_in_path()
+            self.mock_log_dict.assert_called_once_with({'executable_files':
+                                                        expected})
+
     def test_log_startup_items(self):
         list_of_files_in_dir = ['StartupParameters.plist']
         plist = {

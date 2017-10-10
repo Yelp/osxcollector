@@ -915,7 +915,7 @@ class Collector(object):
             ('safari', self._collect_safari),
             ('accounts', self._collect_accounts),
             ('mail', self._collect_mail),
-            ('executables', self._collect_binary_names_in_path)
+            ('executables', self._collect_binary_names_in_path),
             ('full_hash', self._collect_full_hash)
         ]
 
@@ -1213,7 +1213,7 @@ class Collector(object):
         exe_files = []
 
         def is_exe(fpath):
-            return os.path.isfile(fpath) and os.path.exists(fpath) and os.access(fpath, os.X_OK)
+            return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
         if PATH_ENVIRONMENT_NAME in os.environ:
             for bin_dir in os.environ[PATH_ENVIRONMENT_NAME].split(":"):
