@@ -154,7 +154,6 @@ For records representing files there are a bunch of useful keys:
 * `md5`: MD5 hash of the file contents.
 * `sha1`: SHA1 hash of the file contents.
 * `sha2`: SHA2 hash of the file contents.
-* `signature_chain`: The common names of the certs in the file's signing chain
 
 For records representing downloaded files:
 * `xattr-wherefrom`: A list containing the source and referrer URLs for the downloaded file.
