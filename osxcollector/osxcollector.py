@@ -292,12 +292,14 @@ def _get_file_info(file_path, log_xattr=False):
         dict with key ['md5', 'sha1', 'sha2', file_path', 'mtime', 'ctime']
     """
     md5_hash, sha1_hash, sha2_hash = '', '', ''
+    atime = ''
     mtime = ''
     ctime = ''
     extra_data_check = ''
     extra_data_found = False
 
     if os.path.isfile(file_path):
+        atime = _datetime_to_string(datetime.fromtimestamp(os.path.getatime(file_path)))
         mtime = _datetime_to_string(datetime.fromtimestamp(os.path.getmtime(file_path)))
         ctime = _datetime_to_string(datetime.fromtimestamp(os.path.getctime(file_path)))
         md5_hash, sha1_hash, sha2_hash = _hash_file(file_path)
@@ -322,6 +324,7 @@ def _get_file_info(file_path, log_xattr=False):
             'sha1': sha1_hash,
             'sha2': sha2_hash,
             'file_path': file_path,
+            'atime': atime,
             'mtime': mtime,
             'ctime': ctime,
             'signature_chain': signature_chain,
