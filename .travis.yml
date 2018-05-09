@@ -1,7 +1,8 @@
-language: objective-c
+language: generic
 os: osx
+osx_image: xcode9.3
 install:
-   - sudo pip install -r requirements-dev.txt
+   - pip2 install --user -r requirements-dev.txt
 script: make test
 deploy:
   provider: pypi
