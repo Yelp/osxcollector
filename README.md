@@ -148,6 +148,7 @@ Each line of the JSON file records 1 _piece of information_.  There are some com
 
 ##### File Records
 For records representing files there are a bunch of useful keys:
+* `atime`: The file accessed time.
 * `ctime`: The file creation time.
 * `mtime`: The file modified time.
 * `file_path`: The absolute path to the file.
