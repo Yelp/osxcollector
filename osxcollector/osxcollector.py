@@ -43,7 +43,7 @@ import Foundation
 import macholib.MachO
 from xattr import getxattr
 
-__version__ = '1.9'
+__version__ = '1.10'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
