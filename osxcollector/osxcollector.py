@@ -1355,15 +1355,19 @@ class LogFileArchiver(object):
             target_dir_path: Path the directory files should be archived to
         """
         to_archive = [
-            ('private/var/log', 'system.'),
-            ('Library/Logs', None),
+            ('private/var/log', 'system.', None),
+            ('Library/Logs', None, None),
+            ('Library/Logs/DiagnosticReports', None, '.crash'),
         ]
 
-        for log_path, log_file_prefix in to_archive:
+        for log_path, log_file_prefix, log_file_suffix in to_archive:
             log_dir_path = pathjoin(ROOT_PATH, log_path)
 
             for file_name in listdir(log_dir_path):
                 if log_file_prefix and not file_name.startswith(log_file_prefix):
+                    continue
+
+                if log_file_suffix and not file_name.endswith(log_file_suffix):
                     continue
 
                 src = pathjoin(log_dir_path, file_name)
