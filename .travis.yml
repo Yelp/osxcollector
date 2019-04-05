@@ -9,6 +9,7 @@ deploy:
   provider: pypi
   user: yelplabs
   distributions: sdist bdist_wheel
+  skip_existing: true
   password:
     secure: I0m1KUbsEBmPtQ/CQGmPDHr8FUx96IU9s6IM/HqmF/lRTvIp/uPAVxRSNjxvOvVecCLRBDP6H60wSTIb1wVXME7Zg1PHhioOUb1gzWJ7Atq4QTdf5+qJfdZs+fvOoKuWYukj2pWpY5HypIq9crM7L5VzeOYAuYwnK65tJK9yvfo=
   on:
