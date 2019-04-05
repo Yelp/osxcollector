@@ -1,16 +1,17 @@
 language: generic
 os: osx
-osx_image: xcode9.3
-install:
-   - pip2 install --user -r requirements-dev.txt
-script: make test
+osx_image: xcode9.4
+
+install: sudo pip install tox setuptools wheel twine
+
+script: tox -epy27
 deploy:
   provider: pypi
   user: yelplabs
+  distributions: sdist bdist_wheel
   password:
-    secure: kzFpHUdNR8/5Mb8j0WE7MoGjnrsdY+OaD/WJYLJR0t8m0bbI23iKvWoti5BaWc0xbwjyck+DMIRkgaLrFjqTg/Cv0vgRw4hexIPw70tbQ67R8iJ1H2uIFiFeLZHLthedMkJ28eVDQCWuL51aFGbXxphtbPvPmir+lFWDMkdRC/Y=
+    secure: I0m1KUbsEBmPtQ/CQGmPDHr8FUx96IU9s6IM/HqmF/lRTvIp/uPAVxRSNjxvOvVecCLRBDP6H60wSTIb1wVXME7Zg1PHhioOUb1gzWJ7Atq4QTdf5+qJfdZs+fvOoKuWYukj2pWpY5HypIq9crM7L5VzeOYAuYwnK65tJK9yvfo=
   on:
     tags: true
-    distributions: sdist bdist_wheel
     repo: Yelp/osxcollector
-    branch: pypi-autodeploy
+    branch: master

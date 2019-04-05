@@ -1,8 +1,7 @@
 -r requirements.txt
-coverage==3.7.1
-flake8==2.5.1
-mock==1.0.1
-pre-commit==0.8.2
-pyflakes==0.9.1
-testify==0.7.2
-tox==2.0.2
+coverage==4.5.1
+flake8==3.7.7
+mock==2.0.0
+pre-commit>=1.0.0
+pytest==4.4.0
+tox==3.8.6

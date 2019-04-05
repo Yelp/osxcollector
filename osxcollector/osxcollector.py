@@ -18,6 +18,8 @@
 #  Non-fatal errors are only written to stderr when the --debug flag is passed to the script.
 #  They can also be found in the JSON output as lines with a key 'osxcollector_warn'
 #
+from __future__ import absolute_import
+
 import base64
 import calendar
 import os
@@ -43,7 +45,7 @@ import Foundation
 import macholib.MachO
 from xattr import getxattr
 
-__version__ = '1.10'
+from osxcollector import __version__
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
@@ -138,7 +140,7 @@ def _hash_file(file_path):
     hashers = [
         md5(),
         sha1(),
-        sha256()
+        sha256(),
     ]
 
     try:
@@ -217,14 +219,16 @@ def _value_to_datetime(val):
     # Try various versions of converting a number to a datetime.
     # Ordering is important as a timestamp may be "valid" with multiple different conversion algorithms
     # but it won't necessarily be the correct timestamp
-    if (isinstance(val, basestring)):
+    if isinstance(val, basestring):
         try:
             val = float(val)
         except Exception:
             return None
 
-    return (_microseconds_since_epoch_to_datetime(val) or _microseconds_since_1601_to_datetime(val) or
-            _seconds_since_epoch_to_datetime(val) or _seconds_since_2001_to_datetime(val))
+    return _microseconds_since_epoch_to_datetime(val) \
+        or _microseconds_since_1601_to_datetime(val) \
+        or _seconds_since_epoch_to_datetime(val) \
+        or _seconds_since_2001_to_datetime(val)
 
 
 def _datetime_to_string(dt):
@@ -263,7 +267,8 @@ def _get_extended_attr(file_path, attr):
         if xattr_val.startswith('bplist'):
             try:
                 plist_array, _, plist_error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
-                    buffer(xattr_val), 0, None, None)
+                    buffer(xattr_val), 0, None, None,
+                )
                 if plist_error:
                     Logger.log_error(message='plist de-serialization error: {0}'.format(plist_error))
                     return None
@@ -304,12 +309,12 @@ def _get_file_info(file_path, log_xattr=False):
         # check for extradata
         try:
             extra_data_result = str(kyphosis(file_path, False).extra_data)
-            if extra_data_result == "{}":
+            if extra_data_result == '{}':
                 extra_data_check = ''
             else:
                 extra_data_check = base64.b64encode(extra_data_result)
                 extra_data_found = True
-        except:
+        except Exception:
             extra_data_check = ''
 
         file_info = {
@@ -568,7 +573,8 @@ class Logger(object):
         def __exit__(self, type, value, traceback):
             del Logger.Extra.extras[self.key]
 
-PATH_ENVIRONMENT_NAME = "PATH"
+
+PATH_ENVIRONMENT_NAME = 'PATH'
 
 
 class Collector(object):
@@ -603,7 +609,7 @@ class Collector(object):
             ('accounts', self._collect_accounts),
             ('mail', self._collect_mail),
             ('executables', self._collect_binary_names_in_path),
-            ('full_hash', self._collect_full_hash)
+            ('full_hash', self._collect_full_hash),
         ]
 
         # If no section_list was specified, collect everything but the 'full_hash' section
@@ -626,7 +632,7 @@ class Collector(object):
 
         fde_status = os.popen('fdesetup status').read()
 
-        if "On" in fde_status:
+        if 'On' in fde_status:
             return True
         else:
             return False
@@ -667,7 +673,8 @@ class Collector(object):
 
         try:
             plist_nsdata, error = Foundation.NSData.dataWithContentsOfFile_options_error_(
-                plist_path, Foundation.NSUncachedRead, None)
+                plist_path, Foundation.NSUncachedRead, None,
+            )
             if error:
                 error_description = _decode_error_description(error)
                 Logger.log_error('Unable to read plist: [{0}]. plist_path[{1}]'.format(error_description, plist_path))
@@ -677,7 +684,8 @@ class Collector(object):
                 return default
 
             plist_dictionary, _, error = Foundation.NSPropertyListSerialization.propertyListWithData_options_format_error_(
-                plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None)
+                plist_nsdata, Foundation.NSPropertyListMutableContainers, None, None,
+            )
             if error:
                 error_description = _decode_error_description(error)
                 Logger.log_error('Unable to parse plist: [{0}]. plist_path[{1}]'.format(error_description, plist_path))
@@ -891,7 +899,7 @@ class Collector(object):
             'release': release,
             'version': version,
             'machine': machine,
-            'fde': fde
+            'fde': fde,
         }
         Logger.log_dict(record)
 
@@ -909,7 +917,7 @@ class Collector(object):
                         file_path = os.path.join(root_dir, the_file)
                         if is_exe(file_path):
                             exe_files.append(file_path)
-        Logger.log_dict({"executable_files": exe_files})
+        Logger.log_dict({'executable_files': exe_files})
 
     def _collect_startup(self):
         """Log the different LauchAgents and LaunchDaemons"""
@@ -962,7 +970,7 @@ class Collector(object):
         directories_to_hash = [
             ('downloads', 'Downloads'),
             ('email_downloads', 'Library/Mail Downloads'),
-            ('old_email_downloads', 'Library/Containers/com.apple.mail/Data/Library/Mail Downloads')
+            ('old_email_downloads', 'Library/Containers/com.apple.mail/Data/Library/Mail Downloads'),
         ]
 
         for subsection_name, path_to_dir in directories_to_hash:
@@ -980,8 +988,10 @@ class Collector(object):
             Logger.log_warning('Directory not found {0}'.format(dir_path))
             return
 
-        json_files = [file_name for file_name in listdir(
-            dir_path) if file_name.endswith('.json')]
+        json_files = [
+            file_name for file_name in listdir(dir_path)
+            if file_name.endswith('.json')
+        ]
         for file_name in json_files:
             self._log_json_file(dir_path, file_name)
 
@@ -1001,7 +1011,8 @@ class Collector(object):
 
         except Exception as log_json_e:
             Logger.log_exception(
-                log_json_e, message='failed _log_json_file dir_path[{0}] file_name[{1}]'.format(dir_path, file_name))
+                log_json_e, message='failed _log_json_file dir_path[{0}] file_name[{1}]'.format(dir_path, file_name),
+            )
 
     def _log_sqlite_table(self, table_name, cursor, ignore_keys):
         """Dump a SQLite table
@@ -1062,16 +1073,17 @@ class Collector(object):
 
             except Exception as connection_e:
                 if isinstance(connection_e, OperationalError) and -1 != connection_e.message.find('locked'):
-                    shutil.copyfile(sqlite_db_path, "{0}.tmp".format(sqlite_db_path))
-                    self._raw_log_sqlite_db("{0}.tmp".format(sqlite_db_path), ignore)
-                    os.remove("{0}.tmp".format(sqlite_db_path))
+                    shutil.copyfile(sqlite_db_path, '{0}.tmp'.format(sqlite_db_path))
+                    self._raw_log_sqlite_db('{0}.tmp'.format(sqlite_db_path), ignore)
+                    os.remove('{0}.tmp'.format(sqlite_db_path))
 
                     Logger.log_warning('{0} was locked. Copied to {0}.tmp & analyzed.'.format(sqlite_db_path))
                 else:
                     Logger.log_exception(connection_e, message='failed _log_sqlite_db')
 
     def _log_sqlite_dbs_for_subsections(
-            self, sqlite_dbs, profile_path, ignored_sqlite_keys={}):
+            self, sqlite_dbs, profile_path, ignored_sqlite_keys={},
+    ):
         """Dumps SQLite databases for each subsection.
 
         Args:
@@ -1091,7 +1103,8 @@ class Collector(object):
 
     def _log_directories_of_dbs(
             self, directories_of_dbs, profile_path, ignored_sqlite_keys,
-            ignore_db_path=lambda sqlite_db_path: False):
+            ignore_db_path=lambda sqlite_db_path: False,
+    ):
         """Dumps SQLite databases for each subsection.
 
         Args:
@@ -1145,7 +1158,8 @@ class Collector(object):
             ]
 
             self._log_sqlite_dbs_for_subsections(
-                sqlite_dbs, profile_path, firefox_ignored_sqlite_keys)
+                sqlite_dbs, profile_path, firefox_ignored_sqlite_keys,
+            )
 
             with Logger.Extra('osxcollector_subsection', 'json_files'):
                 self._collect_json_files(profile_path)
@@ -1180,10 +1194,11 @@ class Collector(object):
 
         directories_of_dbs = [
             ('databases', 'Databases'),
-            ('localstorage', 'LocalStorage')
+            ('localstorage', 'LocalStorage'),
         ]
         self._log_directories_of_dbs(
-            directories_of_dbs, profile_path, safari_ignored_sqlite_keys)
+            directories_of_dbs, profile_path, safari_ignored_sqlite_keys,
+        )
 
         # collect file info for each extension
         with Logger.Extra('osxcollector_subsection', 'extension_files'):
@@ -1200,7 +1215,7 @@ class Collector(object):
             Logger.log_warning('Directory not found {0}'.format(chrome_path))
             return
 
-        profile_paths = [pathjoin(chrome_path, subdir) for subdir in os.listdir(chrome_path) if os.path.isdir(os.path.join(chrome_path, subdir)) and os.path.isfile("{0}/{1}/History".format(chrome_path, subdir))]
+        profile_paths = [pathjoin(chrome_path, subdir) for subdir in os.listdir(chrome_path) if os.path.isdir(os.path.join(chrome_path, subdir)) and os.path.isfile('{0}/{1}/History'.format(chrome_path, subdir))]
 
         sqlite_dbs = [
             ('history', 'History'),
@@ -1208,25 +1223,28 @@ class Collector(object):
             ('cookies', 'Cookies'),
             ('login_data', 'Login Data'),
             ('top_sites', 'Top Sites'),
-            ('web_data', 'Web Data')
+            ('web_data', 'Web Data'),
         ]
 
         directories_of_dbs = [
             ('databases', 'databases'),
-            ('local_storage', 'Local Storage')
+            ('local_storage', 'Local Storage'),
         ]
 
         def ignore_db_path(sqlite_db_path):
             # Files ending in '-journal' are encrypted
             return sqlite_db_path.endswith('-journal') or os.path.isdir(
-                sqlite_db_path)
+                sqlite_db_path,
+            )
 
         for profile_path in profile_paths:
             self._log_directories_of_dbs(
                 directories_of_dbs, profile_path, chrome_ignored_sqlite_keys,
-                ignore_db_path)
+                ignore_db_path,
+            )
             self._log_sqlite_dbs_for_subsections(
-                sqlite_dbs, profile_path, chrome_ignored_sqlite_keys)
+                sqlite_dbs, profile_path, chrome_ignored_sqlite_keys,
+            )
             with Logger.Extra('osxcollector_subsection', 'preferences'):
                 self._log_json_file(profile_path, 'preferences')
 
@@ -1234,7 +1252,7 @@ class Collector(object):
         """Log the Kernel extensions"""
         kext_paths = [
             'System/Library/Extensions',
-            'Library/Extensions'
+            'Library/Extensions',
         ]
 
         for kext_path in kext_paths:
@@ -1246,7 +1264,7 @@ class Collector(object):
             ('system_admins', self._collect_accounts_system_admins),
             ('system_users', self._collect_accounts_system_users),
             ('social_accounts', self._collect_accounts_social_accounts),
-            ('recent_items', self._collect_accounts_recent_items)
+            ('recent_items', self._collect_accounts_recent_items),
         ]
         for subsection_name, collector in accounts:
             with Logger.Extra('osxcollector_subsection', subsection_name):
@@ -1304,7 +1322,7 @@ class Collector(object):
             ('server', 'RecentServers'),
             ('document', 'RecentDocuments'),
             ('application', 'RecentApplications'),
-            ('host', 'Hosts')
+            ('host', 'Hosts'),
         ]
 
         for recent_type, recent_key in recents:
@@ -1340,7 +1358,7 @@ class Collector(object):
         """Hashes file in the mail app directories"""
         mail_paths = [
             'Library/Mail',
-            'Library/Mail Downloads'
+            'Library/Mail Downloads',
         ]
         for mail_path in mail_paths:
             self._log_file_info_for_directory(pathjoin(homedir.path, mail_path))
@@ -1403,10 +1421,11 @@ class kyphosis():
 
         self.someFile = someFile
         self.extra_data_found = False
-        self.supportedfiles = ["\xca\xfe\xba\xbe",  # FAT
-                               "\xcf\xfa\xed\xfe",  # x86
-                               "\xce\xfa\xed\xfe"   # x86_64
-                               ]
+        self.supportedfiles = [
+            '\xca\xfe\xba\xbe',  # FAT
+            '\xcf\xfa\xed\xfe',  # x86
+            '\xce\xfa\xed\xfe',   # x86_64
+        ]
         # check if macho
         self.dataoff = 0
         self.datasize = 0
@@ -1441,7 +1460,7 @@ class kyphosis():
         # process Fat file
         with open(self.someFile, 'r') as self.bin:
             self.bin.read(4)
-            ArchNo = struct.unpack(">I", self.bin.read(4))[0]
+            ArchNo = struct.unpack('>I', self.bin.read(4))[0]
             for arch in range(ArchNo):
                 self.fat_hdrs[arch] = self.fat_header()
             self.end_fat_hdr = self.bin.tell()
@@ -1467,21 +1486,21 @@ class kyphosis():
     def check_space(self):
         self.bin.seek(self.beginOffset, 0)
         self.empty_space = self.bin.read(self.endOffset - self.beginOffset)
-        if self.empty_space != len(self.empty_space) * "\x00":
+        if self.empty_space != len(self.empty_space) * '\x00':
             self.extra_data_found = True
             self.extra_data[self.count] = self.empty_space
             if self.writeFile is True:
-                print "Writing to " + os.path.basename(self.someFile) + '.extra_data_section' + str(self.count)
+                print 'Writing to ' + os.path.basename(self.someFile) + '.extra_data_section' + str(self.count)
                 with open(os.path.basename(self.someFile) + '.extra_data_section' + str(self.count), 'w') as h:
                     h.write(self.empty_space)
 
     def fat_header(self):
         header = {}
-        header["CPU Type"] = struct.unpack(">I", self.bin.read(4))[0]
-        header["CPU SubType"] = struct.unpack(">I", self.bin.read(4))[0]
-        header["Offset"] = struct.unpack(">I", self.bin.read(4))[0]
-        header["Size"] = struct.unpack(">I", self.bin.read(4))[0]
-        header["Align"] = struct.unpack(">I", self.bin.read(4))[0]
+        header['CPU Type'] = struct.unpack('>I', self.bin.read(4))[0]
+        header['CPU SubType'] = struct.unpack('>I', self.bin.read(4))[0]
+        header['Offset'] = struct.unpack('>I', self.bin.read(4))[0]
+        header['Size'] = struct.unpack('>I', self.bin.read(4))[0]
+        header['Align'] = struct.unpack('>I', self.bin.read(4))[0]
         return header
 
     def check_binary(self):
@@ -1525,7 +1544,7 @@ class kyphosis():
                 self.extra_data_found = True
                 self.extra_data['extra_data_end'] = extra_data_end
                 if self.writeFile is True:
-                    print "Writing to " + os.path.basename(self.someFile) + ".extra_data_end"
+                    print 'Writing to ' + os.path.basename(self.someFile) + '.extra_data_end'
                     with open(os.path.basename(self.someFile) + '.extra_data_end', 'w') as g:
                         g.write(extra_data_end)
 
@@ -1550,28 +1569,34 @@ def main():
     parser.add_argument(
         '-i', '--id', dest='incident_prefix', default='osxcollect',
         help='[OPTIONAL] An identifier which will be added as a prefix to the '
-        'output file name.')
+        'output file name.',
+    )
     parser.add_argument(
         '-p', '--path', dest='rootpath', default='/',
         help='[OPTIONAL] Path to the OS X system to audit (e.g. /mnt/xxx). The'
-        ' running system will be audited by default.')
+        ' running system will be audited by default.',
+    )
     parser.add_argument(
         '-s', '--section', dest='section_list', default=[], action='append',
         help='[OPTIONAL] Just run the named section.  May be specified more '
-        'than once.')
+        'than once.',
+    )
     parser.add_argument(
         '-d', '--debug', action='store_true', default=False,
-        help='[OPTIONAL] Enable verbose output and python breakpoints.')
+        help='[OPTIONAL] Enable verbose output and python breakpoints.',
+    )
     parser.add_argument(
         '-c', '--collect-cookies', dest='collect_cookies_value',
         default=False, action='store_true',
-        help='[OPTIONAL] Collect cookies\' value')
+        help='[OPTIONAL] Collect cookies\' value',
+    )
     parser.add_argument(
         '-l', '--collect-local-storage',
         dest='collect_local_storage_value', default=False,
         action='store_true',
         help='[OPTIONAL] Collect the values stored in web browsers\' '
-        'local storage')
+        'local storage',
+    )
     args = parser.parse_args()
 
     DEBUG_MODE = args.debug

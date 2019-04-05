@@ -1,36 +1,35 @@
+exclude: '^tests/output_filters/data/.*$'
+repos:
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: 493665a5fc24deb2204fc48b8398be77e6c9e5d5
+    rev: v2.1.0
     hooks:
-    -   id: check-added-large-files
-    -   id: check-merge-conflict
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: autopep8-wrapper
-        args:
-        - -i
-        - --ignore=E501
-    -   id: check-case-conflict
     -   id: check-json
-    -   id: check-xml
     -   id: check-yaml
-    -   id: flake8
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
     -   id: name-tests-test
     -   id: requirements-txt-fixer
--   repo: git@git.yelpcorp.com:yelp_pre_commit_hooks
-    sha: 3cb9f5b565bacf06990d83c832cb452d099287f4
-    hooks:
-    -   id: httplib-https-connection
-    -   id: use-except-as
-    -   id: check-indentation
-    -   id: check-imports
-    -   id: check_mock_methods
+    -   id: double-quote-string-fixer
+    -   id: flake8
     -   id: fix-encoding-pragma
+-   repo: git://github.com/pre-commit/mirrors-autopep8
+    rev: v1.4.3
+    hooks:
+    -   id: autopep8
 -   repo: git://github.com/asottile/reorder_python_imports
-    sha: b022734351abe44d0b05a71a4fa1175287c59b49
+    rev: v1.4.0
     hooks:
     -   id: reorder-python-imports
+        args: [
+            '--add-import', 'from __future__ import absolute_import',
+        ]
+        exclude: setup.py
+-   repo: git://github.com/asottile/add-trailing-comma
+    rev: v1.0.0
+    hooks:
+    -   id: add-trailing-comma
 -   repo: https://github.com/Yelp/detect-secrets
-    sha: 0.9.1
+    rev: v0.12.2
     hooks:
     -   id: detect-secrets
         args: ['--baseline', '.secrets.baseline']

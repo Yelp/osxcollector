@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-import testify as T
+from __future__ import absolute_import
 
 from osxcollector import osxcollector
 
 
-class PathUtilsTestCase(T.TestCase):
+class TestPathUtils:
 
     def _test_pathjoin(self, expected, path, *args):
-        T.assert_equal(expected, osxcollector.pathjoin(path, *args))
+        assert expected == osxcollector.pathjoin(path, *args)
 
     def test_all_relative(self):
         self._test_pathjoin('foo/bar/whiz', 'foo', 'bar', 'whiz')

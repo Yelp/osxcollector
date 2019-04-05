@@ -1,8 +1,9 @@
-![osxcollector](osx-github.png)
+![osxcollector](https://raw.githubusercontent.com/Yelp/osxcollector/master/osx-github.png)
 
 [![Stories in Ready](https://badge.waffle.io/Yelp/osxcollector.png?label=ready&title=Ready)](https://waffle.io/Yelp/osxcollector)
 [![Stories in In Progress](https://badge.waffle.io/Yelp/osxcollector.png?label=in%20progress&title=In%20Progress)](https://waffle.io/Yelp/osxcollector)
 [![Build Status](https://travis-ci.org/Yelp/osxcollector.svg)](https://travis-ci.org/Yelp/osxcollector)
+[![PyPI](https://img.shields.io/pypi/v/osxcollector.svg)](https://pypi.python.org/pypi/osxcollector)
 
 # OSXCollector Manual
 OSXCollector is a forensic evidence collection & analysis toolkit for OSX.
