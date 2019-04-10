@@ -45,7 +45,8 @@ import Foundation
 import macholib.MachO
 from xattr import getxattr
 
-from osxcollector import __version__
+
+__version__ = '1.12'
 
 ROOT_PATH = '/'
 """Global root path to build all further paths off of"""
