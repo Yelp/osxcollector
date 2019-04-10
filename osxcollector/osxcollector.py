@@ -784,20 +784,17 @@ class Collector(object):
             Logger.log_dict(file_info)
 
     def _should_walk(self, sub_dir_path):
-        return any([sub_dir_path.endswith(extension) for extension in ['.app', '.kext', '.osax', 'Contents']])
+        return any(sub_dir_path.endswith(extension) for extension in ('.app', '.kext', '.osax', 'Contents'))
 
     def _log_packages_in_dir(self, dir_path):
         """Log the packages in a directory"""
         plist_file = 'Info.plist'
-
-        walk = [(sub_dir_path, file_names) for sub_dir_path, _, file_names in os.walk(dir_path) if self._should_walk(sub_dir_path)]
+        walk = (
+            (sub_dir_path, file_names) for sub_dir_path, _, file_names in os.walk(dir_path)
+            if self._should_walk(sub_dir_path) and plist_file in file_names
+        )
         for sub_dir_path, file_names in walk:
-            if plist_file in file_names:
-                if sub_dir_path.endswith('Contents'):
-                    cfbundle_executable_path = 'MacOS'
-                else:
-                    cfbundle_executable_path = ''
-
+            cfbundle_executable_path = 'MacOS' if sub_dir_path.endswith('Contents') else ''
             plist_path = pathjoin(sub_dir_path, plist_file)
             plist = self._read_plist(plist_path)
             cfbundle_executable = plist.get('CFBundleExecutable')
